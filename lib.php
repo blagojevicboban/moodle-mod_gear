@@ -27,10 +27,11 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Returns the information if the module supports a feature.
  *
+ * @see plugin_supports()
  * @param string $feature FEATURE_xx constant for requested feature
- * @return mixed true if supported, null if unknown
+ * @return bool|string|null True if supported, null if unknown, otherwise the value
  */
-function gear_supports($feature) {
+function gear_supports(string $feature): bool|string|null {
     switch ($feature) {
         case FEATURE_MOD_INTRO:
             return true;
@@ -56,11 +57,16 @@ function gear_supports($feature) {
 /**
  * Adds a new GEAR instance.
  *
- * @param stdClass $gear The data from the form
- * @param mod_gear_mod_form $mform The form
+ * Given an object containing all the necessary data,
+ * (defined by the form in mod_form.php) this function
+ * will create a new instance and return the id number
+ * of the new instance.
+ *
+ * @param stdClass $gear An object from the form in mod_form.php
+ * @param mod_gear_mod_form|null $mform The form instance
  * @return int The id of the newly inserted gear record
  */
-function gear_add_instance($gear, $mform = null) {
+function gear_add_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): int {
     global $DB;
 
     $gear->timecreated = time();
@@ -71,7 +77,7 @@ function gear_add_instance($gear, $mform = null) {
         $gear->scene_config = json_encode([
             'background' => '#1a1a2e',
             'lighting' => 'studio',
-            'camera' => ['position' => [0, 1.6, 3]]
+            'camera' => ['position' => [0, 1.6, 3]],
         ]);
     }
 
@@ -83,11 +89,15 @@ function gear_add_instance($gear, $mform = null) {
 /**
  * Updates an existing GEAR instance.
  *
- * @param stdClass $gear The data from the form
- * @param mod_gear_mod_form $mform The form
- * @return bool Success/Failure
+ * Given an object containing all the necessary data,
+ * (defined by the form in mod_form.php) this function
+ * will update an existing instance with new data.
+ *
+ * @param stdClass $gear An object from the form in mod_form.php
+ * @param mod_gear_mod_form|null $mform The form instance
+ * @return bool True on success, false on failure
  */
-function gear_update_instance($gear, $mform = null) {
+function gear_update_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): bool {
     global $DB;
 
     $gear->timemodified = time();
@@ -100,9 +110,9 @@ function gear_update_instance($gear, $mform = null) {
  * Deletes a GEAR instance.
  *
  * @param int $id Id of the module instance
- * @return bool Success/Failure
+ * @return bool True on success, false on failure
  */
-function gear_delete_instance($id) {
+function gear_delete_instance(int $id): bool {
     global $DB;
 
     if (!$gear = $DB->get_record('gear', ['id' => $id])) {
@@ -123,16 +133,24 @@ function gear_delete_instance($id) {
 /**
  * Serves the files from the gear file areas.
  *
- * @param stdClass $course the course object
- * @param stdClass $cm the course module object
- * @param stdClass $context the context
- * @param string $filearea the name of the file area
- * @param array $args extra arguments (itemid, path)
- * @param bool $forcedownload whether or not force download
- * @param array $options additional options affecting the file serving
- * @return bool false if the file not found, just send the file otherwise
+ * @param stdClass $course The course object
+ * @param stdClass $cm The course module object
+ * @param context_module $context The context
+ * @param string $filearea The name of the file area
+ * @param array $args Extra arguments (itemid, path)
+ * @param bool $forcedownload Whether or not force download
+ * @param array $options Additional options affecting the file serving
+ * @return bool False if the file not found, just send the file otherwise
  */
-function gear_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
+function gear_pluginfile(
+    stdClass $course,
+    stdClass $cm,
+    context_module $context,
+    string $filearea,
+    array $args,
+    bool $forcedownload,
+    array $options = []
+): bool {
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
@@ -155,4 +173,5 @@ function gear_pluginfile($course, $cm, $context, $filearea, $args, $forcedownloa
     }
 
     send_stored_file($file, 86400, 0, $forcedownload, $options);
+    return true;
 }

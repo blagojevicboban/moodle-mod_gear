@@ -64,15 +64,18 @@ $PAGE->set_title(format_string($gear->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
-// Load required JS and CSS.
+// Load required CSS.
 $PAGE->requires->css('/mod/gear/styles.css');
-$PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [
+
+// Prepare JS configuration.
+$jsconfig = [
     'cmid' => $cm->id,
     'gearid' => $gear->id,
     'config' => json_decode($gear->scene_config ?? '{}', true),
     'ar_enabled' => (bool) $gear->ar_enabled,
     'vr_enabled' => (bool) $gear->vr_enabled,
-]);
+];
+$PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
 
 // Get models for this activity.
 $models = $DB->get_records('gear_models', ['gearid' => $gear->id], 'id ASC');

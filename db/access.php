@@ -25,6 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
+    // Ability to add a new GEAR activity.
     'mod/gear:addinstance' => [
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',
@@ -36,6 +37,7 @@ $capabilities = [
         'clonepermissionsfrom' => 'moodle/course:manageactivities',
     ],
 
+    // Ability to view GEAR content.
     'mod/gear:view' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
@@ -48,6 +50,7 @@ $capabilities = [
         ],
     ],
 
+    // Ability to manage GEAR content.
     'mod/gear:manage' => [
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',

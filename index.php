@@ -49,7 +49,9 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('modulenameplural', 'gear'), 2);
 
 // Get all GEAR instances in this course.
-if (!$gears = get_all_instances_in_course('gear', $course)) {
+$gears = get_all_instances_in_course('gear', $course);
+
+if (!$gears) {
     notice(get_string('nomodels', 'gear'), new moodle_url('/course/view.php', ['id' => $course->id]));
 }
 

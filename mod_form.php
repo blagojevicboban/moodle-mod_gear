@@ -28,13 +28,19 @@ require_once($CFG->dirroot . '/course/moodleform_mod.php');
 
 /**
  * GEAR activity module form.
+ *
+ * @package    mod_gear
+ * @copyright  2026 Boban Blagojevic
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_gear_mod_form extends moodleform_mod {
 
     /**
      * Define the form elements.
+     *
+     * @return void
      */
-    public function definition() {
+    public function definition(): void {
         $mform = $this->_form;
 
         // General section.
@@ -91,13 +97,13 @@ class mod_gear_mod_form extends moodleform_mod {
      * @param array $files The uploaded files
      * @return array Validation errors
      */
-    public function validation($data, $files) {
+    public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
 
         // Validate background color format.
         if (!empty($data['background_color'])) {
             if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $data['background_color'])) {
-                $errors['background_color'] = 'Invalid color format. Use #RRGGBB.';
+                $errors['background_color'] = get_string('invalidcolor', 'gear');
             }
         }
 
@@ -108,8 +114,9 @@ class mod_gear_mod_form extends moodleform_mod {
      * Preprocess form data before display.
      *
      * @param array $defaultvalues The default values
+     * @return void
      */
-    public function data_preprocessing(&$defaultvalues) {
+    public function data_preprocessing(&$defaultvalues): void {
         parent::data_preprocessing($defaultvalues);
 
         // Decode scene config if present.

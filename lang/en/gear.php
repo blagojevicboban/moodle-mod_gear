@@ -80,6 +80,7 @@ $string['loadingmodel'] = 'Loading 3D model...';
 $string['nomodels'] = 'No 3D models have been added to this activity.';
 $string['webxrnotsupported'] = 'WebXR is not supported in your browser.';
 $string['arnotsupported'] = 'AR is not supported on this device.';
+$string['invalidcolor'] = 'Invalid color format. Please use #RRGGBB format.';
 
 // Privacy.
 $string['privacy:metadata:gear_tracking'] = 'Information about user interactions with GEAR content.';

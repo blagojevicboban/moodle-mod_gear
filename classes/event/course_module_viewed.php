@@ -16,8 +16,6 @@
 
 namespace mod_gear\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Course module viewed event.
  *
@@ -29,8 +27,10 @@ class course_module_viewed extends \core\event\course_module_viewed {
 
     /**
      * Init method.
+     *
+     * @return void
      */
-    protected function init() {
+    protected function init(): void {
         $this->data['objecttable'] = 'gear';
         $this->data['crud'] = 'r';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
@@ -41,7 +41,7 @@ class course_module_viewed extends \core\event\course_module_viewed {
      *
      * @return \moodle_url
      */
-    public function get_url() {
+    public function get_url(): \moodle_url {
         return new \moodle_url('/mod/gear/view.php', ['id' => $this->contextinstanceid]);
     }
 
@@ -50,7 +50,7 @@ class course_module_viewed extends \core\event\course_module_viewed {
      *
      * @return array
      */
-    public static function get_objectid_mapping() {
+    public static function get_objectid_mapping(): array {
         return ['db' => 'gear', 'restore' => 'gear'];
     }
 }

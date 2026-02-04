@@ -80,6 +80,7 @@ $string['loadingmodel'] = 'Učitavanje 3D modela...';
 $string['nomodels'] = 'Nema dodatih 3D modela u ovoj aktivnosti.';
 $string['webxrnotsupported'] = 'WebXR nije podržan u vašem pregledaču.';
 $string['arnotsupported'] = 'AR nije podržan na ovom uređaju.';
+$string['invalidcolor'] = 'Neispravan format boje. Koristite format #RRGGBB.';
 
 // Privacy.
 $string['privacy:metadata:gear_tracking'] = 'Informacije o interakcijama korisnika sa GEAR sadržajem.';
