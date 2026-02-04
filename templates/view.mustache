@@ -19,20 +19,36 @@
 
     Template for the GEAR activity view page.
 
-    Context variables:
-    * name - Activity name
-    * intro - Activity introduction
-    * has_models - Whether models exist
-    * ar_enabled - AR mode enabled
-    * vr_enabled - VR mode enabled
-    * models - Array of 3D models
-    * hotspots - Array of hotspots
-    * cmid - Course module ID
+    Classes required for JS:
+    * gear-activity - Main container
+    * gear-viewer - 3D viewer container
+    * gear-canvas - WebGL canvas
+
+    Data attributes required for JS:
+    * data-cmid - Course module ID
+
+    Context variables required:
+    * name string - Activity name
+    * intro string - Activity introduction HTML
+    * has_models bool - Whether models exist
+    * ar_enabled bool - AR mode enabled
+    * vr_enabled bool - VR mode enabled
+    * cmid int - Course module ID
+
+    Example context (json):
+    {
+        "name": "Sample GEAR Activity",
+        "intro": "<p>This is an introduction to the 3D model.</p>",
+        "has_models": true,
+        "ar_enabled": true,
+        "vr_enabled": true,
+        "cmid": 123
+    }
 }}
 
 <div class="gear-activity" data-cmid="{{cmid}}">
     <div class="gear-header">
-        <h2>{{name}}</h2>
+        {{#name}}<h2>{{name}}</h2>{{/name}}
         {{#intro}}
         <div class="gear-intro">
             {{{intro}}}
