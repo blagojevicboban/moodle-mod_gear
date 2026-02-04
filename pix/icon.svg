@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <linearGradient id="gearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+  </defs>
+  <!-- VR Headset shape -->
+  <rect x="2" y="7" width="20" height="10" rx="3" fill="url(#gearGrad)"/>
+  <!-- Left lens -->
+  <circle cx="8" cy="12" r="3" fill="#1a1a2e" opacity="0.8"/>
+  <!-- Right lens -->
+  <circle cx="16" cy="12" r="3" fill="#1a1a2e" opacity="0.8"/>
+  <!-- Lens shine -->
+  <circle cx="7" cy="11" r="1" fill="white" opacity="0.4"/>
+  <circle cx="15" cy="11" r="1" fill="white" opacity="0.4"/>
+  <!-- Strap -->
+  <path d="M2 10 Q0 12 2 14" stroke="url(#gearGrad)" stroke-width="1.5" fill="none"/>
+  <path d="M22 10 Q24 12 22 14" stroke="url(#gearGrad)" stroke-width="1.5" fill="none"/>
+  <!-- 3D indicator -->
+  <text x="12" y="20" font-family="Arial, sans-serif" font-size="4" font-weight="bold" fill="#667eea" text-anchor="middle">3D</text>
+</svg>

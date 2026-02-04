@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- VR Headset shape - monochrome -->
+  <rect x="2" y="7" width="20" height="10" rx="3" fill="currentColor"/>
+  <!-- Left lens -->
+  <circle cx="8" cy="12" r="3" fill="white"/>
+  <!-- Right lens -->
+  <circle cx="16" cy="12" r="3" fill="white"/>
+</svg>

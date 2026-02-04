@@ -1,0 +1,29 @@
+# Dependencies
+/node_modules/
+/vendor/
+
+# Build artifacts (rebuild with grunt)
+/amd/build/*.map
+
+# IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Moodle
+/config.php
+
+# Testing
+/tests/coverage/
+.phpunit.result.cache
+
+# Temporary files
+*.tmp
+*.bak
+*.log
