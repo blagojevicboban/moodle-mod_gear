@@ -21,6 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/* global THREE */
+
 define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Ajax, Notification, Str) {
     'use strict';
 
@@ -40,14 +42,15 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
 
-            this.container = document.getElementById(`gear-viewer-${this.cmid}`);
-            this.canvas = document.getElementById(`gear-canvas-${this.cmid}`);
+            this.container = document.getElementById('gear-viewer-' + this.cmid);
+            this.canvas = document.getElementById('gear-canvas-' + this.cmid);
 
             this.isFullscreen = false;
             this.isAutoRotating = false;
             this.scene = null;
             this.camera = null;
             this.renderer = null;
+            this.controls = null;
             this.model = null;
 
             this.init();
@@ -66,9 +69,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.animate();
 
                 // Dispatch loaded event.
-                document.dispatchEvent(new CustomEvent('gear:scene:loaded', {
-                    detail: { cmid: this.cmid, gearid: this.gearid }
-                }));
+                var eventDetail = {cmid: this.cmid, gearid: this.gearid};
+                document.dispatchEvent(new CustomEvent('gear:scene:loaded', {detail: eventDetail}));
             } catch (error) {
                 Notification.exception(error);
             }
@@ -92,11 +94,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Load a script dynamically.
          *
          * @param {string} src Script URL
-         * @returns {Promise}
+         * @returns {Promise} Promise that resolves when script is loaded
          */
         loadScript(src) {
             return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
+                var script = document.createElement('script');
                 script.src = src;
                 script.onload = resolve;
                 script.onerror = reject;
@@ -108,17 +110,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Setup the Three.js scene.
          */
         setupScene() {
+            var bgColor;
+            var aspect;
+            var camPos;
+
             // Create scene.
             this.scene = new THREE.Scene();
 
             // Set background color.
-            const bgColor = this.config.background || '#1a1a2e';
+            bgColor = this.config.background || '#1a1a2e';
             this.scene.background = new THREE.Color(bgColor);
 
             // Create camera.
-            const aspect = this.container.clientWidth / this.container.clientHeight;
+            aspect = this.container.clientWidth / this.container.clientHeight;
             this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-            const camPos = this.config.camera?.position || [0, 1.6, 3];
+            camPos = this.config.camera?.position || [0, 1.6, 3];
             this.camera.position.set(camPos[0], camPos[1], camPos[2]);
 
             // Create renderer.
@@ -143,41 +149,48 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Setup scene lighting.
          */
         setupLighting() {
-            const preset = this.config.lighting || 'studio';
+            var preset = this.config.lighting || 'studio';
+            var ambient;
+            var keyLight;
+            var fillLight;
+            var rimLight;
+            var sunLight;
+            var skyLight;
+            var spotLight;
 
             // Ambient light.
-            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            ambient = new THREE.AmbientLight(0xffffff, 0.5);
             this.scene.add(ambient);
 
             switch (preset) {
                 case 'studio':
                     // Key light.
-                    const keyLight = new THREE.DirectionalLight(0xffffff, 1);
+                    keyLight = new THREE.DirectionalLight(0xffffff, 1);
                     keyLight.position.set(5, 5, 5);
                     this.scene.add(keyLight);
 
                     // Fill light.
-                    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                    fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
                     fillLight.position.set(-5, 0, 5);
                     this.scene.add(fillLight);
 
                     // Rim light.
-                    const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                    rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
                     rimLight.position.set(0, 5, -5);
                     this.scene.add(rimLight);
                     break;
 
                 case 'outdoor':
-                    const sunLight = new THREE.DirectionalLight(0xffffcc, 1.2);
+                    sunLight = new THREE.DirectionalLight(0xffffcc, 1.2);
                     sunLight.position.set(10, 10, 5);
                     this.scene.add(sunLight);
 
-                    const skyLight = new THREE.HemisphereLight(0x87ceeb, 0x3d5c5c, 0.6);
+                    skyLight = new THREE.HemisphereLight(0x87ceeb, 0x3d5c5c, 0.6);
                     this.scene.add(skyLight);
                     break;
 
                 case 'dark':
-                    const spotLight = new THREE.SpotLight(0xffffff, 0.8);
+                    spotLight = new THREE.SpotLight(0xffffff, 0.8);
                     spotLight.position.set(0, 5, 0);
                     this.scene.add(spotLight);
                     break;
@@ -201,26 +214,31 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Setup UI event listeners.
          */
         setupEventListeners() {
+            var fullscreenBtn;
+            var autorotateBtn;
+            var arBtn;
+            var vrBtn;
+
             // Fullscreen button.
-            const fullscreenBtn = document.getElementById(`gear-fullscreen-${this.cmid}`);
+            fullscreenBtn = document.getElementById('gear-fullscreen-' + this.cmid);
             if (fullscreenBtn) {
                 fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
             }
 
             // Auto-rotate button.
-            const autorotateBtn = document.getElementById(`gear-autorotate-${this.cmid}`);
+            autorotateBtn = document.getElementById('gear-autorotate-' + this.cmid);
             if (autorotateBtn) {
                 autorotateBtn.addEventListener('click', () => this.toggleAutoRotate());
             }
 
             // AR button.
-            const arBtn = document.getElementById(`gear-ar-${this.cmid}`);
+            arBtn = document.getElementById('gear-ar-' + this.cmid);
             if (arBtn && this.arEnabled) {
                 this.setupARButton(arBtn);
             }
 
             // VR button.
-            const vrBtn = document.getElementById(`gear-vr-${this.cmid}`);
+            vrBtn = document.getElementById('gear-vr-' + this.cmid);
             if (vrBtn && this.vrEnabled) {
                 this.setupVRButton(vrBtn);
             }
@@ -232,8 +250,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * @param {HTMLElement} button AR button element
          */
         async setupARButton(button) {
+            var supported;
             if ('xr' in navigator) {
-                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                supported = await navigator.xr.isSessionSupported('immersive-ar');
                 if (!supported) {
                     button.disabled = true;
                     button.title = await Str.get_string('arnotsupported', 'mod_gear');
@@ -251,8 +270,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * @param {HTMLElement} button VR button element
          */
         async setupVRButton(button) {
+            var supported;
             if ('xr' in navigator) {
-                const supported = await navigator.xr.isSessionSupported('immersive-vr');
+                supported = await navigator.xr.isSessionSupported('immersive-vr');
                 if (!supported) {
                     button.disabled = true;
                     button.title = await Str.get_string('webxrnotsupported', 'mod_gear');
@@ -268,17 +288,23 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Load 3D models from server.
          */
         async loadModels() {
+            var response;
+            var loader;
+            var gltf;
+            var pos;
+            var rot;
+
             try {
-                const response = await Ajax.call([{
+                response = await Ajax.call([{
                     methodname: 'mod_gear_get_models',
-                    args: { gearid: this.gearid }
+                    args: {gearid: this.gearid}
                 }])[0];
 
                 if (response.models && response.models.length > 0) {
-                    const loader = new THREE.GLTFLoader();
+                    loader = new THREE.GLTFLoader();
 
                     for (const modelData of response.models) {
-                        const gltf = await new Promise((resolve, reject) => {
+                        gltf = await new Promise((resolve, reject) => {
                             loader.load(modelData.url, resolve, undefined, reject);
                         });
 
@@ -286,11 +312,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
                         // Apply transforms.
                         if (modelData.position) {
-                            const pos = JSON.parse(modelData.position);
+                            pos = JSON.parse(modelData.position);
                             this.model.position.set(pos.x || 0, pos.y || 0, pos.z || 0);
                         }
                         if (modelData.rotation) {
-                            const rot = JSON.parse(modelData.rotation);
+                            rot = JSON.parse(modelData.rotation);
                             this.model.rotation.set(rot.x || 0, rot.y || 0, rot.z || 0);
                         }
                         if (modelData.scale) {
@@ -317,8 +343,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Add a placeholder model for testing.
          */
         addPlaceholderModel() {
-            const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const material = new THREE.MeshStandardMaterial({
+            var geometry = new THREE.BoxGeometry(1, 1, 1);
+            var material = new THREE.MeshStandardMaterial({
                 color: 0x4a90d9,
                 metalness: 0.3,
                 roughness: 0.4
@@ -330,16 +356,16 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         /**
          * Center camera on loaded model.
          *
-         * @param {THREE.Object3D} model The model to center on
+         * @param {Object} model The model to center on
          */
         centerCameraOnModel(model) {
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
+            var box = new THREE.Box3().setFromObject(model);
+            var center = box.getCenter(new THREE.Vector3());
+            var size = box.getSize(new THREE.Vector3());
 
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const fov = this.camera.fov * (Math.PI / 180);
-            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+            var maxDim = Math.max(size.x, size.y, size.z);
+            var fov = this.camera.fov * (Math.PI / 180);
+            var cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
             cameraZ *= 1.5; // Add some padding.
 
             this.camera.position.set(center.x, center.y, center.z + cameraZ);
@@ -365,8 +391,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Handle window resize.
          */
         onResize() {
-            const width = this.container.clientWidth;
-            const height = this.container.clientHeight;
+            var width = this.container.clientWidth;
+            var height = this.container.clientHeight;
 
             this.camera.aspect = width / height;
             this.camera.updateProjectionMatrix();
@@ -377,12 +403,15 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Toggle fullscreen mode.
          */
         toggleFullscreen() {
-            const container = this.container.closest('.gear-viewer-container');
+            var container = this.container.closest('.gear-viewer-container');
+            var btn;
+            var icon;
+
             container.classList.toggle('fullscreen');
             this.isFullscreen = !this.isFullscreen;
 
-            const btn = document.getElementById(`gear-fullscreen-${this.cmid}`);
-            const icon = btn.querySelector('i');
+            btn = document.getElementById('gear-fullscreen-' + this.cmid);
+            icon = btn.querySelector('i');
             icon.classList.toggle('fa-expand', !this.isFullscreen);
             icon.classList.toggle('fa-compress', this.isFullscreen);
 
@@ -393,9 +422,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Toggle auto-rotation.
          */
         toggleAutoRotate() {
+            var btn;
+
             this.isAutoRotating = !this.isAutoRotating;
 
-            const btn = document.getElementById(`gear-autorotate-${this.cmid}`);
+            btn = document.getElementById('gear-autorotate-' + this.cmid);
             btn.classList.toggle('active', this.isAutoRotating);
         }
 
@@ -403,16 +434,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Start AR session.
          */
         async startARSession() {
+            var session;
+            var eventDetail;
+
             try {
-                const session = await navigator.xr.requestSession('immersive-ar', {
+                session = await navigator.xr.requestSession('immersive-ar', {
                     requiredFeatures: ['hit-test', 'local-floor']
                 });
 
                 this.renderer.xr.setSession(session);
 
-                document.dispatchEvent(new CustomEvent('gear:ar:started', {
-                    detail: { cmid: this.cmid }
-                }));
+                eventDetail = {cmid: this.cmid};
+                document.dispatchEvent(new CustomEvent('gear:ar:started', {detail: eventDetail}));
 
                 this.trackEvent('ar_start');
             } catch (error) {
@@ -424,16 +457,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Start VR session.
          */
         async startVRSession() {
+            var session;
+            var eventDetail;
+
             try {
-                const session = await navigator.xr.requestSession('immersive-vr', {
+                session = await navigator.xr.requestSession('immersive-vr', {
                     optionalFeatures: ['local-floor', 'bounded-floor']
                 });
 
                 this.renderer.xr.setSession(session);
 
-                document.dispatchEvent(new CustomEvent('gear:vr:started', {
-                    detail: { cmid: this.cmid }
-                }));
+                eventDetail = {cmid: this.cmid};
+                document.dispatchEvent(new CustomEvent('gear:vr:started', {detail: eventDetail}));
 
                 this.trackEvent('vr_start');
             } catch (error) {
