@@ -40,6 +40,8 @@ class mod_gear_mod_form extends moodleform_mod {
      * @return void
      */
     public function definition(): void {
+        global $CFG;
+
         $mform = $this->_form;
 
         // General section.
@@ -54,6 +56,25 @@ class mod_gear_mod_form extends moodleform_mod {
 
         // Description.
         $this->standard_intro_elements();
+
+        // 3D Models section.
+        $mform->addElement('header', 'modelsection', get_string('modelsection', 'gear'));
+
+        // File picker for 3D models.
+        $maxbytes = get_max_upload_file_size($CFG->maxbytes);
+        $mform->addElement(
+            'filemanager',
+            'modelfiles',
+            get_string('modelfiles', 'gear'),
+            null,
+            [
+                'subdirs' => 0,
+                'maxbytes' => $maxbytes,
+                'maxfiles' => 10,
+                'accepted_types' => ['.gltf', '.glb', '.obj', '.fbx'],
+            ]
+        );
+        $mform->addHelpButton('modelfiles', 'modelfiles', 'gear');
 
         // Scene settings section.
         $mform->addElement('header', 'scenesettings', get_string('scenesettings', 'gear'));
@@ -125,6 +146,21 @@ class mod_gear_mod_form extends moodleform_mod {
                 $defaultvalues['background_color'] = $config['background'] ?? '#1a1a2e';
                 $defaultvalues['lighting'] = $config['lighting'] ?? 'studio';
             }
+        }
+
+        // Prepare file manager for existing files.
+        if ($this->current->instance) {
+            $context = context_module::instance($this->current->coursemodule);
+            $draftitemid = file_get_submitted_draft_itemid('modelfiles');
+            file_prepare_draft_area(
+                $draftitemid,
+                $context->id,
+                'mod_gear',
+                'model',
+                0,
+                ['subdirs' => 0, 'maxfiles' => 10]
+            );
+            $defaultvalues['modelfiles'] = $draftitemid;
         }
     }
 }

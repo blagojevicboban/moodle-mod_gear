@@ -70,16 +70,31 @@ function gear_add_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): in
     $gear->timecreated = time();
     $gear->timemodified = time();
 
-    // Process scene config if needed.
-    if (empty($gear->scene_config)) {
-        $gear->scene_config = json_encode([
-            'background' => '#1a1a2e',
-            'lighting' => 'studio',
-            'camera' => ['position' => [0, 1.6, 3]],
-        ]);
-    }
+    // Build scene config from form fields.
+    $gear->scene_config = json_encode([
+        'background' => $gear->background_color ?? '#1a1a2e',
+        'lighting' => $gear->lighting ?? 'studio',
+        'camera' => ['position' => [0, 1.6, 3]],
+    ]);
 
     $gear->id = $DB->insert_record('gear', $gear);
+
+    // Save uploaded model files.
+    $cmid = $gear->coursemodule;
+    $context = context_module::instance($cmid);
+    if (!empty($gear->modelfiles)) {
+        file_save_draft_area_files(
+            $gear->modelfiles,
+            $context->id,
+            'mod_gear',
+            'model',
+            0,
+            ['subdirs' => 0, 'maxfiles' => 10]
+        );
+
+        // Create gear_models records for each uploaded file.
+        gear_sync_model_records($gear->id, $context->id);
+    }
 
     return $gear->id;
 }
@@ -101,7 +116,76 @@ function gear_update_instance(stdClass $gear, ?mod_gear_mod_form $mform = null):
     $gear->timemodified = time();
     $gear->id = $gear->instance;
 
-    return $DB->update_record('gear', $gear);
+    // Build scene config from form fields.
+    $gear->scene_config = json_encode([
+        'background' => $gear->background_color ?? '#1a1a2e',
+        'lighting' => $gear->lighting ?? 'studio',
+        'camera' => ['position' => [0, 1.6, 3]],
+    ]);
+
+    $result = $DB->update_record('gear', $gear);
+
+    // Save uploaded model files.
+    $cmid = $gear->coursemodule;
+    $context = context_module::instance($cmid);
+    if (isset($gear->modelfiles)) {
+        file_save_draft_area_files(
+            $gear->modelfiles,
+            $context->id,
+            'mod_gear',
+            'model',
+            0,
+            ['subdirs' => 0, 'maxfiles' => 10]
+        );
+
+        // Sync gear_models records.
+        gear_sync_model_records($gear->id, $context->id);
+    }
+
+    return $result;
+}
+
+/**
+ * Sync gear_models table with uploaded files.
+ *
+ * @param int $gearid The GEAR instance ID
+ * @param int $contextid The context ID
+ * @return void
+ */
+function gear_sync_model_records(int $gearid, int $contextid): void {
+    global $DB;
+
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($contextid, 'mod_gear', 'model', 0, 'filename', false);
+
+    // Get existing model records.
+    $existing = $DB->get_records('gear_models', ['gearid' => $gearid], '', 'filepath, id');
+
+    $processed = [];
+    foreach ($files as $file) {
+        $filepath = $file->get_filename();
+        $processed[$filepath] = true;
+
+        if (!isset($existing[$filepath])) {
+            // Add new model record.
+            $record = new stdClass();
+            $record->gearid = $gearid;
+            $record->name = pathinfo($filepath, PATHINFO_FILENAME);
+            $record->filepath = $filepath;
+            $record->filesize = $file->get_filesize();
+            $record->format = pathinfo($filepath, PATHINFO_EXTENSION);
+            $record->scale = 1.0;
+            $record->timecreated = time();
+            $DB->insert_record('gear_models', $record);
+        }
+    }
+
+    // Remove records for deleted files.
+    foreach ($existing as $filepath => $record) {
+        if (!isset($processed[$filepath])) {
+            $DB->delete_records('gear_models', ['id' => $record->id]);
+        }
+    }
 }
 
 /**
@@ -170,6 +254,41 @@ function gear_pluginfile(
         return false;
     }
 
+    // Set CORS headers for 3D model files.
+    $mimetype = $file->get_mimetype();
+    if (strpos($mimetype, 'model') !== false || in_array(pathinfo($filename, PATHINFO_EXTENSION), ['gltf', 'glb'])) {
+        header('Access-Control-Allow-Origin: *');
+    }
+
     send_stored_file($file, 86400, 0, $forcedownload, $options);
     return true;
+}
+
+/**
+ * Get all models for a GEAR instance.
+ *
+ * @param int $gearid The GEAR instance ID
+ * @param int $contextid The context ID for generating URLs
+ * @return array Array of model objects with URLs
+ */
+function gear_get_models(int $gearid, int $contextid): array {
+    global $DB;
+
+    $models = $DB->get_records('gear_models', ['gearid' => $gearid]);
+    $result = [];
+
+    foreach ($models as $model) {
+        $url = moodle_url::make_pluginfile_url(
+            $contextid,
+            'mod_gear',
+            'model',
+            0,
+            '/',
+            $model->filepath
+        );
+        $model->url = $url->out();
+        $result[] = $model;
+    }
+
+    return $result;
 }

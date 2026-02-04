@@ -77,8 +77,8 @@ $jsconfig = [
 ];
 $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
 
-// Get models for this activity.
-$models = $DB->get_records('gear_models', ['gearid' => $gear->id], 'id ASC');
+// Get models for this activity (with file URLs).
+$models = gear_get_models($gear->id, $context->id);
 $hotspots = $DB->get_records('gear_hotspots', ['gearid' => $gear->id], 'sortorder ASC');
 
 // Prepare data for template.
