@@ -67,6 +67,20 @@ $PAGE->set_context($context);
 // Load required CSS.
 $PAGE->requires->css('/mod/gear/styles.css');
 
+// Get models for this activity (with file URLs).
+$models = gear_get_models($gear->id, $context->id);
+$hotspots = $DB->get_records('gear_hotspots', ['gearid' => $gear->id], 'sortorder ASC');
+
+// Prepare model data for JS (just URL and name).
+$jsmodels = [];
+foreach ($models as $model) {
+    $jsmodels[] = [
+        'url' => $model->url,
+        'name' => $model->name,
+        'format' => $model->format,
+    ];
+}
+
 // Prepare JS configuration.
 $jsconfig = [
     'cmid' => $cm->id,
@@ -74,12 +88,9 @@ $jsconfig = [
     'config' => json_decode($gear->scene_config ?? '{}', true),
     'ar_enabled' => (bool) $gear->ar_enabled,
     'vr_enabled' => (bool) $gear->vr_enabled,
+    'models' => $jsmodels,
 ];
 $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
-
-// Get models for this activity (with file URLs).
-$models = gear_get_models($gear->id, $context->id);
-$hotspots = $DB->get_records('gear_hotspots', ['gearid' => $gear->id], 'sortorder ASC');
 
 // Prepare data for template.
 $templatedata = [

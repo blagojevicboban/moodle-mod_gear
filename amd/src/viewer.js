@@ -41,6 +41,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.config = options.config || {};
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
+            this.modelsData = options.models || [];
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -285,55 +286,42 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         }
 
         /**
-         * Load 3D models from server.
+         * Load 3D models from config data.
          */
         async loadModels() {
-            var response;
             var loader;
             var gltf;
-            var pos;
-            var rot;
 
             try {
-                response = await Ajax.call([{
-                    methodname: 'mod_gear_get_models',
-                    args: {gearid: this.gearid}
-                }])[0];
-
-                if (response.models && response.models.length > 0) {
+                if (this.modelsData && this.modelsData.length > 0) {
                     loader = new THREE.GLTFLoader();
 
-                    for (const modelData of response.models) {
+                    for (const modelData of this.modelsData) {
                         gltf = await new Promise((resolve, reject) => {
                             loader.load(modelData.url, resolve, undefined, reject);
                         });
 
                         this.model = gltf.scene;
 
-                        // Apply transforms.
-                        if (modelData.position) {
-                            pos = JSON.parse(modelData.position);
-                            this.model.position.set(pos.x || 0, pos.y || 0, pos.z || 0);
-                        }
-                        if (modelData.rotation) {
-                            rot = JSON.parse(modelData.rotation);
-                            this.model.rotation.set(rot.x || 0, rot.y || 0, rot.z || 0);
-                        }
-                        if (modelData.scale) {
-                            this.model.scale.setScalar(modelData.scale);
-                        }
+                        // Apply default scale.
+                        this.model.scale.setScalar(1);
 
                         this.scene.add(this.model);
 
                         // Center camera on model.
                         this.centerCameraOnModel(this.model);
                     }
-                }
 
-                // Mark as loaded.
-                this.container.classList.add('loaded');
+                    // Mark as loaded.
+                    this.container.classList.add('loaded');
+                } else {
+                    // No models uploaded yet - show placeholder.
+                    this.addPlaceholderModel();
+                    this.container.classList.add('loaded');
+                }
             } catch (error) {
-                // Models might not be loaded via AJAX in MVP - use placeholder.
+                // Error loading model - show placeholder.
+                window.console.error('GEAR: Error loading model:', error);
                 this.addPlaceholderModel();
                 this.container.classList.add('loaded');
             }
