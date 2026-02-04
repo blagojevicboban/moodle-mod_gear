@@ -34,11 +34,12 @@ function xmldb_gear_upgrade(int $oldversion): bool {
     $dbman = $DB->get_manager();
 
     // Upgrade steps will be added here as the plugin evolves.
-    // Example:
-    // if ($oldversion < 2026020500) {
-    //     // Add new field or table.
-    //     upgrade_mod_savepoint(true, 2026020500, 'gear');
-    // }
+    /*
+    if ($oldversion < 2026020500) {
+        // Add new field or table.
+        upgrade_mod_savepoint(true, 2026020500, 'gear');
+    }
+    */
 
     return true;
 }
