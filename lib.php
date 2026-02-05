@@ -42,7 +42,7 @@ function gear_supports(string $feature): bool|string|null {
         case FEATURE_COMPLETION_HAS_RULES:
             return true;
         case FEATURE_GRADE_HAS_GRADE:
-            return false;
+            return true;
         case FEATURE_GRADE_OUTCOMES:
             return false;
         case FEATURE_MOD_PURPOSE:
@@ -100,6 +100,7 @@ function gear_add_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): in
         gear_sync_model_records($gear->id, $context->id);
     }
 
+    gear_grade_item_update($gear);
     return $gear->id;
 }
 
@@ -150,6 +151,7 @@ function gear_update_instance(stdClass $gear, ?mod_gear_mod_form $mform = null):
         gear_sync_model_records($gear->id, $context->id);
     }
 
+    gear_grade_item_update($gear);
     return $result;
 }
 
@@ -194,6 +196,111 @@ function gear_sync_model_records(int $gearid, int $contextid): void {
             $DB->delete_records('gear_models', ['id' => $record->id]);
         }
     }
+}
+
+/**
+ * Return grade for given user or all users.
+ *
+ * @param int $gearid id of gear
+ * @param int $userid optional user id, 0 means all users
+ * @return array array of grades, false if none
+ */
+function gear_get_user_grades($gear, $userid = 0) {
+    global $DB;
+
+    $params = array('gearid' => $gear->id);
+    $sql = "SELECT u.id as userid, t.data
+              FROM {user} u
+              JOIN {gear_tracking} t ON t.userid = u.id
+             WHERE t.gearid = :gearid AND t.action = 'quiz_submit'";
+
+    if ($userid) {
+        $params['userid'] = $userid;
+        $sql .= " AND u.id = :userid";
+    }
+
+    $tracking = $DB->get_records_sql($sql, $params);
+    $grades = array();
+
+    foreach ($tracking as $track) {
+        $data = json_decode($track->data, true);
+        if (isset($data['score'])) {
+            if (!isset($grades[$track->userid])) {
+                $grades[$track->userid] = array(
+                    'id' => $track->userid,
+                    'userid' => $track->userid,
+                    'rawgrade' => 0,
+                    'hotspots' => []
+                );
+            }
+            
+            // Logic: take max score per hotspot.
+            $hotspotid = isset($data['hotspotid']) ? $data['hotspotid'] : 0;
+            $current_hotspot_score = isset($grades[$track->userid]['hotspots'][$hotspotid]) ? $grades[$track->userid]['hotspots'][$hotspotid] : 0;
+            
+            if ($data['score'] > $current_hotspot_score) {
+                // Update total.
+                $grades[$track->userid]['rawgrade'] += ($data['score'] - $current_hotspot_score);
+                $grades[$track->userid]['hotspots'][$hotspotid] = $data['score'];
+            }
+        }
+    }
+
+    return $grades;
+}
+
+/**
+ * Update grades in the gradebook.
+ *
+ * @param stdClass $gear The module instance
+ * @param int $userid Specific user only, 0 means all
+ * @param bool $nullifnone If true and the user has no grade then a null value is sent to the gradebook
+ */
+function gear_update_grades($gear, $userid = 0, $nullifnone = true) {
+    global $CFG;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    if ($gear->grade == 0) {
+        gear_grade_item_update($gear);
+    } else if ($grades = gear_get_user_grades($gear, $userid)) {
+        gear_grade_item_update($gear, $grades);
+    } else if ($userid && $nullifnone) {
+        $grade = new stdClass();
+        $grade->userid = $userid;
+        $grade->rawgrade = null;
+        gear_grade_item_update($gear, $grade);
+    } else {
+        gear_grade_item_update($gear);
+    }
+}
+
+/**
+ * Create/update grade item for given gear.
+ *
+ * @param stdClass $gear The module instance
+ * @param mixed $grades Optional array/object of grade(s); 'reset' means reset grades in gradebook
+ * @return int 0 if ok, error code otherwise
+ */
+function gear_grade_item_update($gear, $grades = null) {
+    global $CFG;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    $params = array('itemname' => $gear->name, 'idnumber' => $gear->cmidnumber);
+
+    if ($gear->grade > 0) {
+        $params['gradetype'] = GRADE_TYPE_VALUE;
+        $params['grademax'] = $gear->grade;
+        $params['grademin'] = 0;
+    } else {
+        $params['gradetype'] = GRADE_TYPE_NONE;
+    }
+
+    if ($grades === 'reset') {
+        $params['reset'] = true;
+        $grades = null;
+    }
+
+    return grade_update('mod/gear', $gear->course, 'mod', 'gear', $gear->id, 0, $grades, $params);
 }
 
 /**

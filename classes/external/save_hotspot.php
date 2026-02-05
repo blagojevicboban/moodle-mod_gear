@@ -45,6 +45,7 @@ class save_hotspot extends external_api {
             'content' => new external_value(PARAM_RAW, 'Hotspot content', VALUE_DEFAULT, ''),
             'position' => new external_value(PARAM_RAW, 'JSON position {x,y,z}'),
             'icon' => new external_value(PARAM_TEXT, 'Icon name', VALUE_DEFAULT, 'info'),
+            'config' => new external_value(PARAM_RAW, 'JSON config', VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -69,7 +70,8 @@ class save_hotspot extends external_api {
         string $title,
         string $content,
         string $position,
-        string $icon
+        string $icon,
+        string $config = ''
     ): array {
         global $DB;
 
@@ -82,6 +84,7 @@ class save_hotspot extends external_api {
             'content' => $content,
             'position' => $position,
             'icon' => $icon,
+            'config' => $config,
         ]);
 
         // Get the course module.
@@ -100,7 +103,9 @@ class save_hotspot extends external_api {
         $hotspot->title = $params['title'];
         $hotspot->content = $params['content'];
         $hotspot->position = $params['position'];
+        $hotspot->position = $params['position'];
         $hotspot->icon = $params['icon'];
+        $hotspot->config = $params['config'];
 
         if ($params['id'] > 0) {
             // Update existing.

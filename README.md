@@ -15,7 +15,8 @@
 | 📱 **AR Mode** | View 3D content in augmented reality |
 | 🥽 **VR Mode** | Immersive VR experience with headsets |
 | 📍 **Hotspots** | Interactive information points |
-| 📊 **Tracking** | Built-in completion and activity tracking |
+| 📝 **Quizzes** | In-world multiple choice questions with grading |
+| 📊 **Tracking** | Built-in completion, grading, and activity tracking |
 | 🌐 **WebXR** | No app installation required |
 | 🔒 **Privacy** | GDPR compliant (Privacy API) |
 | 📦 **Backup** | Full Backup/Restore support |

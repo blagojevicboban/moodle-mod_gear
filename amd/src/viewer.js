@@ -584,6 +584,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             title.textContent = hotspot.title || 'Info';
             content.innerHTML = hotspot.content || '';
 
+            if (hotspot.type === 'quiz') {
+                this.renderQuizInPopup(popup, hotspot);
+            }
+
             // If editing is allowed for managers, add an Edit button.
             if (this.canManage && this.hotspotsEditable) {
                 var editBtn = document.createElement('button');
@@ -640,6 +644,30 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     '" class="form-control" placeholder="Enter title">' +
                     '</div>' +
                     '<div class="gear-form-group">' +
+                    '<label for="gear-hotspot-input-type-' + this.cmid + '">Type</label>' +
+                    '<select id="gear-hotspot-input-type-' + this.cmid + '" class="form-control">' +
+                    '<option value="info">Info</option>' +
+                    '<option value="quiz">Quiz</option>' +
+                    '</select>' +
+                    '</div>' +
+                    '<div id="gear-hotspot-quiz-fields-' + this.cmid + '" style="display:none;">' +
+                    '<div class="gear-form-group">' +
+                    '<label for="gear-hotspot-input-options-' + this.cmid + '">Options (comma separated)</label>' +
+                    '<input type="text" id="gear-hotspot-input-options-' + this.cmid +
+                    '" class="form-control" placeholder="Option A, Option B, Option C">' +
+                    '</div>' +
+                    '<div class="gear-form-group">' +
+                    '<label for="gear-hotspot-input-correct-' + this.cmid + '">Correct Answer (Index 0-N)</label>' +
+                    '<input type="number" id="gear-hotspot-input-correct-' + this.cmid +
+                    '" class="form-control" value="0" min="0">' +
+                    '</div>' +
+                    '<div class="gear-form-group">' +
+                    '<label for="gear-hotspot-input-points-' + this.cmid + '">Points</label>' +
+                    '<input type="number" id="gear-hotspot-input-points-' + this.cmid +
+                    '" class="form-control" value="10" min="1">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="gear-form-group">' +
                     '<label for="gear-hotspot-input-content-' + this.cmid + '">Content</label>' +
                     '<textarea id="gear-hotspot-input-content-' + this.cmid +
                     '" class="form-control" rows="3" placeholder="Enter content"></textarea>' +
@@ -650,6 +678,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     '</div>' +
                     '</div>';
                 this.container.appendChild(form);
+
+                // Type change handler.
+                var typeSelect = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
+                var quizFields = form.querySelector('#gear-hotspot-quiz-fields-' + this.cmid);
+                typeSelect.addEventListener('change', () => {
+                    quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
+                });
 
                 // Cancel button.
                 cancelBtn = form.querySelector('.gear-cancel-btn');
@@ -669,6 +704,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = hotspotToEdit.title || '';
                 form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = hotspotToEdit.content || '';
                 form.dataset.hotspotId = hotspotToEdit.id;
+                
+                var typeSelect = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
+                typeSelect.value = hotspotToEdit.type || 'info';
+                typeSelect.dispatchEvent(new Event('change'));
+
+                if (hotspotToEdit.type === 'quiz' && hotspotToEdit.config) {
+                    var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
+                    form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = config.options ? config.options.join(', ') : '';
+                    form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = config.correctAnswer || 0;
+                    form.querySelector('#gear-hotspot-input-points-' + this.cmid).value = config.points || 10;
+                }
+                
                 // Use hotspot position if present, otherwise provided point.
                 var usedPos = hotspotToEdit.position || point;
                 form.dataset.posX = usedPos.x.toFixed(3);
@@ -701,6 +748,25 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 y: parseFloat(form.dataset.posY),
                 z: parseFloat(form.dataset.posZ)
             };
+            
+            var typeInput = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
+            var type = typeInput.value;
+            var config = {};
+            
+            if (type === 'quiz') {
+                var optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
+                var correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
+                var points = form.querySelector('#gear-hotspot-input-points-' + this.cmid).value;
+                
+                config.options = optionsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                config.correctAnswer = parseInt(correct, 10);
+                config.points = parseInt(points, 10);
+                
+                if (config.options.length < 2) {
+                     Notification.alert('Error', 'Please provide at least 2 options');
+                     return;
+                }
+            }
 
             if (!title) {
                 Notification.alert('Error', 'Please enter a title');
@@ -717,11 +783,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     id: hotspotId,
                     gearid: this.gearid,
                     modelid: 0,
-                    type: 'info',
+                    type: type,
                     title: title,
                     content: content,
                     position: JSON.stringify(position),
-                    icon: 'info'
+                    icon: (type === 'quiz') ? 'question' : 'info',
+                    config: JSON.stringify(config)
                 }
             }])[0].then((response) => {
                 // Add hotspot mesh.
@@ -778,6 +845,75 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 });
 
                 return response;
+            }).catch(Notification.exception);
+        }
+
+
+        /**
+         * Render quiz interface in popup.
+         * 
+         * @param {HTMLElement} popup
+         * @param {Object} hotspot
+         */
+        renderQuizInPopup(popup, hotspot) {
+            var contentDiv = popup.querySelector('.gear-hotspot-content');
+            var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+            
+            if (!config || !config.options) {
+                contentDiv.innerHTML += '<p class="text-danger">Invalid quiz configuration</p>';
+                return;
+            }
+
+            var html = '<div class="gear-quiz-container">';
+            html += '<form id="gear-quiz-form-' + hotspot.id + '">';
+            
+            config.options.forEach((opt, index) => {
+                html += '<div class="form-check">';
+                html += '<input class="form-check-input" type="radio" name="gear-quiz-option" id="q-opt-' + hotspot.id + '-' + index + '" value="' + index + '">';
+                html += '<label class="form-check-label" for="q-opt-' + hotspot.id + '-' + index + '">' + opt + '</label>';
+                html += '</div>';
+            });
+            
+            html += '<button type="button" class="btn btn-primary btn-sm mt-2 gear-quiz-submit">Submit</button>';
+            html += '<div class="gear-quiz-feedback mt-2"></div>';
+            html += '</form></div>';
+            
+            contentDiv.innerHTML += html;
+            
+            var submitBtn = popup.querySelector('.gear-quiz-submit');
+            submitBtn.addEventListener('click', () => {
+                var selected = popup.querySelector('input[name="gear-quiz-option"]:checked');
+                if (!selected) {
+                    Notification.alert('Warning', 'Please select an answer');
+                    return;
+                }
+                this.submitQuizAnswer(hotspot, selected.value, popup);
+            });
+        }
+
+        /**
+         * Submit quiz answer.
+         */
+        submitQuizAnswer(hotspot, answer, popup) {
+             Ajax.call([{
+                methodname: 'mod_gear_submit_quiz',
+                args: {
+                    gearid: this.gearid,
+                    hotspotid: hotspot.id,
+                    answer: answer
+                }
+            }])[0].then((response) => {
+                var feedbackDiv = popup.querySelector('.gear-quiz-feedback');
+                var submitBtn = popup.querySelector('.gear-quiz-submit');
+                
+                if (response.correct) {
+                    feedbackDiv.innerHTML = '<span class="badge badge-success">Correct!</span> +' + response.score + ' pts';
+                } else {
+                    feedbackDiv.innerHTML = '<span class="badge badge-danger">Incorrect</span>';
+                }
+                
+                submitBtn.disabled = true;
+                // update tracking/grades UI if necessary
             }).catch(Notification.exception);
         }
     }

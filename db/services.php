@@ -43,7 +43,13 @@ $functions = [
         'classname'     => 'mod_gear\external\delete_hotspot',
         'description'   => 'Delete a hotspot',
         'type'          => 'write',
-        'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',
+    ],
+    'mod_gear_submit_quiz' => [
+        'classname'     => 'mod_gear\external\submit_quiz',
+        'description'   => 'Submit a quiz answer',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:view',
     ],
 ];
