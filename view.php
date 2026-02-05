@@ -68,9 +68,10 @@ $PAGE->set_context($context);
 $PAGE->requires->css('/mod/gear/styles.css');
 
 // Load Three.js BEFORE AMD to avoid RequireJS conflicts.
-$PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js'), true);
-$PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js'), true);
-$PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/GLTFLoader.js'), true);
+// Using r128 which supports global THREE.OrbitControls and THREE.GLTFLoader.
+$PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'), true);
+$PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'), true);
+$PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'), true);
 
 // Get models for this activity (with file URLs).
 $models = gear_get_models($gear->id, $context->id);
