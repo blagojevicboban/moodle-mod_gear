@@ -17,6 +17,9 @@
 | 📍 **Hotspots** | Interactive information points |
 | 📊 **Tracking** | Built-in completion and activity tracking |
 | 🌐 **WebXR** | No app installation required |
+| 🔒 **Privacy** | GDPR compliant (Privacy API) |
+| 📦 **Backup** | Full Backup/Restore support |
+| 📱 **Mobile** | Moodle Mobile App support |
 
 ## 📋 Requirements
 
@@ -76,7 +79,11 @@ vendor/bin/phpunit --testsuite mod_gear_testsuite
 vendor/bin/phpcs --standard=moodle mod/gear
 
 # Build AMD modules
-npx grunt amd --root=mod/gear
+npm install
+npx grunt amd
+
+# Watch for changes
+npx grunt watch
 ```
 
 ## 📁 Structure
