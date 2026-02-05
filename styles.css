@@ -324,27 +324,39 @@
     margin-bottom: 1rem;
 }
 
-.gear-form-group label {
-    display: block;
-    margin-bottom: 0.375rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
-}
-
 .gear-form-group input,
 .gear-form-group textarea {
     width: 100%;
     padding: 0.625rem 0.75rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* slightly lighter translucent background for better contrast */
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 8px;
-    color: #fff;
+    color: #ffffff;
+    /* ensure caret and webkit text color are white */
+    caret-color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
     font-size: 0.95rem;
     transition: all 0.2s;
 }
-
 .gear-form-group input:focus,
 .gear-form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    /* slightly brighten background on focus */
+    background: rgba(255, 255, 255, 0.09);
+}
+.gear-form-group input::placeholder,
+.gear-form-group textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* improve selected text visibility inside inputs/textareas */
+.gear-form-group input::selection,
+.gear-form-group textarea::selection {
+    background: rgba(255, 255, 255, 0.18);
+    color: #0b1220;
+}
     outline: none;
     border-color: var(--primary);
     background: rgba(255, 255, 255, 0.15);

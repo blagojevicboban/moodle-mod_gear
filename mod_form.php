@@ -103,6 +103,16 @@ class mod_gear_mod_form extends moodleform_mod {
         $mform->addElement('select', 'lighting', get_string('lighting', 'gear'), $lightingoptions);
         $mform->setDefault('lighting', 'studio');
 
+        // Hotspots settings.
+        $mform->addElement('header', 'hotspotsettings', get_string('hotspots', 'gear'));
+        $mform->addElement('advcheckbox', 'enablehotspots', get_string('enablehotspots', 'gear'));
+        $mform->setDefault('enablehotspots', 1);
+        $mform->addHelpButton('enablehotspots', 'enablehotspots', 'gear');
+
+        $mform->addElement('advcheckbox', 'edithotspots', get_string('edithotspots', 'gear'));
+        $mform->setDefault('edithotspots', 0);
+        $mform->addHelpButton('edithotspots', 'edithotspots', 'gear');
+
         // Standard course module elements.
         $this->standard_coursemodule_elements();
 

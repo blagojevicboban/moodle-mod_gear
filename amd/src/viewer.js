@@ -39,6 +39,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.cmid = options.cmid;
             this.gearid = options.gearid;
             this.config = options.config || {};
+            // Hotspot feature flags from scene config.
+            this.hotspotsEnabled = (this.config.hotspots && typeof this.config.hotspots.enabled !== 'undefined') ? !!this.config.hotspots.enabled : true;
+            this.hotspotsEditable = (this.config.hotspots && !!this.config.hotspots.edit) || false;
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
             this.modelsData = options.models || [];
@@ -73,7 +76,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.setupRaycaster();
                 this.setupEventListeners();
                 this.loadModels();
-                this.loadHotspots();
+                if (this.hotspotsEnabled) {
+                    this.loadHotspots();
+                }
                 this.animate();
 
                 // Dispatch loaded event.
@@ -489,7 +494,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.raycaster.setFromCamera(this.mouse, this.camera);
 
                 // Shift+Click to add new hotspot (managers only).
-                if (event.shiftKey && this.canManage && this.model) {
+                if (event.shiftKey && this.canManage && this.model && this.hotspotsEnabled) {
                     var modelIntersects = this.raycaster.intersectObject(this.model, true);
                     if (modelIntersects.length > 0) {
                         var point = modelIntersects[0].point;
@@ -575,11 +580,36 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             title.textContent = hotspot.title || 'Info';
             content.innerHTML = hotspot.content || '';
 
+            // If editing is allowed for managers, add an Edit button.
+            if (this.canManage && this.hotspotsEditable) {
+                var editBtn = document.createElement('button');
+                editBtn.className = 'btn btn-secondary gear-edit-hotspot';
+                editBtn.textContent = 'Edit';
+                editBtn.style.marginLeft = '0.5rem';
+                // When clicked, open the form populated with hotspot data.
+                editBtn.addEventListener('click', () => {
+                    // Use the hotspot position to open the form in edit mode.
+                    var pos = hotspot.position || {x: 0, y: 0, z: 0};
+                    this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
+                    popup.classList.remove('active');
+                });
+
+                // Append edit button next to title if possible.
+                var titleEl = popup.querySelector('.gear-hotspot-title');
+                if (titleEl) {
+                    titleEl.appendChild(editBtn);
+                } else {
+                    popup.querySelector('.gear-hotspot-popup-inner').appendChild(editBtn);
+                }
+            }
+
             // Show popup.
             popup.classList.add('active');
 
             // Track interaction.
-            this.trackInteraction('hotspot_click', {hotspotId: hotspot.id, title: hotspot.title});
+            if (typeof this.trackInteraction === 'function') {
+                this.trackInteraction('hotspot_click', {hotspotId: hotspot.id, title: hotspot.title});
+            }
         }
 
         /**
@@ -587,7 +617,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          *
          * @param {Object} point THREE.Vector3 position
          */
-        showAddHotspotForm(point) {
+        showAddHotspotForm(point, hotspotToEdit) {
             var form = document.getElementById('gear-hotspot-form-' + this.cmid);
             var saveBtn;
             var cancelBtn;
@@ -622,16 +652,29 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     form.classList.remove('active');
                 });
             } else {
-                // Reset form.
+                // Reset form or populate for edit.
                 form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = '';
                 form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = '';
+                form.removeAttribute('data-hotspot-id');
                 form.classList.add('active');
             }
 
-            // Store position.
-            form.dataset.posX = point.x.toFixed(3);
-            form.dataset.posY = point.y.toFixed(3);
-            form.dataset.posZ = point.z.toFixed(3);
+            // If editing an existing hotspot, populate fields and set id.
+            if (hotspotToEdit) {
+                form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = hotspotToEdit.title || '';
+                form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = hotspotToEdit.content || '';
+                form.dataset.hotspotId = hotspotToEdit.id;
+                // Use hotspot position if present, otherwise provided point.
+                var usedPos = hotspotToEdit.position || point;
+                form.dataset.posX = usedPos.x.toFixed(3);
+                form.dataset.posY = usedPos.y.toFixed(3);
+                form.dataset.posZ = usedPos.z.toFixed(3);
+            } else {
+                // Store position for new hotspot.
+                form.dataset.posX = point.x.toFixed(3);
+                form.dataset.posY = point.y.toFixed(3);
+                form.dataset.posZ = point.z.toFixed(3);
+            }
 
             // Save button (re-bind to use current position).
             saveBtn = form.querySelector('.gear-save-btn');
@@ -659,11 +702,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 return;
             }
 
+            // Determine whether creating new or editing existing hotspot.
+            var hotspotId = form.dataset.hotspotId ? parseInt(form.dataset.hotspotId, 10) : 0;
+
             // Save via AJAX.
             Ajax.call([{
                 methodname: 'mod_gear_save_hotspot',
                 args: {
-                    id: 0,
+                    id: hotspotId,
                     gearid: this.gearid,
                     modelid: 0,
                     type: 'info',
@@ -680,16 +726,44 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     transparent: true,
                     opacity: 0.9
                 });
-                var sphere = new THREE.Mesh(geometry, material);
-                sphere.position.set(position.x, position.y, position.z);
-                sphere.userData = {
-                    id: response.id,
-                    title: title,
-                    content: content,
-                    type: 'info'
-                };
-                this.scene.add(sphere);
-                this.hotspotMeshes.push(sphere);
+                if (hotspotId && hotspotId > 0) {
+                    // Update existing mesh data.
+                    var updated = false;
+                    for (var i = 0; i < this.hotspotMeshes.length; i++) {
+                        var hm = this.hotspotMeshes[i];
+                        if (hm.userData && hm.userData.id == hotspotId) {
+                            hm.userData.title = title;
+                            hm.userData.content = content;
+                            // Update position if changed.
+                            hm.position.set(position.x, position.y, position.z);
+                            updated = true;
+                            break;
+                        }
+                    }
+                    if (!updated) {
+                        var sphere = new THREE.Mesh(geometry, material);
+                        sphere.position.set(position.x, position.y, position.z);
+                        sphere.userData = {
+                            id: response.id,
+                            title: title,
+                            content: content,
+                            type: 'info'
+                        };
+                        this.scene.add(sphere);
+                        this.hotspotMeshes.push(sphere);
+                    }
+                } else {
+                    var sphere = new THREE.Mesh(geometry, material);
+                    sphere.position.set(position.x, position.y, position.z);
+                    sphere.userData = {
+                        id: response.id,
+                        title: title,
+                        content: content,
+                        type: 'info'
+                    };
+                    this.scene.add(sphere);
+                    this.hotspotMeshes.push(sphere);
+                }
 
                 // Close form.
                 form.classList.remove('active');

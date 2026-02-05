@@ -75,6 +75,10 @@ function gear_add_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): in
         'background' => $gear->background_color ?? '#1a1a2e',
         'lighting' => $gear->lighting ?? 'studio',
         'camera' => ['position' => [0, 1.6, 3]],
+        'hotspots' => [
+            'enabled' => isset($gear->enablehotspots) ? (bool)$gear->enablehotspots : true,
+            'edit' => isset($gear->edithotspots) ? (bool)$gear->edithotspots : false,
+        ],
     ]);
 
     $gear->id = $DB->insert_record('gear', $gear);
@@ -121,6 +125,10 @@ function gear_update_instance(stdClass $gear, ?mod_gear_mod_form $mform = null):
         'background' => $gear->background_color ?? '#1a1a2e',
         'lighting' => $gear->lighting ?? 'studio',
         'camera' => ['position' => [0, 1.6, 3]],
+        'hotspots' => [
+            'enabled' => isset($gear->enablehotspots) ? (bool)$gear->enablehotspots : true,
+            'edit' => isset($gear->edithotspots) ? (bool)$gear->edithotspots : false,
+        ],
     ]);
 
     $result = $DB->update_record('gear', $gear);
