@@ -64,6 +64,7 @@ $string['modulename'] = 'GEAR';
 $string['modulename_help'] = 'GEAR modul omogućava nastavnicima kreiranje imerzivnih AR/VR obrazovnih iskustava sa 3D modelima, hotspotovima i interaktivnim elementima.';
 $string['modulenameplural'] = 'GEAR Aktivnosti';
 $string['nomodels'] = 'Nema dodatih 3D modela u ovoj aktivnosti.';
+$string['pluginadministration'] = 'GEAR administracija';
 $string['pluginname'] = 'GEAR - Imerzivno učenje';
 $string['privacy:metadata:gear_tracking'] = 'Informacije o interakcijama korisnika sa GEAR sadržajem.';
 $string['privacy:metadata:gear_tracking:action'] = 'Akcija koju je korisnik izvršio.';

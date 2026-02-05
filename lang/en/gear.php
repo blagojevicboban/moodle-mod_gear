@@ -64,6 +64,7 @@ $string['modulename'] = 'GEAR';
 $string['modulename_help'] = 'The GEAR activity module enables teachers to create immersive AR/VR learning experiences with 3D models, hotspots, and interactive elements.';
 $string['modulenameplural'] = 'GEAR Activities';
 $string['nomodels'] = 'No 3D models have been added to this activity.';
+$string['pluginadministration'] = 'GEAR administration';
 $string['pluginname'] = 'GEAR - Immersive Learning';
 $string['privacy:metadata:gear_tracking'] = 'Information about user interactions with GEAR content.';
 $string['privacy:metadata:gear_tracking:action'] = 'The action performed by the user.';
