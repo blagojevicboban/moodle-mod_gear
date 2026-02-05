@@ -1,8 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <!-- VR Headset shape - monochrome -->
-  <rect x="2" y="7" width="20" height="10" rx="3" fill="currentColor"/>
+  <!-- VR Headset body - monochrome -->
+  <rect x="1" y="6" width="22" height="12" rx="4" fill="currentColor"/>
   <!-- Left lens -->
-  <circle cx="8" cy="12" r="3" fill="white"/>
+  <circle cx="7.5" cy="12" r="3.5" fill="white"/>
   <!-- Right lens -->
-  <circle cx="16" cy="12" r="3" fill="white"/>
+  <circle cx="16.5" cy="12" r="3.5" fill="white"/>
+  <!-- Center bridge -->
+  <rect x="10.5" y="10" width="3" height="4" rx="1" fill="currentColor"/>
 </svg>

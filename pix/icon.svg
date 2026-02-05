@@ -1,22 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <defs>
     <linearGradient id="gearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#667eea"/>
-      <stop offset="100%" style="stop-color:#764ba2"/>
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
     </linearGradient>
   </defs>
-  <!-- VR Headset shape -->
-  <rect x="2" y="7" width="20" height="10" rx="3" fill="url(#gearGrad)"/>
+  <!-- VR Headset body -->
+  <rect x="1" y="6" width="22" height="12" rx="4" fill="url(#gearGrad)"/>
   <!-- Left lens -->
-  <circle cx="8" cy="12" r="3" fill="#1a1a2e" opacity="0.8"/>
+  <circle cx="7.5" cy="12" r="3.5" fill="#1e1b4b"/>
+  <circle cx="6.5" cy="11" r="1" fill="white" opacity="0.5"/>
   <!-- Right lens -->
-  <circle cx="16" cy="12" r="3" fill="#1a1a2e" opacity="0.8"/>
-  <!-- Lens shine -->
-  <circle cx="7" cy="11" r="1" fill="white" opacity="0.4"/>
-  <circle cx="15" cy="11" r="1" fill="white" opacity="0.4"/>
-  <!-- Strap -->
-  <path d="M2 10 Q0 12 2 14" stroke="url(#gearGrad)" stroke-width="1.5" fill="none"/>
-  <path d="M22 10 Q24 12 22 14" stroke="url(#gearGrad)" stroke-width="1.5" fill="none"/>
-  <!-- 3D indicator -->
-  <text x="12" y="20" font-family="Arial, sans-serif" font-size="4" font-weight="bold" fill="#667eea" text-anchor="middle">3D</text>
+  <circle cx="16.5" cy="12" r="3.5" fill="#1e1b4b"/>
+  <circle cx="15.5" cy="11" r="1" fill="white" opacity="0.5"/>
+  <!-- Center bridge -->
+  <rect x="10.5" y="10" width="3" height="4" rx="1" fill="#4f46e5"/>
 </svg>
