@@ -40,7 +40,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.gearid = options.gearid;
             this.config = options.config || {};
             // Hotspot feature flags from scene config.
-            this.hotspotsEnabled = (this.config.hotspots && typeof this.config.hotspots.enabled !== 'undefined') ? !!this.config.hotspots.enabled : true;
+            if (this.config.hotspots && typeof this.config.hotspots.enabled !== 'undefined') {
+                this.hotspotsEnabled = !!this.config.hotspots.enabled;
+            } else {
+                this.hotspotsEnabled = true;
+            }
             this.hotspotsEditable = (this.config.hotspots && !!this.config.hotspots.edit) || false;
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
@@ -616,6 +620,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * Show form to add a new hotspot.
          *
          * @param {Object} point THREE.Vector3 position
+         * @param {Object} [hotspotToEdit] Optional hotspot object when editing
          */
         showAddHotspotForm(point, hotspotToEdit) {
             var form = document.getElementById('gear-hotspot-form-' + this.cmid);
@@ -740,8 +745,20 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                             break;
                         }
                     }
-                    if (!updated) {
-                        var sphere = new THREE.Mesh(geometry, material);
+                        if (!updated) {
+                            let sphere = new THREE.Mesh(geometry, material);
+                            sphere.position.set(position.x, position.y, position.z);
+                            sphere.userData = {
+                                id: response.id,
+                                title: title,
+                                content: content,
+                                type: 'info'
+                            };
+                            this.scene.add(sphere);
+                            this.hotspotMeshes.push(sphere);
+                        }
+                } else {
+                        let sphere = new THREE.Mesh(geometry, material);
                         sphere.position.set(position.x, position.y, position.z);
                         sphere.userData = {
                             id: response.id,
@@ -751,18 +768,6 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         };
                         this.scene.add(sphere);
                         this.hotspotMeshes.push(sphere);
-                    }
-                } else {
-                    var sphere = new THREE.Mesh(geometry, material);
-                    sphere.position.set(position.x, position.y, position.z);
-                    sphere.userData = {
-                        id: response.id,
-                        title: title,
-                        content: content,
-                        type: 'info'
-                    };
-                    this.scene.add(sphere);
-                    this.hotspotMeshes.push(sphere);
                 }
 
                 // Close form.
