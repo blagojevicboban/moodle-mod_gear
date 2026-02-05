@@ -82,12 +82,20 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          */
         async loadThreeJS() {
             // Three.js should be loaded via lib folder or CDN.
-            // For now, we'll use a placeholder implementation.
             if (typeof THREE === 'undefined') {
-                // Load from CDN as fallback.
-                await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js');
-                await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js');
-                await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/GLTFLoader.js');
+                // Temporarily disable AMD to prevent Three.js conflict with RequireJS.
+                var originalDefine = window.define;
+                window.define = undefined;
+
+                try {
+                    // Load from CDN as fallback.
+                    await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js');
+                    await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js');
+                    await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/GLTFLoader.js');
+                } finally {
+                    // Restore AMD.
+                    window.define = originalDefine;
+                }
             }
         }
 
