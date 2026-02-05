@@ -79,3 +79,4 @@ $string['supportedformats'] = 'Supported formats: glTF, GLB';
 $string['vr_enabled'] = 'Enable VR mode';
 $string['vr_enabled_help'] = 'Allow users to view content in Virtual Reality with a headset.';
 $string['webxrnotsupported'] = 'WebXR is not supported in your browser.';
+$string['mobile_warning'] = 'This content is optimized for the Moodle Mobile App. Please click the button below to interact.';
