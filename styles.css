@@ -357,15 +357,7 @@
     background: rgba(255, 255, 255, 0.18);
     color: #0b1220;
 }
-    outline: none;
-    border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.15);
-}
 
-.gear-form-group input::placeholder,
-.gear-form-group textarea::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-}
 
 .gear-form-actions {
     display: flex;
