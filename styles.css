@@ -315,3 +315,78 @@
     margin-bottom: 0;
 }
 
+/* Hotspot add form */
+.gear-hotspot-form-inner {
+    min-width: 320px;
+}
+
+.gear-form-group {
+    margin-bottom: 1rem;
+}
+
+.gear-form-group label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.gear-form-group input,
+.gear-form-group textarea {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.gear-form-group input:focus,
+.gear-form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.gear-form-group input::placeholder,
+.gear-form-group textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.gear-form-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.25rem;
+}
+
+.gear-form-actions .btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gear-form-actions .btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.gear-form-actions .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.gear-form-actions .btn-primary {
+    background: var(--primary);
+    border: none;
+    color: #fff;
+}
+
+.gear-form-actions .btn-primary:hover {
+    background: var(--primary-dark);
+}
+

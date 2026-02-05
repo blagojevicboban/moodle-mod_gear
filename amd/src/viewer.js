@@ -487,6 +487,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
                 this.raycaster.setFromCamera(this.mouse, this.camera);
+
+                // Shift+Click to add new hotspot (managers only).
+                if (event.shiftKey && this.canManage && this.model) {
+                    var modelIntersects = this.raycaster.intersectObject(this.model, true);
+                    if (modelIntersects.length > 0) {
+                        var point = modelIntersects[0].point;
+                        this.showAddHotspotForm(point);
+                        return;
+                    }
+                }
+
+                // Normal click - check hotspots.
                 var intersects = this.raycaster.intersectObjects(this.hotspotMeshes);
 
                 if (intersects.length > 0) {
@@ -568,6 +580,126 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
             // Track interaction.
             this.trackInteraction('hotspot_click', {hotspot_id: hotspot.id, title: hotspot.title});
+        }
+
+        /**
+         * Show form to add a new hotspot.
+         *
+         * @param {Object} point THREE.Vector3 position
+         */
+        showAddHotspotForm(point) {
+            var form = document.getElementById('gear-hotspot-form-' + this.cmid);
+            var saveBtn;
+            var cancelBtn;
+
+            if (!form) {
+                // Create form.
+                form = document.createElement('div');
+                form.id = 'gear-hotspot-form-' + this.cmid;
+                form.className = 'gear-hotspot-popup active';
+                form.innerHTML = '<div class="gear-hotspot-popup-inner gear-hotspot-form-inner">' +
+                    '<h4 class="gear-hotspot-title">Add Hotspot</h4>' +
+                    '<div class="gear-form-group">' +
+                    '<label for="gear-hotspot-input-title-' + this.cmid + '">Title</label>' +
+                    '<input type="text" id="gear-hotspot-input-title-' + this.cmid +
+                    '" class="form-control" placeholder="Enter title">' +
+                    '</div>' +
+                    '<div class="gear-form-group">' +
+                    '<label for="gear-hotspot-input-content-' + this.cmid + '">Content</label>' +
+                    '<textarea id="gear-hotspot-input-content-' + this.cmid +
+                    '" class="form-control" rows="3" placeholder="Enter content"></textarea>' +
+                    '</div>' +
+                    '<div class="gear-form-actions">' +
+                    '<button type="button" class="btn btn-secondary gear-cancel-btn">Cancel</button>' +
+                    '<button type="button" class="btn btn-primary gear-save-btn">Save</button>' +
+                    '</div>' +
+                    '</div>';
+                this.container.appendChild(form);
+
+                // Cancel button.
+                cancelBtn = form.querySelector('.gear-cancel-btn');
+                cancelBtn.addEventListener('click', () => {
+                    form.classList.remove('active');
+                });
+            } else {
+                // Reset form.
+                form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = '';
+                form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = '';
+                form.classList.add('active');
+            }
+
+            // Store position.
+            form.dataset.posX = point.x.toFixed(3);
+            form.dataset.posY = point.y.toFixed(3);
+            form.dataset.posZ = point.z.toFixed(3);
+
+            // Save button (re-bind to use current position).
+            saveBtn = form.querySelector('.gear-save-btn');
+            saveBtn.onclick = () => this.saveNewHotspot(form);
+        }
+
+        /**
+         * Save a new hotspot via AJAX.
+         *
+         * @param {HTMLElement} form The form element
+         */
+        saveNewHotspot(form) {
+            var titleInput = form.querySelector('#gear-hotspot-input-title-' + this.cmid);
+            var contentInput = form.querySelector('#gear-hotspot-input-content-' + this.cmid);
+            var title = titleInput.value.trim();
+            var content = contentInput.value.trim();
+            var position = {
+                x: parseFloat(form.dataset.posX),
+                y: parseFloat(form.dataset.posY),
+                z: parseFloat(form.dataset.posZ)
+            };
+
+            if (!title) {
+                Notification.alert('Error', 'Please enter a title');
+                return;
+            }
+
+            // Save via AJAX.
+            Ajax.call([{
+                methodname: 'mod_gear_save_hotspot',
+                args: {
+                    id: 0,
+                    gearid: this.gearid,
+                    modelid: 0,
+                    type: 'info',
+                    title: title,
+                    content: content,
+                    position: JSON.stringify(position),
+                    icon: 'info'
+                }
+            }])[0].then((response) => {
+                // Add hotspot mesh.
+                var geometry = new THREE.SphereGeometry(0.08, 16, 16);
+                var material = new THREE.MeshBasicMaterial({
+                    color: 0x6366f1,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                var sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(position.x, position.y, position.z);
+                sphere.userData = {
+                    id: response.id,
+                    title: title,
+                    content: content,
+                    type: 'info'
+                };
+                this.scene.add(sphere);
+                this.hotspotMeshes.push(sphere);
+
+                // Close form.
+                form.classList.remove('active');
+                Notification.addNotification({
+                    message: 'Hotspot saved successfully',
+                    type: 'success'
+                });
+
+                return response;
+            }).catch(Notification.exception);
         }
     }
 
