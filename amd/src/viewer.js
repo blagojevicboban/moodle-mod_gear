@@ -42,6 +42,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
             this.modelsData = options.models || [];
+            this.hotspotsData = options.hotspots || [];
+            this.canManage = options.canmanage || false;
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -53,6 +55,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.renderer = null;
             this.controls = null;
             this.model = null;
+            this.hotspotMeshes = [];
+            this.raycaster = null;
+            this.mouse = new THREE.Vector2();
 
             this.init();
         }
@@ -65,8 +70,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 await this.loadThreeJS();
                 this.setupScene();
                 this.setupControls();
+                this.setupRaycaster();
                 this.setupEventListeners();
                 this.loadModels();
+                this.loadHotspots();
                 this.animate();
 
                 // Dispatch loaded event.
@@ -465,6 +472,102 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     data: JSON.stringify(data)
                 }
             }]);
+        }
+
+        /**
+         * Setup raycaster for click detection.
+         */
+        setupRaycaster() {
+            this.raycaster = new THREE.Raycaster();
+
+            // Click handler for hotspots.
+            this.canvas.addEventListener('click', (event) => {
+                var rect = this.canvas.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                var intersects = this.raycaster.intersectObjects(this.hotspotMeshes);
+
+                if (intersects.length > 0) {
+                    var hotspotMesh = intersects[0].object;
+                    this.showHotspotPopup(hotspotMesh.userData);
+                }
+            });
+        }
+
+        /**
+         * Load hotspots from data.
+         */
+        loadHotspots() {
+            var geometry;
+            var material;
+            var sphere;
+            var pos;
+
+            if (!this.hotspotsData || this.hotspotsData.length === 0) {
+                return;
+            }
+
+            // Hotspot sphere geometry.
+            geometry = new THREE.SphereGeometry(0.08, 16, 16);
+            material = new THREE.MeshBasicMaterial({
+                color: 0x6366f1,
+                transparent: true,
+                opacity: 0.9
+            });
+
+            for (const hotspot of this.hotspotsData) {
+                sphere = new THREE.Mesh(geometry, material.clone());
+                pos = hotspot.position || {x: 0, y: 0, z: 0};
+                sphere.position.set(pos.x, pos.y, pos.z);
+                sphere.userData = hotspot;
+                this.scene.add(sphere);
+                this.hotspotMeshes.push(sphere);
+            }
+        }
+
+        /**
+         * Show hotspot popup.
+         *
+         * @param {Object} hotspot Hotspot data
+         */
+        showHotspotPopup(hotspot) {
+            var popup = document.getElementById('gear-hotspot-popup-' + this.cmid);
+            var title;
+            var content;
+            var closeBtn;
+
+            if (!popup) {
+                // Create popup if it doesn't exist.
+                popup = document.createElement('div');
+                popup.id = 'gear-hotspot-popup-' + this.cmid;
+                popup.className = 'gear-hotspot-popup';
+                popup.innerHTML = '<div class="gear-hotspot-popup-inner">' +
+                    '<button class="gear-hotspot-close" aria-label="Close">&times;</button>' +
+                    '<h4 class="gear-hotspot-title"></h4>' +
+                    '<div class="gear-hotspot-content"></div>' +
+                    '</div>';
+                this.container.appendChild(popup);
+
+                // Close button handler.
+                closeBtn = popup.querySelector('.gear-hotspot-close');
+                closeBtn.addEventListener('click', () => {
+                    popup.classList.remove('active');
+                });
+            }
+
+            // Update content.
+            title = popup.querySelector('.gear-hotspot-title');
+            content = popup.querySelector('.gear-hotspot-content');
+            title.textContent = hotspot.title || 'Info';
+            content.innerHTML = hotspot.content || '';
+
+            // Show popup.
+            popup.classList.add('active');
+
+            // Track interaction.
+            this.trackInteraction('hotspot_click', {hotspot_id: hotspot.id, title: hotspot.title});
         }
     }
 

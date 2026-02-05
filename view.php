@@ -87,6 +87,22 @@ foreach ($models as $model) {
     ];
 }
 
+// Prepare hotspots data for JS.
+$jshotspots = [];
+foreach ($hotspots as $hotspot) {
+    $jshotspots[] = [
+        'id' => $hotspot->id,
+        'type' => $hotspot->type ?? 'info',
+        'title' => $hotspot->title ?? '',
+        'content' => $hotspot->content ?? '',
+        'position' => json_decode($hotspot->position ?? '{"x":0,"y":0,"z":0}'),
+        'icon' => $hotspot->icon ?? 'info',
+    ];
+}
+
+// Check if user can manage hotspots.
+$canmanage = has_capability('mod/gear:manage', $context);
+
 // Prepare JS configuration.
 $jsconfig = [
     'cmid' => $cm->id,
@@ -95,6 +111,8 @@ $jsconfig = [
     'ar_enabled' => (bool) $gear->ar_enabled,
     'vr_enabled' => (bool) $gear->vr_enabled,
     'models' => $jsmodels,
+    'hotspots' => $jshotspots,
+    'canmanage' => $canmanage,
 ];
 $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
 
