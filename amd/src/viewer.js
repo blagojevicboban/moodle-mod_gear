@@ -78,41 +78,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         }
 
         /**
-         * Load Three.js library dynamically.
+         * Load Three.js library.
+         * Three.js is loaded by PHP before AMD, so just verify it exists.
          */
         async loadThreeJS() {
-            // Three.js should be loaded via lib folder or CDN.
+            // Three.js is loaded via PHP $PAGE->requires->js() before this module.
+            // Just wait for it to be available.
             if (typeof THREE === 'undefined') {
-                // Temporarily disable AMD to prevent Three.js conflict with RequireJS.
-                var originalDefine = window.define;
-                window.define = undefined;
-
-                try {
-                    // Load from CDN as fallback.
-                    await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js');
-                    await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js');
-                    await this.loadScript('https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/GLTFLoader.js');
-                } finally {
-                    // Restore AMD.
-                    window.define = originalDefine;
-                }
+                // Wait a bit for scripts to load.
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
-        }
-
-        /**
-         * Load a script dynamically.
-         *
-         * @param {string} src Script URL
-         * @returns {Promise} Promise that resolves when script is loaded
-         */
-        loadScript(src) {
-            return new Promise((resolve, reject) => {
-                var script = document.createElement('script');
-                script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
+            if (typeof THREE === 'undefined') {
+                throw new Error('Three.js not loaded. Please check view.php.');
+            }
         }
 
         /**
