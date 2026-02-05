@@ -1,0 +1,17 @@
+{
+    "name": "blagojevicboban/moodle-mod_gear",
+    "description": "GEAR - Immersive AR/VR Learning for Moodle",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Boban Blagojevic",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
+    }
+}
