@@ -287,7 +287,7 @@ function gear_grade_item_update($gear, $grades = null) {
 
     $params = array('itemname' => $gear->name, 'idnumber' => $gear->cmidnumber);
 
-    if ($gear->grade > 0) {
+    if (isset($gear->grade) && $gear->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
         $params['grademax'] = $gear->grade;
         $params['grademin'] = 0;

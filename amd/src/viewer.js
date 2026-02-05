@@ -918,6 +918,136 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         }
     }
 
+
+
+    /**
+     * SyncManager class for collaborative mode.
+     */
+    class SyncManager {
+        constructor(viewer) {
+            this.viewer = viewer;
+            this.interval = null;
+            this.avatars = {}; // Map of userid -> { mesh, label }
+            this.lastPosition = null;
+            this.lastRotation = null;
+        }
+
+        start() {
+            this.interval = setInterval(() => this.sync(), 2000);
+            this.sync(); // Initial call
+        }
+
+        stop() {
+            if (this.interval) {
+                clearInterval(this.interval);
+                this.interval = null;
+            }
+        }
+
+        sync() {
+            if (!this.viewer.camera) return;
+
+            var pos = this.viewer.camera.getAttribute('position');
+            var rot = this.viewer.camera.getAttribute('rotation');
+
+            // Only update if changed significantly? 
+            // For now, send anyway to keep session alive (heartbeat).
+            
+            var posJson = JSON.stringify(pos);
+            var rotJson = JSON.stringify(rot);
+
+            Ajax.call([{
+                methodname: 'mod_gear_sync_session',
+                args: {
+                    gearid: this.viewer.gearid,
+                    position: posJson,
+                    rotation: rotJson
+                }
+            }])[0].then((users) => {
+                this.updateAvatars(users);
+            }).catch((e) => {
+                // Silent fail to allow offline walking? Or log?
+                console.error('Sync error', e); 
+            });
+        }
+
+        updateAvatars(users) {
+            var activeIds = new Set();
+            
+            users.forEach((user) => {
+                activeIds.add(user.userid);
+                
+                if (!this.avatars[user.userid]) {
+                    this.createAvatar(user);
+                }
+                
+                this.updateAvatarState(user);
+            });
+            
+            // Remove disconnected users.
+            Object.keys(this.avatars).forEach((id) => {
+                if (!activeIds.has(parseInt(id))) {
+                    this.removeAvatar(id);
+                }
+            });
+        }
+
+        createAvatar(user) {
+            var el = document.createElement('a-entity');
+            el.setAttribute('id', 'avatar-' + user.userid);
+            
+            // Simple avatar: Sphere + Text
+            var sphere = document.createElement('a-sphere');
+            sphere.setAttribute('radius', '0.3');
+            sphere.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16)); // Random color
+            sphere.setAttribute('shadow', '');
+            
+            var text = document.createElement('a-text');
+            text.setAttribute('value', user.firstname);
+            text.setAttribute('align', 'center');
+            text.setAttribute('position', '0 0.5 0');
+            text.setAttribute('side', 'double');
+            text.setAttribute('scale', '2 2 2');
+            
+            el.appendChild(sphere);
+            el.appendChild(text);
+            
+            this.viewer.scene.appendChild(el);
+            
+            this.avatars[user.userid] = {
+                el: el
+            };
+        }
+
+        updateAvatarState(user) {
+            var avatar = this.avatars[user.userid];
+            if (!avatar) return;
+            
+            if (user.position) {
+                var pos = JSON.parse(user.position);
+                avatar.el.setAttribute('position', pos);
+            }
+            
+            if (user.rotation) {
+                var rot = JSON.parse(user.rotation);
+                // We only care about Y rotation for visual usually, but let's apply all?
+                // Actually applying full rotation to a sphere is invisible, 
+                // but if we had a face it would matter.
+                // Text should always face camera? LookAt?
+                // For now just apply rotation.
+                avatar.el.setAttribute('rotation', rot);
+            }
+        }
+
+        removeAvatar(userid) {
+            var avatar = this.avatars[userid];
+            if (avatar && avatar.el.parentNode) {
+                avatar.el.parentNode.removeChild(avatar.el);
+            }
+            delete this.avatars[userid];
+        }
+    }
+
     return {
         /**
          * Initialize the GEAR viewer.
@@ -925,7 +1055,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * @param {Object} options Configuration options
          */
         init: function(options) {
-            new GearViewer(options);
+            var viewer = new GearViewer(options);
+            
+            // Start sync if enabled (maybe add a setting later, for now always on)
+            var sync = new SyncManager(viewer);
+            viewer.scene.addEventListener('loaded', () => {
+                sync.start();
+            });
         }
     };
 });

@@ -33,7 +33,19 @@ function xmldb_gear_upgrade(int $oldversion): bool {
 
     $dbman = $DB->get_manager();
 
-    // Upgrade steps will be added here as the plugin evolves.
+    if ($oldversion < 2026020502) {
+        // Define field grade to be added to gear.
+        $table = new xmldb_table('gear');
+        $field = new xmldb_field('grade', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'introformat');
+
+        // Conditionally launch add field grade.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Gear savepoint reached.
+        upgrade_mod_savepoint(true, 2026020502, 'gear');
+    }
 
     return true;
 }

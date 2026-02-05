@@ -52,4 +52,11 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:view',
     ],
+    'mod_gear_sync_session' => [
+        'classname'     => 'mod_gear\external\sync_session',
+        'description'   => 'Sync user session and get others',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:view',
+    ],
 ];

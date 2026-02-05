@@ -16,6 +16,7 @@
 | 🥽 **VR Mode** | Immersive VR experience with headsets |
 | 📍 **Hotspots** | Interactive information points |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
+| 👥 **Collaborative** | Real-time multi-user sessions with avatars |
 | 📊 **Tracking** | Built-in completion, grading, and activity tracking |
 | 🌐 **WebXR** | No app installation required |
 | 🔒 **Privacy** | GDPR compliant (Privacy API) |
