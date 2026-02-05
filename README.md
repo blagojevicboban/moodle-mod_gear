@@ -17,6 +17,8 @@
 | 📍 **Hotspots** | Interactive information points |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
+| 🏆 **Leaderboards** | Gamification with top score display |
+| 🔊 **Spatial Audio** | Positional audio guides that react to distance |
 | 📊 **Tracking** | Built-in completion, grading, and activity tracking |
 | 🌐 **WebXR** | No app installation required |
 | 🔒 **Privacy** | GDPR compliant (Privacy API) |

@@ -59,4 +59,18 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:view',
     ],
+    'mod_gear_get_leaderboard' => [
+        'classname'     => 'mod_gear\external\get_leaderboard',
+        'description'   => 'Get leaderboard scores',
+        'type'          => 'read',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:view',
+    ],
+    'mod_gear_generate_content' => [
+        'classname'     => 'mod_gear\external\generate_content',
+        'description'   => 'Generate content using AI',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
 ];

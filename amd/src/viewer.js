@@ -65,6 +65,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.hotspotMeshes = [];
             this.raycaster = null;
             this.mouse = new THREE.Vector2();
+            this.audioListener = null;
 
             this.init();
         }
@@ -140,6 +141,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.renderer.setPixelRatio(window.devicePixelRatio);
             this.renderer.outputEncoding = THREE.sRGBEncoding;
             this.renderer.xr.enabled = true;
+
+            // Audio Listener.
+            this.audioListener = new THREE.AudioListener();
+            this.camera.add(this.audioListener);
 
             // Add lighting.
             this.setupLighting();
@@ -245,6 +250,128 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             if (vrBtn && this.vrEnabled) {
                 this.setupVRButton(vrBtn);
             }
+            
+            // Leaderboard button (injected dynamically).
+            this.setupLeaderboardButton();
+        }
+
+        /**
+         * Setup Leaderboard button and modal.
+         */
+        setupLeaderboardButton() {
+            var btn = document.createElement('button');
+            btn.className = 'btn btn-secondary gear-control-btn gear-leaderboard-btn';
+            btn.title = 'Leaderboard';
+            btn.innerHTML = '<i class="fa fa-trophy"></i>';
+            btn.style.position = 'absolute';
+            btn.style.top = '10px';
+            btn.style.right = '60px'; // Next to fullscreen button usually
+            btn.style.zIndex = '1000';
+            
+            btn.addEventListener('click', () => this.showLeaderboard());
+            
+            // Append to container.
+            this.container.appendChild(btn);
+        }
+
+        /**
+         * Show Leaderboard modal.
+         */
+        showLeaderboard() {
+            var modal = document.getElementById('gear-leaderboard-modal-' + this.cmid);
+            if (!modal) {
+                modal = this.createLeaderboardModal();
+            }
+            
+            // Show modal with loading state.
+             modal.classList.add('active');
+             var content = modal.querySelector('.gear-leaderboard-content');
+             content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+             
+             // Fetch data.
+             Ajax.call([{
+                methodname: 'mod_gear_get_leaderboard',
+                args: {
+                    gearid: this.gearid,
+                    limit: 10
+                }
+            }])[0].then((scores) => {
+                this.renderLeaderboard(content, scores);
+            }).catch(Notification.exception);
+        }
+
+        /**
+         * Create Leaderboard modal element.
+         */
+        createLeaderboardModal() {
+            var modal = document.createElement('div');
+            modal.id = 'gear-leaderboard-modal-' + this.cmid;
+            modal.className = 'gear-modal';
+            // Simple overlay styles (can be moved to CSS).
+            modal.style.position = 'absolute';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.background = 'rgba(0,0,0,0.8)';
+            modal.style.display = 'none';
+            modal.style.zIndex = '2000';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            
+            modal.innerHTML = `
+                <div class="gear-modal-dialog" style="background:white; padding:20px; border-radius:8px; max-width:500px; width:90%; position:relative;">
+                    <button class="close" style="position:absolute; top:10px; right:10px;">&times;</button>
+                    <h3><i class="fa fa-trophy text-warning"></i> Leaderboard</h3>
+                    <div class="gear-leaderboard-content"></div>
+                </div>
+            `;
+            
+            // Close logic.
+            modal.querySelector('.close').addEventListener('click', () => {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            });
+            
+            // Override display when active.
+            var style = document.createElement('style');
+            style.textContent = `#gear-leaderboard-modal-${this.cmid}.active { display: flex !important; }`;
+            document.head.appendChild(style);
+            
+            this.container.appendChild(modal);
+            return modal;
+        }
+
+        /**
+         * Render leaderboard table.
+         * @param {HTMLElement} container 
+         * @param {Array} scores 
+         */
+        renderLeaderboard(container, scores) {
+            if (scores.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No scores yet. Be the first!</p>';
+                return;
+            }
+            
+            var html = '<table class="table table-striped">';
+            html += '<thead><tr><th>#</th><th>User</th><th>Score</th></tr></thead>';
+            html += '<tbody>';
+            
+            scores.forEach((entry, index) => {
+                var badge = '';
+                if (index === 0) badge = '🥇';
+                else if (index === 1) badge = '🥈';
+                else if (index === 2) badge = '🥉';
+                
+                html += `<tr>
+                    <td>${index + 1} ${badge}</td>
+                    <td>${entry.fullname}</td>
+                    <td><strong>${entry.score}</strong></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            
+            container.innerHTML = html;
         }
 
         /**
@@ -543,6 +670,30 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 pos = hotspot.position || {x: 0, y: 0, z: 0};
                 sphere.position.set(pos.x, pos.y, pos.z);
                 sphere.userData = hotspot;
+                
+                // Audio Support.
+                if (hotspot.type === 'audio' && hotspot.config) {
+                    var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                    if (config.audioUrl) {
+                        try {
+                            var sound = new THREE.PositionalAudio(this.audioListener);
+                            var audioLoader = new THREE.AudioLoader();
+                            audioLoader.load(config.audioUrl, (buffer) => {
+                                sound.setBuffer(buffer);
+                                sound.setRefDistance(1);
+                                sound.setRolloffFactor(1); // Default rolloff
+                                sound.setLoop(true); // Default loop or config
+                                sphere.add(sound);
+                                sphere.userData.sound = sound;
+                            });
+                            // Differentiate audio hotspots visually.
+                            sphere.material.color.setHex(0x10b981); // Green for audio
+                        } catch (e) {
+                           window.console.warn('GEAR: Failed to load audio', e);
+                        }
+                    }
+                }
+
                 this.scene.add(sphere);
                 this.hotspotMeshes.push(sphere);
             }
@@ -586,6 +737,32 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
             if (hotspot.type === 'quiz') {
                 this.renderQuizInPopup(popup, hotspot);
+            } else if (hotspot.type === 'audio' && hotspot.sound) {
+                // Add play/pause controls.
+                var audioControls = document.createElement('div');
+                audioControls.className = 'gear-audio-controls mt-2';
+                var btnText = hotspot.sound.isPlaying ? 'Pause Audio' : 'Play Audio';
+                var btnIcon = hotspot.sound.isPlaying ? 'fa-pause' : 'fa-play';
+                
+                audioControls.innerHTML = `
+                    <button class="btn btn-sm btn-info gear-audio-toggle">
+                        <i class="fa ${btnIcon}"></i> ${btnText}
+                    </button>
+                    <div class="small text-muted mt-1"><i class="fa fa-volume-up"></i> Spatial Audio</div>
+                `;
+                
+                var toggleBtn = audioControls.querySelector('.gear-audio-toggle');
+                toggleBtn.addEventListener('click', () => {
+                   if (hotspot.sound.isPlaying) {
+                       hotspot.sound.pause();
+                       toggleBtn.innerHTML = '<i class="fa fa-play"></i> Play Audio';
+                   } else {
+                       hotspot.sound.play();
+                       toggleBtn.innerHTML = '<i class="fa fa-pause"></i> Pause Audio';
+                   }
+                });
+                
+                content.appendChild(audioControls);
             }
 
             // If editing is allowed for managers, add an Edit button.
@@ -645,10 +822,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     '</div>' +
                     '<div class="gear-form-group">' +
                     '<label for="gear-hotspot-input-type-' + this.cmid + '">Type</label>' +
-                    '<select id="gear-hotspot-input-type-' + this.cmid + '" class="form-control">' +
+                    '<div class="d-flex">' +
+                    '<select id="gear-hotspot-input-type-' + this.cmid + '" class="form-control mr-2">' +
                     '<option value="info">Info</option>' +
                     '<option value="quiz">Quiz</option>' +
+                    '<option value="audio">Audio</option>' +
                     '</select>' +
+                    '<button type="button" class="btn btn-info gear-ai-btn" title="AI Assist">✨ AI Assist</button>' +
+                    '</div>' +
                     '</div>' +
                     '<div id="gear-hotspot-quiz-fields-' + this.cmid + '" style="display:none;">' +
                     '<div class="gear-form-group">' +
@@ -667,6 +848,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     '" class="form-control" value="10" min="1">' +
                     '</div>' +
                     '</div>' +
+                    '<div id="gear-hotspot-audio-fields-' + this.cmid + '" style="display:none;">' +
+                    '<div class="gear-form-group">' +
+                    '<label for="gear-hotspot-input-audiourl-' + this.cmid + '">Audio URL (MP3/WAV)</label>' +
+                    '<input type="text" id="gear-hotspot-input-audiourl-' + this.cmid +
+                    '" class="form-control" placeholder="https://example.com/audio.mp3">' +
+                    '</div>' +
+                    '</div>' +
                     '<div class="gear-form-group">' +
                     '<label for="gear-hotspot-input-content-' + this.cmid + '">Content</label>' +
                     '<textarea id="gear-hotspot-input-content-' + this.cmid +
@@ -682,8 +870,43 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 // Type change handler.
                 var typeSelect = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
                 var quizFields = form.querySelector('#gear-hotspot-quiz-fields-' + this.cmid);
+                var audioFields = form.querySelector('#gear-hotspot-audio-fields-' + this.cmid);
                 typeSelect.addEventListener('change', () => {
                     quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
+                    audioFields.style.display = (typeSelect.value === 'audio') ? 'block' : 'none';
+                });
+
+                // AI Assist button.
+                var aiBtn = form.querySelector('.gear-ai-btn');
+                aiBtn.addEventListener('click', () => {
+                    var type = typeSelect.value;
+                    var prompt = window.prompt("What should this hotspot be about?", "");
+                    if (prompt) {
+                        aiBtn.disabled = true;
+                        aiBtn.textContent = 'Generating...';
+                        this.generateContent(prompt, type).then((data) => {
+                            aiBtn.disabled = false;
+                            aiBtn.textContent = '✨ AI Assist';
+                            
+                            if (type === 'quiz') {
+                                try {
+                                    var json = JSON.parse(data);
+                                    form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = json.question || '';
+                                    form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = json.options ? json.options.join(', ') : '';
+                                    form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = json.correct || 0;
+                                } catch (e) {
+                                    Notification.alert('Error', 'Failed to parse AI response');
+                                }
+                            } else if (type === 'info') {
+                                form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = prompt; // Use prompt as title
+                                form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = data;
+                            }
+                        }).catch((err) => {
+                            aiBtn.disabled = false;
+                            aiBtn.textContent = '✨ AI Assist';
+                            Notification.alert('AI Error', err.message || 'Generation failed');
+                        });
+                    }
                 });
 
                 // Cancel button.
@@ -714,6 +937,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = config.options ? config.options.join(', ') : '';
                     form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = config.correctAnswer || 0;
                     form.querySelector('#gear-hotspot-input-points-' + this.cmid).value = config.points || 10;
+                } else if (hotspotToEdit.type === 'audio' && hotspotToEdit.config) {
+                    var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
+                    form.querySelector('#gear-hotspot-input-audiourl-' + this.cmid).value = config.audioUrl || '';
                 }
                 
                 // Use hotspot position if present, otherwise provided point.
@@ -806,20 +1032,26 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         if (hm.userData && hm.userData.id == hotspotId) {
                             hm.userData.title = title;
                             hm.userData.content = content;
+                            hm.userData.type = type;
+                            hm.userData.icon = (type === 'quiz') ? 'question' : 'info';
+                            hm.userData.config = JSON.stringify(config);
                             // Update position if changed.
                             hm.position.set(position.x, position.y, position.z);
                             updated = true;
                             break;
                         }
                     }
-                        if (!updated) {
+                    
+                    if (!updated) {
                             let sphere = new THREE.Mesh(geometry, material);
                             sphere.position.set(position.x, position.y, position.z);
                             sphere.userData = {
                                 id: response.id,
                                 title: title,
                                 content: content,
-                                type: 'info'
+                                type: type,
+                                icon: (type === 'quiz') ? 'question' : 'info',
+                                config: JSON.stringify(config)
                             };
                             this.scene.add(sphere);
                             this.hotspotMeshes.push(sphere);
@@ -831,7 +1063,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                             id: response.id,
                             title: title,
                             content: content,
-                            type: 'info'
+                            type: type,
+                            icon: (type === 'quiz') ? 'question' : 'info',
+                            config: JSON.stringify(config)
                         };
                         this.scene.add(sphere);
                         this.hotspotMeshes.push(sphere);
@@ -916,6 +1150,29 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 // update tracking/grades UI if necessary
             }).catch(Notification.exception);
         }
+        /**
+         * Generate content using AI.
+         *
+         * @param {string} prompt The user prompt.
+         * @param {string} type Content type (info/quiz).
+         * @return {Promise}
+         */
+        generateContent(prompt, type) {
+            return Ajax.call([{
+                methodname: 'mod_gear_generate_content',
+                args: {
+                    gearid: this.gearid,
+                    prompt: prompt,
+                    type: type
+                }
+            }])[0].then((response) => {
+                if (response.success) {
+                    return response.content;
+                } else {
+                    return Promise.reject('Generation failed');
+                }
+            });
+        }
     }
 
 
@@ -927,7 +1184,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         constructor(viewer) {
             this.viewer = viewer;
             this.interval = null;
-            this.avatars = {}; // Map of userid -> { mesh, label }
+            this.avatars = {}; // Map of userid -> { mesh }
             this.lastPosition = null;
             this.lastRotation = null;
         }
@@ -947,27 +1204,27 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         sync() {
             if (!this.viewer.camera) return;
 
-            var pos = this.viewer.camera.getAttribute('position');
-            var rot = this.viewer.camera.getAttribute('rotation');
+            // Use Three.js properties.
+            var pos = this.viewer.camera.position;
+            var rot = this.viewer.camera.rotation;
 
             // Only update if changed significantly? 
             // For now, send anyway to keep session alive (heartbeat).
             
-            var posJson = JSON.stringify(pos);
-            var rotJson = JSON.stringify(rot);
+            var posObj = { x: pos.x, y: pos.y, z: pos.z };
+            var rotObj = { x: rot.x, y: rot.y, z: rot.z }; // Euler
 
             Ajax.call([{
                 methodname: 'mod_gear_sync_session',
                 args: {
                     gearid: this.viewer.gearid,
-                    position: posJson,
-                    rotation: rotJson
+                    position: JSON.stringify(posObj),
+                    rotation: JSON.stringify(rotObj)
                 }
             }])[0].then((users) => {
                 this.updateAvatars(users);
             }).catch((e) => {
-                // Silent fail to allow offline walking? Or log?
-                console.error('Sync error', e); 
+                window.console.warn('Sync error', e); 
             });
         }
 
@@ -993,29 +1250,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         }
 
         createAvatar(user) {
-            var el = document.createElement('a-entity');
-            el.setAttribute('id', 'avatar-' + user.userid);
+            // Create a group for the avatar.
+            var group = new THREE.Group();
             
-            // Simple avatar: Sphere + Text
-            var sphere = document.createElement('a-sphere');
-            sphere.setAttribute('radius', '0.3');
-            sphere.setAttribute('color', '#' + Math.floor(Math.random()*16777215).toString(16)); // Random color
-            sphere.setAttribute('shadow', '');
+            // Simple avatar: Sphere representing head.
+            var geometry = new THREE.SphereGeometry(0.3, 16, 16);
+            var color = '#' + Math.floor(Math.random()*16777215).toString(16);
+            var material = new THREE.MeshBasicMaterial({ color: color });
+            var sphere = new THREE.Mesh(geometry, material);
+            group.add(sphere);
             
-            var text = document.createElement('a-text');
-            text.setAttribute('value', user.firstname);
-            text.setAttribute('align', 'center');
-            text.setAttribute('position', '0 0.5 0');
-            text.setAttribute('side', 'double');
-            text.setAttribute('scale', '2 2 2');
-            
-            el.appendChild(sphere);
-            el.appendChild(text);
-            
-            this.viewer.scene.appendChild(el);
+            // Add to scene.
+            this.viewer.scene.add(group);
             
             this.avatars[user.userid] = {
-                el: el
+                mesh: group
             };
         }
 
@@ -1024,28 +1273,34 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             if (!avatar) return;
             
             if (user.position) {
-                var pos = JSON.parse(user.position);
-                avatar.el.setAttribute('position', pos);
+                try {
+                    var pos = (typeof user.position === 'string') ? JSON.parse(user.position) : user.position;
+                    avatar.mesh.position.set(pos.x, pos.y, pos.z);
+                } catch(e) {
+                    // Ignore parse error
+                }
             }
             
             if (user.rotation) {
-                var rot = JSON.parse(user.rotation);
-                // We only care about Y rotation for visual usually, but let's apply all?
-                // Actually applying full rotation to a sphere is invisible, 
-                // but if we had a face it would matter.
-                // Text should always face camera? LookAt?
-                // For now just apply rotation.
-                avatar.el.setAttribute('rotation', rot);
+                 try {
+                    var rot = (typeof user.rotation === 'string') ? JSON.parse(user.rotation) : user.rotation;
+                    avatar.mesh.rotation.set(rot.x, rot.y, rot.z);
+                } catch(e) {
+                    // Ignore parse error
+                }
             }
         }
 
         removeAvatar(userid) {
             var avatar = this.avatars[userid];
-            if (avatar && avatar.el.parentNode) {
-                avatar.el.parentNode.removeChild(avatar.el);
+            if (avatar && avatar.mesh) {
+                this.viewer.scene.remove(avatar.mesh);
+                // Optional: dispose geometry/material.
             }
             delete this.avatars[userid];
         }
+        
+
     }
 
     return {
@@ -1057,10 +1312,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         init: function(options) {
             var viewer = new GearViewer(options);
             
-            // Start sync if enabled (maybe add a setting later, for now always on)
+            // Start sync if enabled.
             var sync = new SyncManager(viewer);
-            viewer.scene.addEventListener('loaded', () => {
-                sync.start();
+            document.addEventListener('gear:scene:loaded', (e) => {
+                if (e.detail.cmid == options.cmid) {
+                    sync.start();
+                }
             });
         }
     };

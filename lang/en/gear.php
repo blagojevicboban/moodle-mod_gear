@@ -24,6 +24,19 @@
 
 $string['addhotspot'] = 'Add hotspot';
 $string['addmodel'] = 'Add 3D model';
+$string['ai_settings'] = 'AI Content Generator';
+$string['aisettings'] = 'AI Assistant Settings';
+$string['aisettings_desc'] = 'Configure the AI Content Generator using OpenAI or compatible API.';
+$string['enableai'] = 'Enable AI Assistant';
+$string['enableai_desc'] = 'Allow teachers to use AI to generate hotspot content and quizzes.';
+$string['aiapikey'] = 'API Key';
+$string['aiapikey_desc'] = 'Enter your OpenAI API Key (or compatible provider key).';
+$string['aimodel'] = 'AI Model';
+$string['aimodel_desc'] = 'Specify the model to use (e.g., gpt-4o-mini, gpt-3.5-turbo).';
+$string['aiassist'] = '✨ AI Assist';
+$string['aiassist_help'] = 'Click to generate content based on a topic.';
+$string['ai_prompt'] = 'What is this hotspot about?';
+$string['addmodel'] = 'Add 3D model';
 $string['ar_enabled'] = 'Enable AR mode';
 $string['ar_enabled_help'] = 'Allow users to view content in Augmented Reality on supported devices.';
 $string['arnotsupported'] = 'AR is not supported on this device.';

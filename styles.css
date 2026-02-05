@@ -157,11 +157,11 @@
 /* Hotspot popup */
 .gear-hotspot-popup {
     position: absolute;
-    background: #fff;
+    background: transparent;
     border-radius: 12px;
-    padding: 1rem;
-    max-width: 300px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    padding: 0;
+    max-width: 400px;
+    box-shadow: none;
     z-index: 100;
     animation: popup-appear 0.2s ease;
 }
