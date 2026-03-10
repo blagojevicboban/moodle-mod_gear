@@ -48,8 +48,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.hotspotsEditable = (this.config.hotspots && !!this.config.hotspots.edit) || false;
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
-            this.modelsData = options.models || [];
-            this.hotspotsData = options.hotspots || [];
+            this.modelsData = [];
+            this.hotspotsData = [];
             this.canManage = options.canmanage || false;
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
@@ -82,6 +82,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.setupControls();
                 this.setupRaycaster();
                 this.setupEventListeners();
+
+                // Fetch data from server to avoid large arguments in js_call_amd.
+                await this.fetchSceneData();
+
                 this.loadModels();
                 if (this.hotspotsEnabled) {
                     this.loadHotspots();
@@ -93,6 +97,34 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 document.dispatchEvent(new CustomEvent('gear:scene:loaded', {detail: eventDetail}));
             } catch (error) {
                 Notification.exception(error);
+            }
+        }
+
+        /**
+         * Fetch models and hotspots from the server.
+         */
+        async fetchSceneData() {
+            try {
+                const response = await Ajax.call([{
+                    methodname: 'mod_gear_get_scene_data',
+                    args: { gearid: this.gearid }
+                }])[0];
+
+                this.modelsData = response.models || [];
+                this.hotspotsData = response.hotspots || [];
+
+                // Parse position and config for hotspots.
+                this.hotspotsData.forEach(h => {
+                    if (typeof h.position === 'string') {
+                        try { h.position = JSON.parse(h.position); } catch (e) { h.position = {x: 0, y: 0, z: 0}; }
+                    }
+                    if (typeof h.config === 'string') {
+                        try { h.config = JSON.parse(h.config); } catch (e) { h.config = {}; }
+                    }
+                });
+            } catch (error) {
+                window.console.error('GEAR: Failed to fetch scene data', error);
+                throw error;
             }
         }
 

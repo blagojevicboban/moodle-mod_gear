@@ -81,4 +81,11 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:view',
     ],
+    'mod_gear_get_scene_data' => [
+        'classname'     => 'mod_gear\external\get_scene_data',
+        'description'   => 'Get all scene data (models and hotspots)',
+        'type'          => 'read',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:view',
+    ],
 ];

@@ -111,8 +111,6 @@ $jsconfig = [
     'config' => json_decode($gear->scene_config ?? '{}', true),
     'ar_enabled' => (bool) $gear->ar_enabled,
     'vr_enabled' => (bool) $gear->vr_enabled,
-    'models' => $jsmodels,
-    'hotspots' => $jshotspots,
     'canmanage' => $canmanage,
 ];
 $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
