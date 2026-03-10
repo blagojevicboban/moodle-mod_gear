@@ -66,6 +66,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.raycaster = null;
             this.mouse = new THREE.Vector2();
             this.audioListener = null;
+            this.movingHotspotId = null; // Track hotspot being moved.
 
             this.init();
         }
@@ -690,6 +691,15 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
                 this.raycaster.setFromCamera(this.mouse, this.camera);
 
+                // Check if we are moving a hotspot (Managers only).
+                if (this.movingHotspotId !== null && this.canManage) {
+                    var moveIntersects = this.raycaster.intersectObject(this.model, true);
+                    if (moveIntersects.length > 0) {
+                        this.updateHotspotPosition(this.movingHotspotId, moveIntersects[0].point);
+                        return;
+                    }
+                }
+
                 // Shift+Click to add new hotspot (managers only).
                 if (event.shiftKey && this.canManage && this.model && this.hotspotsEnabled) {
                     var modelIntersects = this.raycaster.intersectObject(this.model, true);
@@ -708,6 +718,50 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     this.showHotspotPopup(hotspotMesh.userData);
                 }
             });
+        }
+
+        /**
+         * Update hotspot position in DB and scene.
+         * 
+         * @param {number} id
+         * @param {THREE.Vector3} newPoint
+         */
+        updateHotspotPosition(id, newPoint) {
+            var hotspot = this.hotspotsData.find(h => h.id == id);
+            if (!hotspot) return;
+
+            var position = { x: newPoint.x, y: newPoint.y, z: newPoint.z };
+
+            Ajax.call([{
+                methodname: 'mod_gear_save_hotspot',
+                args: {
+                    id: id,
+                    gearid: this.gearid,
+                    modelid: 0,
+                    type: hotspot.type,
+                    title: hotspot.title,
+                    content: hotspot.content,
+                    position: JSON.stringify(position), // DB expects string
+                    icon: hotspot.icon || '',
+                    config: (typeof hotspot.config === 'object') ? JSON.stringify(hotspot.config) : (hotspot.config || '')
+                }
+            }])[0].then(() => {
+                // Update mesh.
+                var mesh = this.hotspotMeshes.find(m => m.userData.id == id);
+                if (mesh) {
+                    mesh.position.copy(newPoint);
+                }
+                // Update data.
+                hotspot.position = position;
+                
+                this.movingHotspotId = null;
+                this.canvas.style.cursor = 'auto';
+
+                Notification.addNotification({
+                    message: 'Hotspot moved successfully',
+                    type: 'success'
+                });
+            }).catch(Notification.exception);
         }
 
         /**
@@ -981,6 +1035,23 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     popup.classList.remove('active');
                 });
                 btnGroup.appendChild(editBtn);
+
+                // Move button.
+                var moveBtn = document.createElement('button');
+                moveBtn.className = 'btn btn-sm btn-outline-info gear-move-hotspot';
+                moveBtn.innerHTML = '<i class="fa fa-arrows-alt"></i>';
+                moveBtn.title = 'Move';
+                moveBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.movingHotspotId = hotspot.id;
+                    this.canvas.style.cursor = 'move';
+                    popup.classList.remove('active');
+                    Notification.addNotification({
+                        message: 'Click on the model to place the hotspot',
+                        type: 'info'
+                    });
+                });
+                btnGroup.appendChild(moveBtn);
 
                 // Delete button.
                 var delBtn = document.createElement('button');
