@@ -5,9 +5,24 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-03-10
 
-## [0.1.1] - 2026-02-05
+### Added
+- Real-time Multi-user Collaborative mode with avatars
+- Spatial Audio Guides (Three.js PositionalAudio)
+- In-world Quiz functionality with automated grading
+- Global Leaderboard system
+- AI Content Assistant (OpenAI integration)
+- Admin settings for AI configuration (API key, Model)
+- User interaction tracking system
+
+### Fixed
+- Quiz results aggregation logic in Leaderboard
+- Missing trackEvent calls in viewer.js
+- Database field access in grading logic
+- Security: Removed sensitive files and API keys from repository
+
+## [0.2.0] - 2026-02-05
 
 ### Added
 - Moodle 5.0/5.1 support
