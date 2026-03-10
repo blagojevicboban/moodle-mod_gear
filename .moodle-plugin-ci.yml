@@ -6,6 +6,7 @@ phpcs:
     ignore:
         - node_modules
         - vendor
+        - flatted.php
 phpmd:
     ignore:
         - node_modules
