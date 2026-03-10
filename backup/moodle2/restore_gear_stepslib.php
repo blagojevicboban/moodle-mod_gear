@@ -22,20 +22,19 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+
 
 /**
  * Restore step for mod_gear.
  */
 class restore_gear_activity_structure_step extends restore_activity_structure_step {
-
     /**
      * Define the structure of the restore step.
      *
      * @return restore_path_element[]
      */
     protected function define_structure() {
-        $paths = array();
+        $paths = [];
 
         $paths[] = new restore_path_element('gear', '/activity/gear');
         $paths[] = new restore_path_element('gear_model', '/activity/gear/gear_models/gear_model');

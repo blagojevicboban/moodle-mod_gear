@@ -22,13 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+
 
 /**
  * Backup step for mod_gear.
  */
 class backup_gear_activity_structure_step extends backup_activity_structure_step {
-
     /**
      * Define the structure of the plugin.
      *
@@ -36,27 +35,27 @@ class backup_gear_activity_structure_step extends backup_activity_structure_step
      */
     protected function define_structure() {
         // Define the structure of the plugin tables.
-        $gear = new backup_nested_element('gear', array('id'), array(
+        $gear = new backup_nested_element('gear', ['id'], [
             'course', 'name', 'intro', 'introformat', 'scene_config',
-            'ar_enabled', 'vr_enabled', 'completion_type', 'timecreated', 'timemodified'
-        ));
+            'ar_enabled', 'vr_enabled', 'completion_type', 'timecreated', 'timemodified',
+        ]);
 
         $models = new backup_nested_element('gear_models');
-        $model = new backup_nested_element('gear_model', array('id'), array(
+        $model = new backup_nested_element('gear_model', ['id'], [
             'name', 'filepath', 'filesize', 'format', 'metadata',
-            'position', 'rotation', 'scale', 'timecreated'
-        ));
+            'position', 'rotation', 'scale', 'timecreated',
+        ]);
 
         $hotspots = new backup_nested_element('gear_hotspots');
-        $hotspot = new backup_nested_element('gear_hotspot', array('id'), array(
+        $hotspot = new backup_nested_element('gear_hotspot', ['id'], [
             'modelid', 'type', 'title', 'content', 'position',
-            'icon', 'config', 'sortorder'
-        ));
+            'icon', 'config', 'sortorder',
+        ]);
 
         $trackings = new backup_nested_element('gear_trackings');
-        $tracking = new backup_nested_element('gear_tracking', array('id'), array(
-            'userid', 'action', 'data', 'duration', 'timecreated'
-        ));
+        $tracking = new backup_nested_element('gear_tracking', ['id'], [
+            'userid', 'action', 'data', 'duration', 'timecreated',
+        ]);
 
         // Build the tree.
         $gear->add_child($models);
@@ -69,14 +68,14 @@ class backup_gear_activity_structure_step extends backup_activity_structure_step
         $trackings->add_child($tracking);
 
         // Sources.
-        $gear->set_source_table('gear', array('id' => backup::VAR_ACTIVITYID));
+        $gear->set_source_table('gear', ['id' => backup::VAR_ACTIVITYID]);
 
-        $model->set_source_table('gear_models', array('gearid' => backup::VAR_PARENTID));
-        $hotspot->set_source_table('gear_hotspots', array('gearid' => backup::VAR_PARENTID));
+        $model->set_source_table('gear_models', ['gearid' => backup::VAR_PARENTID]);
+        $hotspot->set_source_table('gear_hotspots', ['gearid' => backup::VAR_PARENTID]);
 
         // Tracking data is user data, so only include if users are included in backup.
         if ($this->get_setting_value('userinfo')) {
-            $tracking->set_source_table('gear_tracking', array('gearid' => backup::VAR_PARENTID));
+            $tracking->set_source_table('gear_tracking', ['gearid' => backup::VAR_PARENTID]);
         }
 
         // Annotations.

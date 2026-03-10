@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="mod_gear">
+    <description>PHP_CodeSniffer ruleset for mod_gear. Extends Moodle coding standards.</description>
+
+    <!-- Use Moodle coding standard -->
+    <rule ref="moodle"/>
+
+    <!-- Exclude third-party vendor directories from all checks -->
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+</ruleset>

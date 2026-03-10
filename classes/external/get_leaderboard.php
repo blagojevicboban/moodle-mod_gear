@@ -68,64 +68,64 @@ class get_leaderboard extends external_api {
         require_capability('mod/gear:view', $context);
 
         // Aggregate scores from tracking table.
-        // We need to fetch all quiz_submit actions and process them because 
+        // We need to fetch all quiz_submit actions and process them because
         // the score is inside the JSON data.
         // Note: For high scale, this should be cached or stored in a dedicated table.
-        
+
         $sql = "SELECT t.id, t.userid, u.firstname, u.lastname, t.data
                   FROM {gear_tracking} t
                   JOIN {user} u ON u.id = t.userid
                  WHERE t.gearid = :gearid
                    AND t.action = 'quiz_submit'";
-        
+
         $records = $DB->get_records_sql($sql, ['gearid' => $gearid]);
-        
-        $user_scores = [];
+
+        $userscores = [];
 
         foreach ($records as $record) {
             $data = json_decode($record->data, true);
             if (isset($data['score']) && isset($data['hotspotid'])) {
                 // Determine unique key if we want sum of BEST attempts per hotspot?
                 // Logic used in lib.php: gear_get_user_grades sums max score per hotspot.
-                
+
                 $uid = $record->userid;
-                if (!isset($user_scores[$uid])) {
-                    $user_scores[$uid] = [
+                if (!isset($userscores[$uid])) {
+                    $userscores[$uid] = [
                         'userid' => $uid,
                         'fullname' => fullname($record),
                         'hotspots' => [],
-                        'total' => 0
+                        'total' => 0,
                     ];
                 }
-                
+
                 $hid = $data['hotspotid'];
-                $current_max = isset($user_scores[$uid]['hotspots'][$hid]) ? $user_scores[$uid]['hotspots'][$hid] : 0;
-                
-                if ($data['score'] > $current_max) {
-                    $user_scores[$uid]['hotspots'][$hid] = $data['score'];
+                $currentmax = isset($userscores[$uid]['hotspots'][$hid]) ? $userscores[$uid]['hotspots'][$hid] : 0;
+
+                if ($data['score'] > $currentmax) {
+                    $userscores[$uid]['hotspots'][$hid] = $data['score'];
                 }
             }
         }
-        
-        // Calculate totals
+
+        // Calculate totals.
         $leaderboard = [];
-        foreach ($user_scores as $uid => $data) {
-            $total = array_sum($data['hotspots']);
+        foreach ($userscores as $uid => $userdata) {
+            $total = array_sum($userdata['hotspots']);
             if ($total > 0) {
                 $leaderboard[] = [
                     'userid' => $uid,
-                    'fullname' => $data['fullname'],
-                    'score' => $total
+                    'fullname' => $userdata['fullname'],
+                    'score' => $total,
                 ];
             }
         }
-        
-        // Sort by score desc
-        usort($leaderboard, function($a, $b) {
+
+        // Sort by score desc.
+        usort($leaderboard, function ($a, $b) {
             return $b['score'] - $a['score'];
         });
-        
-        // Limit
+
+        // Limit results.
         return array_slice($leaderboard, 0, $limit);
     }
 

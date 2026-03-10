@@ -26,25 +26,34 @@ defined('MOODLE_INTERNAL') || die;
 
 if ($ADMIN->fulltree) {
     // AI Settings Section.
-    $settings->add(new admin_setting_heading('mod_gear/ai_settings',
+    $settings->add(new admin_setting_heading(
+        'mod_gear/ai_settings',
         get_string('aisettings', 'mod_gear'),
-        get_string('aisettings_desc', 'mod_gear')));
+        get_string('aisettings_desc', 'mod_gear')
+    ));
 
     // Enable AI.
-    $settings->add(new admin_setting_configcheckbox('mod_gear/ai_enabled',
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_gear/ai_enabled',
         get_string('enableai', 'mod_gear'),
         get_string('enableai_desc', 'mod_gear'),
-        0));
+        0
+    ));
 
     // API Key (Password field).
-    $settings->add(new admin_setting_configpasswordunmask('mod_gear/ai_apikey',
+    $settings->add(new admin_setting_configpasswordunmask(
+        'mod_gear/ai_apikey',
         get_string('aiapikey', 'mod_gear'),
         get_string('aiapikey_desc', 'mod_gear'),
-        ''));
+        ''
+    ));
 
     // Model Name.
-    $settings->add(new admin_setting_configtext('mod_gear/ai_model',
+    $settings->add(new admin_setting_configtext(
+        'mod_gear/ai_model',
         get_string('aimodel', 'mod_gear'),
         get_string('aimodel_desc', 'mod_gear'),
-        'gpt-4o-mini', PARAM_TEXT));
+        'gpt-4o-mini',
+        PARAM_TEXT
+    ));
 }

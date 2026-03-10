@@ -77,6 +77,14 @@
                     <i class="fa fa-sync" aria-hidden="true"></i>
                 </button>
             </div>
+            <div class="gear-controls-center d-none d-lg-flex">
+                <div class="gear-control-hints">
+                    <span class="gear-help-hint" tabindex="0" role="button" data-toggle="tooltip" data-placement="top" title="{{#str}}rotatehint_desc, mod_gear{{/str}}"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> {{#str}}rotatehint, mod_gear{{/str}}</span>
+                    <span class="gear-help-hint" tabindex="0" role="button" data-toggle="tooltip" data-placement="top" title="{{#str}}panhint_desc, mod_gear{{/str}}"><i class="fa fa-arrows-alt" aria-hidden="true"></i> {{#str}}panhint, mod_gear{{/str}}</span>
+                    <span class="gear-help-hint" tabindex="0" role="button" data-toggle="tooltip" data-placement="top" title="{{#str}}zoomhint_desc, mod_gear{{/str}}"><i class="fa fa-search-plus" aria-hidden="true"></i> {{#str}}zoomhint, mod_gear{{/str}}</span>
+                    <span class="gear-help-hint" tabindex="0" role="button" data-toggle="tooltip" data-placement="top" title="{{#str}}hotspothint_desc, mod_gear{{/str}}"><i class="fa fa-dot-circle" aria-hidden="true"></i> {{#str}}hotspothint, mod_gear{{/str}}</span>
+                </div>
+            </div>
             <div class="gear-controls-right">
                 {{#ar_enabled}}
                 <button type="button" class="btn btn-primary gear-ar-btn" id="gear-ar-{{cmid}}">

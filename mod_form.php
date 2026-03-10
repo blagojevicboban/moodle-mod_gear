@@ -110,7 +110,7 @@ class mod_gear_mod_form extends moodleform_mod {
         $mform->addHelpButton('enablehotspots', 'enablehotspots', 'gear');
 
         $mform->addElement('advcheckbox', 'edithotspots', get_string('edithotspots', 'gear'));
-        $mform->setDefault('edithotspots', 0);
+        $mform->setDefault('edithotspots', 1);
         $mform->addHelpButton('edithotspots', 'edithotspots', 'gear');
 
         // Standard course module elements.

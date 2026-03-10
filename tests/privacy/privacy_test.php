@@ -25,13 +25,13 @@ use core_privacy\tests\provider_testcase;
  * @package    mod_gear
  * @copyright  2026 Boban Blagojevic
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \mod_gear\privacy\provider
  */
-class privacy_test extends provider_testcase {
-
+final class privacy_test extends provider_testcase {
     /**
      * Test for provider::get_metadata().
      */
-    public function test_get_metadata() {
+    public function test_get_metadata(): void {
         $collection = new collection('mod_gear');
         $newcollection = provider::get_metadata($collection);
         $itemcollection = $newcollection->get_collection();
@@ -46,7 +46,7 @@ class privacy_test extends provider_testcase {
     /**
      * Test for provider::get_contexts_for_userid().
      */
-    public function test_get_contexts_for_userid() {
+    public function test_get_contexts_for_userid(): void {
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
@@ -72,7 +72,7 @@ class privacy_test extends provider_testcase {
     /**
      * Test for provider::export_user_data().
      */
-    public function test_export_user_data() {
+    public function test_export_user_data(): void {
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
@@ -106,7 +106,7 @@ class privacy_test extends provider_testcase {
     /**
      * Test for provider::delete_data_for_all_users_in_context().
      */
-    public function test_delete_data_for_all_users_in_context() {
+    public function test_delete_data_for_all_users_in_context(): void {
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
@@ -125,7 +125,7 @@ class privacy_test extends provider_testcase {
     /**
      * Test for provider::delete_data_for_user().
      */
-    public function test_delete_data_for_user() {
+    public function test_delete_data_for_user(): void {
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();

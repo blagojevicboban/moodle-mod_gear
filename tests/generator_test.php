@@ -24,13 +24,13 @@ use advanced_testcase;
  * @package    mod_gear
  * @copyright  2026 Boban Blagojevic
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \mod_gear_generator
  */
-class generator_test extends advanced_testcase {
-
+final class generator_test extends advanced_testcase {
     /**
      * Test generator creation.
      */
-    public function test_generator() {
+    public function test_generator(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -43,7 +43,7 @@ class generator_test extends advanced_testcase {
         $this->assertEquals('Test GEAR', $gear->name);
         $this->assertEquals($course->id, $gear->course);
         $this->assertNotEmpty($gear->scene_config);
-        
+
         // Assert record exists in DB.
         $this->assertTrue($DB->record_exists('gear', ['id' => $gear->id]));
     }

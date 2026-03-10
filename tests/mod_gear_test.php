@@ -24,13 +24,14 @@ use advanced_testcase;
  * @package    mod_gear
  * @copyright  2026 Boban Blagojevic
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @coversDefaultClass \mod_gear
  */
-class mod_gear_test extends advanced_testcase {
-
+final class mod_gear_test extends advanced_testcase {
     /**
      * Test adding a gear instance.
+     * @covers ::gear_add_instance
      */
-    public function test_gear_add_instance() {
+    public function test_gear_add_instance(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -57,8 +58,9 @@ class mod_gear_test extends advanced_testcase {
 
     /**
      * Test updating a gear instance.
+     * @covers ::gear_update_instance
      */
-    public function test_gear_update_instance() {
+    public function test_gear_update_instance(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -67,12 +69,10 @@ class mod_gear_test extends advanced_testcase {
         $gear = $this->getDataGenerator()->create_module('gear', ['course' => $course->id, 'name' => 'Old Name']);
 
         $record = new \stdClass();
-        $record->id = $gear->id; // Course module ID not needed for update function usually, but instance ID is.
-        // Moodle's update_instance typically takes an object with 'instance' property or 'id' property mapping to instance id depending on context.
-        // Let's check lib.php implementation. Usually it expects the object from form data which has 'instance' (the id of record in basic table).
+        $record->id = $gear->id;
         // Standard moodle form data for update has: id (cmid), instance (record id), course (course id).
         // Let's assume gear_update_instance expects the data object.
-        
+
         $record->instance = $gear->id;
         $record->course = $course->id;
         $record->name = 'New Name';
@@ -90,18 +90,31 @@ class mod_gear_test extends advanced_testcase {
 
     /**
      * Test deleting a gear instance.
+     * @covers ::gear_delete_instance
      */
-    public function test_gear_delete_instance() {
+    public function test_gear_delete_instance(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
 
         $course = $this->getDataGenerator()->create_course();
         $gear = $this->getDataGenerator()->create_module('gear', ['course' => $course->id]);
-        
+
         // Add some related data to verify cascade delete.
-        $DB->insert_record('gear_models', ['gearid' => $gear->id, 'name' => 'Test Model', 'path' => 'test.glb', 'timecreated' => time(), 'timemodified' => time()]);
-        $DB->insert_record('gear_hotspots', ['gearid' => $gear->id, 'modelid' => 0, 'title' => 'Test Hotspot', 'content' => 'content', 'position' => '0 0 0', 'normal' => '0 1 0', 'type' => 'info', 'timecreated' => time(), 'timemodified' => time()]);
+        $DB->insert_record('gear_models', [
+            'gearid' => $gear->id,
+            'name' => 'Test Model',
+            'filepath' => 'test.glb',
+            'timecreated' => time(),
+        ]);
+        $DB->insert_record('gear_hotspots', [
+            'gearid' => $gear->id,
+            'modelid' => 0,
+            'title' => 'Test Hotspot',
+            'content' => 'content',
+            'position' => '0 0 0',
+            'type' => 'info',
+        ]);
 
         $this->assertTrue($DB->record_exists('gear', ['id' => $gear->id]));
         $this->assertTrue($DB->record_exists('gear_models', ['gearid' => $gear->id]));

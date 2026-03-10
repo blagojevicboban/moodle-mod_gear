@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/mod/gear/backup/moodle2/restore_gear_stepslib.php
  * Restore task for mod_gear.
  */
 class restore_gear_activity_task extends restore_activity_task {
-
     /**
      * Define (or validate) the restore steps.
      */
@@ -50,9 +49,9 @@ class restore_gear_activity_task extends restore_activity_task {
      *
      * @return array
      */
-    static public function define_decode_contents() {
-        $contents = array();
-        $contents[] = new restore_decode_content('gear', array('intro'), 'gear');
+    public static function define_decode_contents() {
+        $contents = [];
+        $contents[] = new restore_decode_content('gear', ['intro'], 'gear');
         return $contents;
     }
 
@@ -61,8 +60,8 @@ class restore_gear_activity_task extends restore_activity_task {
      *
      * @return array
      */
-    static public function define_decode_rules() {
-        $rules = array();
+    public static function define_decode_rules() {
+        $rules = [];
 
         $rules[] = new restore_decode_rule('GEARVIEWBYID', '/mod/gear/view.php?id=$1', 'course_module');
         $rules[] = new restore_decode_rule('GEARINDEX', '/mod/gear/index.php?id=$1', 'course');
@@ -75,8 +74,8 @@ class restore_gear_activity_task extends restore_activity_task {
      *
      * @return array
      */
-    static public function define_restore_log_rules() {
-        $rules = array();
+    public static function define_restore_log_rules() {
+        $rules = [];
 
         $rules[] = new restore_log_rule('gear', 'add', 'view.php?id={course_module}', '{name}');
         $rules[] = new restore_log_rule('gear', 'update', 'view.php?id={course_module}', '{name}');
@@ -90,8 +89,8 @@ class restore_gear_activity_task extends restore_activity_task {
      *
      * @return array
      */
-    static public function define_restore_log_rules_for_course() {
-        $rules = array();
+    public static function define_restore_log_rules_for_course() {
+        $rules = [];
 
         $rules[] = new restore_log_rule('gear', 'view all', 'index.php?id={course}', 'gear');
 

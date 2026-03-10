@@ -73,9 +73,35 @@
 }
 
 .gear-controls-left,
+.gear-controls-center,
 .gear-controls-right {
     display: flex;
     gap: 0.5rem;
+}
+
+.gear-control-hints {
+    display: flex;
+    gap: 1.25rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.gear-control-hints span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.gear-help-hint {
+    cursor: help;
+    outline: none;
+}
+
+.gear-control-hints i {
+    font-size: 0.9rem;
+    opacity: 0.8;
 }
 
 .gear-control-btn {

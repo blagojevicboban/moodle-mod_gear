@@ -94,7 +94,6 @@ class sync_session extends external_api {
         }
 
         // Clean up old sessions (optional, maybe run via cron or probability).
-        // $DB->delete_records_select('gear_sessions', 'timemodified < :timeout', ['timeout' => $now - 60]);
 
         // Fetch other active users.
         $sql = "SELECT s.*, u.firstname, u.lastname
@@ -103,11 +102,11 @@ class sync_session extends external_api {
                  WHERE s.gearid = :gearid
                    AND s.userid != :userid
                    AND s.timemodified > :timeout";
-        
+
         $others = $DB->get_records_sql($sql, [
             'gearid' => $gearid,
             'userid' => $userid,
-            'timeout' => $timeout
+            'timeout' => $timeout,
         ]);
 
         $result = [];

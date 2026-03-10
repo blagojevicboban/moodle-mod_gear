@@ -22,6 +22,8 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once(__DIR__ . '/../../lib.php');
 
 /**
@@ -67,9 +69,9 @@ class submit_quiz extends external_api {
         ]);
 
         // Get the course module.
-        $gear = $DB->get_record('gear', ['id' => $params['gearid']], '*', MUST_EXIST);
         $cm = get_coursemodule_from_instance('gear', $params['gearid'], 0, false, MUST_EXIST);
         $context = context_module::instance($cm->id);
+        $gear = $DB->get_record('gear', ['id' => $cm->instance], '*', MUST_EXIST);
 
         // Check capability.
         self::validate_context($context);
@@ -77,7 +79,7 @@ class submit_quiz extends external_api {
 
         // Get hotspot to verify answer.
         $hotspot = $DB->get_record('gear_hotspots', ['id' => $params['hotspotid'], 'gearid' => $gear->id], '*', MUST_EXIST);
-        
+
         $config = json_decode($hotspot->config, true);
         $correct = false;
         $score = 0;
@@ -95,26 +97,19 @@ class submit_quiz extends external_api {
         }
 
         // Record tracking data.
-        // Check if user already submitted this hotspot? (Optional: prevent multiple attempts).
-        // For now, allow multiple attempts but only record if score > previous? Or just record everything.
-        // Let's record everything, and lib.php can handle aggregation (e.g., sum distinct hotspots).
-        
-        $record = new \stdClass();
-        $record->gearid = $gear->id;
-        $record->userid = $USER->id;
-        $record->action = 'quiz_submit';
-        $record->data = json_encode([
+        $trackrecord = new \stdClass();
+        $trackrecord->gearid = $gear->id;
+        $trackrecord->userid = $USER->id;
+        $trackrecord->action = 'quiz_submit';
+        $trackrecord->data = json_encode([
             'hotspotid' => $hotspot->id,
             'answer' => $params['answer'],
             'correct' => $correct,
-            'score' => $score
+            'score' => $score,
         ]);
-        $record->timecreated = time();
-        
-        // We might want to remove previous attempts for *this* hotspot to avoid summing same question multiple times.
-        // But that's complex logic for SQL.
-        // Let's just insert for now.
-        $DB->insert_record('gear_tracking', $record);
+        $trackrecord->timecreated = time();
+
+        $DB->insert_record('gear_tracking', $trackrecord);
 
         // Trigger grade update.
         gear_update_grades($gear, $USER->id);
@@ -122,7 +117,7 @@ class submit_quiz extends external_api {
         return [
             'correct' => $correct,
             'score' => $score,
-            'feedback' => $feedback
+            'feedback' => $feedback,
         ];
     }
 

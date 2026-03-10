@@ -208,7 +208,7 @@ function gear_sync_model_records(int $gearid, int $contextid): void {
 function gear_get_user_grades($gear, $userid = 0) {
     global $DB;
 
-    $params = array('gearid' => $gear->id);
+    $params = ['gearid' => $gear->id];
     $sql = "SELECT u.id as userid, t.data
               FROM {user} u
               JOIN {gear_tracking} t ON t.userid = u.id
@@ -220,27 +220,28 @@ function gear_get_user_grades($gear, $userid = 0) {
     }
 
     $tracking = $DB->get_records_sql($sql, $params);
-    $grades = array();
+    $grades = [];
 
     foreach ($tracking as $track) {
         $data = json_decode($track->data, true);
         if (isset($data['score'])) {
             if (!isset($grades[$track->userid])) {
-                $grades[$track->userid] = array(
+                $grades[$track->userid] = [
                     'id' => $track->userid,
                     'userid' => $track->userid,
                     'rawgrade' => 0,
-                    'hotspots' => []
-                );
+                    'hotspots' => [],
+                ];
             }
-            
+
             // Logic: take max score per hotspot.
             $hotspotid = isset($data['hotspotid']) ? $data['hotspotid'] : 0;
-            $current_hotspot_score = isset($grades[$track->userid]['hotspots'][$hotspotid]) ? $grades[$track->userid]['hotspots'][$hotspotid] : 0;
-            
-            if ($data['score'] > $current_hotspot_score) {
+            $currenthotspotscore = isset($grades[$track->userid]['hotspots'][$hotspotid]) ?
+                $grades[$track->userid]['hotspots'][$hotspotid] : 0;
+
+            if ($data['score'] > $currenthotspotscore) {
                 // Update total.
-                $grades[$track->userid]['rawgrade'] += ($data['score'] - $current_hotspot_score);
+                $grades[$track->userid]['rawgrade'] += ($data['score'] - $currenthotspotscore);
                 $grades[$track->userid]['hotspots'][$hotspotid] = $data['score'];
             }
         }
@@ -258,7 +259,7 @@ function gear_get_user_grades($gear, $userid = 0) {
  */
 function gear_update_grades($gear, $userid = 0, $nullifnone = true) {
     global $CFG;
-    require_once($CFG->libdir.'/gradelib.php');
+    require_once($CFG->libdir . '/gradelib.php');
 
     if ($gear->grade == 0) {
         gear_grade_item_update($gear);
@@ -283,10 +284,10 @@ function gear_update_grades($gear, $userid = 0, $nullifnone = true) {
  */
 function gear_grade_item_update($gear, $grades = null) {
     global $CFG, $DB;
-    require_once($CFG->libdir.'/gradelib.php');
+    require_once($CFG->libdir . '/gradelib.php');
 
     $cm = get_coursemodule_from_instance('gear', $gear->id, $gear->course, false, MUST_EXIST);
-    $params = array('itemname' => $gear->name, 'idnumber' => $cm->idnumber);
+    $params = ['itemname' => $gear->name, 'idnumber' => $cm->idnumber];
 
     if (isset($gear->grade) && $gear->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;

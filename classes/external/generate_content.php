@@ -21,7 +21,6 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
-
 /**
  * Generate content using AI.
  *
@@ -76,40 +75,43 @@ class generate_content extends external_api {
         }
 
         // Construct System Prompt.
-        $system_prompt = "You are a helpful assistant for an Augmented/Virtual Reality learning platform. ";
-        $user_prompt = "";
+        $systemprompt = "You are a helpful assistant for an Augmented/Virtual Reality learning platform. ";
+        $userprompt = "";
 
         if ($type === 'quiz') {
-            $system_prompt .= "Generate a multiple choice question based on the user's topic. ";
-            $system_prompt .= "Return ONLY valid JSON with this structure: { \"question\": \"Question text\", \"options\": [\"A\", \"B\", \"C\"], \"correct\": 0, \"points\": 10, \"explanation\": \"Optional explanation\" }. ";
-            $system_prompt .= "Ensure correct index is 0-based. Do not include markdown formatting.";
-            $user_prompt = "Topic: " . $prompt;
+            $systemprompt .= "Generate a multiple choice question based on the user's topic. ";
+            $systemprompt .= "Return ONLY valid JSON with this structure: { \"question\": \"Question text\", ";
+            $systemprompt .= "\"options\": [\"A\", \"B\", \"C\"], \"correct\": 0, \"points\": 10, ";
+            $systemprompt .= "\"explanation\": \"Optional explanation\" }. ";
+            $systemprompt .= "Ensure correct index is 0-based. Do not include markdown formatting.";
+            $userprompt = "Topic: " . $prompt;
         } else {
-            $system_prompt .= "Write a short, engaging description (max 50 words) about the topic suitable for a popup info card.";
-            $user_prompt = "Topic: " . $prompt;
+            $systemprompt .= "Write a short, engaging description (max 50 words) about the topic ";
+            $systemprompt .= "suitable for a popup info card.";
+            $userprompt = "Topic: " . $prompt;
         }
 
         // Call OpenAI API.
         $url = 'https://api.openai.com/v1/chat/completions';
-        $data = [
+        $apidata = [
             'model' => $model,
             'messages' => [
-                ['role' => 'system', 'content' => $system_prompt],
-                ['role' => 'user', 'content' => $user_prompt]
+                ['role' => 'system', 'content' => $systemprompt],
+                ['role' => 'user', 'content' => $userprompt],
             ],
-            'temperature' => 0.7
+            'temperature' => 0.7,
         ];
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($apidata));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
-            'Authorization: Bearer ' . $apikey
+            'Authorization: Bearer ' . $apikey,
         ]);
         // Moodle proxy support if needed, simpler for now.
-        
+
         $response = curl_exec($ch);
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -124,9 +126,7 @@ class generate_content extends external_api {
         // Clean up markdown code blocks if present (common issue with LLMs returning JSON).
         if ($type === 'quiz') {
             $content = trim($content);
-            if (strpos($content, '```json') === 0) {
-                $content = str_replace(['```json', '```'], '', $content);
-            }
+            $content = str_replace([chr(96) . chr(96) . chr(96) . 'json', chr(96) . chr(96) . chr(96)], '', $content);
             // Validate JSON.
             $test = json_decode($content);
             if (!$test) {
@@ -136,7 +136,7 @@ class generate_content extends external_api {
 
         return [
             'success' => true,
-            'content' => $content
+            'content' => $content,
         ];
     }
 

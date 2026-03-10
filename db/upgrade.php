@@ -58,7 +58,7 @@ function xmldb_gear_upgrade(int $oldversion): bool {
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('gearid', XMLDB_KEY_FOREIGN, ['gearid'], 'gear', ['id']);
-        
+
         $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
         $table->add_index('gearid_timemodified', XMLDB_INDEX_NOTUNIQUE, ['gearid', 'timemodified']);
 

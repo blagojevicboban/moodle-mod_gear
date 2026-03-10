@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/mod/gear/backup/moodle2/backup_gear_stepslib.php'
  * Backup task for mod_gear.
  */
 class backup_gear_activity_task extends backup_activity_task {
-
     /**
      * Define the settings for this activity.
      */
@@ -51,7 +50,7 @@ class backup_gear_activity_task extends backup_activity_task {
      * @param string $content The content to encode
      * @return string The encoded content
      */
-    static public function encode_content_links($content) {
+    public static function encode_content_links($content) {
         global $CFG;
 
         $base = preg_quote($CFG->wwwroot, "/");

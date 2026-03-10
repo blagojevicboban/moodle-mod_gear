@@ -253,6 +253,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             
             // Leaderboard button (injected dynamically).
             this.setupLeaderboardButton();
+
+            // Initialize tooltips for control hints using native Bootstrap API.
+            // We avoid jQuery's .tooltip() plugin as it may not be available in Moodle 4.x AMD context.
+            try {
+                document.querySelectorAll('.gear-help-hint').forEach(function(el) {
+                    if (window.bootstrap && window.bootstrap.Tooltip) {
+                        new window.bootstrap.Tooltip(el, {trigger: 'click hover focus'});
+                    }
+                });
+            } catch (e) {
+                // Tooltip initialisation is non-critical; silently ignore failures.
+                window.console.warn('GEAR: tooltip init failed', e);
+            }
         }
 
         /**
