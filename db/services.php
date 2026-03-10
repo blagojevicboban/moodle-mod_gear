@@ -88,4 +88,11 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:view',
     ],
+    'mod_gear_save_model_transform' => [
+        'classname'     => 'mod_gear\external\save_model_transform',
+        'description'   => 'Save model transformation (position, rotation, scale)',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
 ];

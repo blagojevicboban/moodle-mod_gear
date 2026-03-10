@@ -73,9 +73,13 @@ class get_scene_data extends external_api {
         $jsmodels = [];
         foreach ($models as $model) {
             $jsmodels[] = [
+                'id' => (int)$model->id,
                 'url' => $model->url,
                 'name' => $model->name,
                 'format' => $model->format,
+                'position' => $model->position ?? '{"x":0,"y":0,"z":0}',
+                'rotation' => $model->rotation ?? '{"x":0,"y":0,"z":0}',
+                'scale' => (float)$model->scale,
             ];
         }
 
@@ -109,9 +113,13 @@ class get_scene_data extends external_api {
         return new external_single_structure([
             'models' => new external_multiple_structure(
                 new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Model ID'),
                     'url' => new external_value(PARAM_URL, 'Model URL'),
                     'name' => new external_value(PARAM_TEXT, 'Model name'),
                     'format' => new external_value(PARAM_TEXT, 'File format'),
+                    'position' => new external_value(PARAM_RAW, 'JSON position'),
+                    'rotation' => new external_value(PARAM_RAW, 'JSON rotation'),
+                    'scale' => new external_value(PARAM_FLOAT, 'Scale factor'),
                 ])
             ),
             'hotspots' => new external_multiple_structure(
