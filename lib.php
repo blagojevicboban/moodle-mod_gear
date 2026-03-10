@@ -181,7 +181,7 @@ function gear_sync_model_records(int $gearid, int $contextid): void {
 
         $filename = $file->get_filename();
         $filepath = $file->get_filepath();
-        $fullPath = ltrim($filepath . $filename, '/');
+        $fullpath = ltrim($filepath . $filename, '/');
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
         // Skip non-model entry points (textures, .bin files, etc.) from being independent models.
@@ -189,14 +189,14 @@ function gear_sync_model_records(int $gearid, int $contextid): void {
             continue;
         }
 
-        $processed[$fullPath] = true;
+        $processed[$fullpath] = true;
 
-        if (!isset($existing[$fullPath])) {
+        if (!isset($existing[$fullpath])) {
             // Add new model record.
             $record = new stdClass();
             $record->gearid = $gearid;
             $record->name = $filename;
-            $record->filepath = $fullPath;
+            $record->filepath = $fullpath;
             $record->filesize = $file->get_filesize();
             $record->format = $ext;
             $record->scale = 1.0;
