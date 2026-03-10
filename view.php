@@ -97,6 +97,7 @@ foreach ($hotspots as $hotspot) {
         'content' => $hotspot->content ?? '',
         'position' => json_decode($hotspot->position ?? '{"x":0,"y":0,"z":0}'),
         'icon' => $hotspot->icon ?? 'info',
+        'config' => $hotspot->config ?? '',
     ];
 }
 

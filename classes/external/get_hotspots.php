@@ -76,6 +76,7 @@ class get_hotspots extends external_api {
                 'content' => $hotspot->content ?? '',
                 'position' => $hotspot->position ?? '{"x":0,"y":0,"z":0}',
                 'icon' => $hotspot->icon ?? 'info',
+                'config' => $hotspot->config ?? '',
                 'sortorder' => $hotspot->sortorder,
             ];
         }
@@ -99,6 +100,7 @@ class get_hotspots extends external_api {
                     'content' => new external_value(PARAM_RAW, 'Hotspot content'),
                     'position' => new external_value(PARAM_RAW, 'JSON position'),
                     'icon' => new external_value(PARAM_TEXT, 'Icon name'),
+                    'config' => new external_value(PARAM_RAW, 'JSON config'),
                     'sortorder' => new external_value(PARAM_INT, 'Sort order'),
                 ])
             ),

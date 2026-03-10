@@ -1287,6 +1287,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                      Notification.alert('Error', 'Please provide at least 2 options');
                      return;
                 }
+            } else if (type === 'audio') {
+                var audioUrl = form.querySelector('#gear-hotspot-input-audiourl-' + this.cmid).value.trim();
+                config.audioUrl = audioUrl;
             }
 
             if (!title) {
