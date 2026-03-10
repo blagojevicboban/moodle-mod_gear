@@ -1,20 +1,23 @@
 phplint:
     ignore:
-        - node_modules
-        - vendor
+        - node_modules/
+        - vendor/
+        - flatted.php
 phpcs:
     ignore:
-        - node_modules
-        - vendor
+        - node_modules/
+        - vendor/
         - flatted.php
 phpmd:
     ignore:
-        - node_modules
-        - vendor
+        - node_modules/
+        - vendor/
+        - flatted.php
 phpdoc:
     ignore:
-        - node_modules
-        - vendor
+        - node_modules/
+        - vendor/
+        - flatted.php
 grunt:
     ignore:
         - node_modules
