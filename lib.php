@@ -201,6 +201,7 @@ function gear_sync_model_records(int $gearid, int $contextid): void {
 /**
  * Return grade for given user or all users.
  *
+ * @param stdClass $gear The gear instance
  * @param int $gearid id of gear
  * @param int $userid optional user id, 0 means all users
  * @return array array of grades, false if none

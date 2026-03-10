@@ -60,6 +60,7 @@ class save_hotspot extends external_api {
      * @param string $content Hotspot content
      * @param string $position JSON position
      * @param string $icon Icon name
+     * @param string $config JSON config
      * @return array
      */
     public static function execute(
