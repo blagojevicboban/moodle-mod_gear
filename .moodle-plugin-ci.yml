@@ -1,0 +1,24 @@
+phplint:
+    ignore:
+        - node_modules
+        - vendor
+phpcs:
+    ignore:
+        - node_modules
+        - vendor
+phpmd:
+    ignore:
+        - node_modules
+        - vendor
+phpdoc:
+    ignore:
+        - node_modules
+        - vendor
+grunt:
+    ignore:
+        - node_modules
+        - vendor
+phpunit:
+    ignore:
+        - node_modules
+        - vendor
