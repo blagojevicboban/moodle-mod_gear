@@ -420,3 +420,85 @@
     background: var(--primary-dark);
 }
 
+
+/* Hotspots Dropdown */
+.gear-hotspots-dropdown {
+    margin: 0 1rem;
+}
+
+.gear-hotspots-dropdown .gear-control-btn {
+    font-size: 0.9rem;
+    height: 40px;
+}
+
+.gear-hotspots-menu {
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 0.5rem;
+    min-width: 220px;
+    margin-top: 0.5rem;
+}
+
+.dropdown-item.gear-hotspot-nav-item {
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.dropdown-item.gear-hotspot-nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateX(4px);
+}
+
+.dropdown-item.gear-hotspot-nav-item i {
+    width: 16px;
+    opacity: 0.7;
+}
+
+.dropdown-item.gear-hotspot-nav-item.active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.dropdown-item.gear-hotspot-nav-item.active i {
+    opacity: 1;
+}
+
+@keyframes hotspot-blink {
+    0%, 100% {
+        opacity: 0.9;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(1.5);
+    }
+}
+
+.gear-hotspot-blinking {
+    animation: hotspot-blink 0.5s infinite ease-in-out !important;
+}
+
+@media (max-width: 991px) {
+    .gear-hotspots-dropdown {
+        order: -1;
+        width: 100%;
+        margin: 0 0 0.5rem 0;
+    }
+    .gear-hotspots-dropdown .gear-control-btn {
+        width: 100% !important;
+        justify-content: center;
+    }
+}

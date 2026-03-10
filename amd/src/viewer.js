@@ -710,6 +710,101 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.scene.add(sphere);
                 this.hotspotMeshes.push(sphere);
             }
+
+            this.renderHotspotsNav();
+        }
+
+        /**
+         * Render horizontal hotspots navigation (now a dropdown).
+         */
+        renderHotspotsNav() {
+            var container = document.getElementById('gear-hotspots-nav-' + this.cmid);
+            if (!container) return;
+
+            var menu = container.querySelector('.gear-hotspots-menu');
+            if (!menu) return;
+
+            menu.innerHTML = '';
+            
+            if (this.hotspotsData.length === 0) {
+                menu.innerHTML = '<span class="dropdown-item-text text-muted">No hotspots yet</span>';
+                return;
+            }
+
+            this.hotspotsData.forEach((hotspot) => {
+                var item = document.createElement('button');
+                item.className = 'dropdown-item gear-hotspot-nav-item';
+                item.type = 'button';
+                item.id = 'gear-hotspot-nav-item-' + hotspot.id;
+                
+                var icon = 'fa-dot-circle';
+                if (hotspot.type === 'quiz') icon = 'fa-question-circle';
+                if (hotspot.type === 'audio') icon = 'fa-volume-up';
+                
+                item.innerHTML = `<i class="fa ${icon} mr-2"></i> ${hotspot.title || 'Point'}`;
+                item.addEventListener('click', () => this.focusHotspot(hotspot.id));
+                menu.appendChild(item);
+            });
+        }
+
+        /**
+         * Focus camera on a specific hotspot.
+         * 
+         * @param {number} hotspotId
+         */
+        focusHotspot(hotspotId) {
+            var hotspotData = this.hotspotsData.find(h => h.id == hotspotId);
+            var mesh = this.hotspotMeshes.find(m => m.userData.id == hotspotId);
+            
+            if (!hotspotData || !mesh) return;
+
+            // Highlight in Nav.
+            document.querySelectorAll('.gear-hotspot-nav-item').forEach(el => el.classList.remove('active'));
+            var navItem = document.getElementById('gear-hotspot-nav-item-' + hotspotId);
+            if (navItem) {
+                navItem.classList.add('active');
+                navItem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
+
+            // Move Camera.
+            var targetPos = mesh.position.clone();
+            
+            // Calculate a nice camera position relative to hotspot.
+            // We want to look AT the hotspot from a short distance.
+            var offset = new THREE.Vector3(0, 0.5, 1); 
+            var newCamPos = targetPos.clone().add(offset);
+
+            // Simple transition (could use TWEEN if available, but OrbitControls target update is enough).
+            this.controls.target.copy(targetPos);
+            this.camera.position.copy(newCamPos);
+            this.controls.update();
+
+            // Blink effect on mesh.
+            this.stopBlinking();
+            this.activeBlinkMesh = mesh;
+            this.blinkInterval = setInterval(() => {
+                mesh.visible = !mesh.visible;
+            }, 300);
+            
+            // Stop blinking after 3 seconds.
+            setTimeout(() => this.stopBlinking(), 3000);
+
+            // Show popup.
+            this.showHotspotPopup(hotspotData);
+        }
+
+        /**
+         * Stop any active blinking.
+         */
+        stopBlinking() {
+            if (this.blinkInterval) {
+                clearInterval(this.blinkInterval);
+                this.blinkInterval = null;
+            }
+            if (this.activeBlinkMesh) {
+                this.activeBlinkMesh.visible = true;
+                this.activeBlinkMesh = null;
+            }
         }
 
         /**
@@ -799,6 +894,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 } else {
                     popup.querySelector('.gear-hotspot-popup-inner').appendChild(editBtn);
                 }
+            }
+
+            // Highlight in Nav.
+            document.querySelectorAll('.gear-hotspot-nav-item').forEach(el => el.classList.remove('active'));
+            var navItem = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
+            if (navItem) {
+                navItem.classList.add('active');
+                navItem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
             }
 
             // Show popup.
@@ -1054,6 +1157,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                             break;
                         }
                     }
+
+                    // Update data array.
+                    var dataIdx = this.hotspotsData.findIndex(h => h.id == hotspotId);
+                    if (dataIdx !== -1) {
+                        this.hotspotsData[dataIdx] = Object.assign(this.hotspotsData[dataIdx], {
+                            title: title,
+                            content: content,
+                            type: type,
+                            position: position,
+                            config: JSON.stringify(config)
+                        });
+                    }
                     
                     if (!updated) {
                             let sphere = new THREE.Mesh(geometry, material);
@@ -1070,19 +1185,25 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                             this.hotspotMeshes.push(sphere);
                         }
                 } else {
-                        let sphere = new THREE.Mesh(geometry, material);
-                        sphere.position.set(position.x, position.y, position.z);
-                        sphere.userData = {
+                        let sphereData = {
                             id: response.id,
                             title: title,
                             content: content,
                             type: type,
+                            position: position,
                             icon: (type === 'quiz') ? 'question' : 'info',
                             config: JSON.stringify(config)
                         };
+                        this.hotspotsData.push(sphereData);
+
+                        let sphere = new THREE.Mesh(geometry, material);
+                        sphere.position.set(position.x, position.y, position.z);
+                        sphere.userData = sphereData;
                         this.scene.add(sphere);
                         this.hotspotMeshes.push(sphere);
                 }
+
+                this.renderHotspotsNav();
 
                 // Close form.
                 form.classList.remove('active');

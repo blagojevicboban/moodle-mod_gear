@@ -85,6 +85,14 @@
                     <span class="gear-help-hint" tabindex="0" role="button" data-toggle="tooltip" data-placement="top" title="{{#str}}hotspothint_desc, mod_gear{{/str}}"><i class="fa fa-dot-circle" aria-hidden="true"></i> {{#str}}hotspothint, mod_gear{{/str}}</span>
                 </div>
             </div>
+            <div class="gear-hotspots-dropdown dropdown d-flex align-items-center" id="gear-hotspots-nav-{{cmid}}">
+                <button class="btn btn-outline-light dropdown-toggle gear-control-btn w-auto px-3" type="button" id="gear-hotspots-toggle-{{cmid}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa fa-map-marker-alt mr-2"></i> {{#str}}hotspots, mod_gear{{/str}}
+                </button>
+                <div class="dropdown-menu dropdown-menu-right gear-hotspots-menu" aria-labelledby="gear-hotspots-toggle-{{cmid}}">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
             <div class="gear-controls-right">
                 {{#ar_enabled}}
                 <button type="button" class="btn btn-primary gear-ar-btn" id="gear-ar-{{cmid}}">
