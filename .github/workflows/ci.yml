@@ -72,7 +72,7 @@ jobs:
         run: moodle-plugin-ci phpmd
 
       - name: Remove third-party PHP files
-        run: find plugin/node_modules -name "*.php" -type f -delete || true
+        run: find . -path "*/node_modules/*" -name "*.php" -type f -delete || true
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() }}
