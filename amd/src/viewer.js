@@ -286,6 +286,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
             this.setupHotspotsButton(overlay);
             this.setupLeaderboardButton(overlay);
+            this.setupHelpButton(overlay);
+        }
+
+        /**
+         * Setup help button floating on scene.
+         * 
+         * @param {HTMLElement} parent
+         */
+        setupHelpButton(parent) {
+            var btn = document.createElement('button');
+            btn.className = 'btn btn-secondary gear-control-btn gear-overlay-btn';
+            btn.innerHTML = '<i class="fa fa-question"></i>';
+            btn.title = 'Help';
+            btn.addEventListener('click', () => this.showHelp());
+            parent.appendChild(btn);
         }
 
         /**
@@ -338,6 +353,94 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             btn.title = 'Leaderboard';
             btn.addEventListener('click', () => this.showLeaderboard());
             parent.appendChild(btn);
+        }
+
+        /**
+         * Show Help modal.
+         */
+        showHelp() {
+            var modal = document.getElementById('gear-help-modal-' + this.cmid);
+            if (!modal) {
+                modal = this.createHelpModal();
+            }
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+        }
+
+        /**
+         * Create Help modal.
+         * @returns {HTMLElement}
+         */
+        createHelpModal() {
+            var modal = document.createElement('div');
+            modal.id = 'gear-help-modal-' + this.cmid;
+            modal.className = 'gear-modal';
+            
+            // Basic Styles (matches leaderboard style but we can move to CSS).
+            modal.style.position = 'absolute';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.background = 'rgba(0,0,0,0.85)';
+            modal.style.display = 'none';
+            modal.style.zIndex = '2000';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.backdropFilter = 'blur(5px)';
+            
+            // Try to get strings from page if possible, or use defaults.
+            var strings = {
+                help: 'Instructions',
+                rotate: 'Rotate: Left Click + Drag',
+                pan: 'Pan: Right Click + Drag',
+                zoom: 'Zoom: Scroll Mouse Wheel',
+                hotspots: 'Hotspots: Click on spheres to interact'
+            };
+
+            modal.innerHTML = `
+                <div class="gear-modal-dialog" style="background:#1a1a2e; color:white; padding:30px; border-radius:15px; max-width:400px; width:90%; position:relative; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                    <button class="close" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+                    <h3 style="margin-top:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; display:flex; align-items:center;">
+                        <i class="fa fa-question-circle mr-3 text-info"></i> ${strings.help}
+                    </h3>
+                    <div style="display:flex; flex-direction:column; gap:20px; font-size:0.95rem;">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                                <i class="fa fa-mouse-pointer text-info"></i>
+                            </div>
+                            <span>${strings.rotate}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                                <i class="fa fa-arrows-alt text-info"></i>
+                            </div>
+                            <span>${strings.pan}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                                <i class="fa fa-search-plus text-info"></i>
+                            </div>
+                            <span>${strings.zoom}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                                <i class="fa fa-dot-circle text-info"></i>
+                            </div>
+                            <span>${strings.hotspots}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Close logic.
+            modal.querySelector('.close').addEventListener('click', () => {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            });
+            
+            this.container.appendChild(modal);
+            return modal;
         }
 
 
