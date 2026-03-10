@@ -1,0 +1,3 @@
+# Third-party vendor directories - never lint these.
+node_modules/
+vendor/
