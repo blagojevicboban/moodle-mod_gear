@@ -251,8 +251,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.setupVRButton(vrBtn);
             }
             
-            // Leaderboard button (injected dynamically).
-            this.setupLeaderboardButton();
+            // Leaderboard button.
+            var leaderBtn = document.getElementById('gear-leaderboard-' + this.cmid);
+            if (leaderBtn) {
+                leaderBtn.addEventListener('click', () => this.showLeaderboard());
+            }
 
             // Initialize tooltips for control hints using native Bootstrap API.
             // We avoid jQuery's .tooltip() plugin as it may not be available in Moodle 4.x AMD context.
@@ -268,24 +271,6 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             }
         }
 
-        /**
-         * Setup Leaderboard button and modal.
-         */
-        setupLeaderboardButton() {
-            var btn = document.createElement('button');
-            btn.className = 'btn btn-secondary gear-control-btn gear-leaderboard-btn';
-            btn.title = 'Leaderboard';
-            btn.innerHTML = '<i class="fa fa-trophy"></i>';
-            btn.style.position = 'absolute';
-            btn.style.top = '10px';
-            btn.style.right = '60px'; // Next to fullscreen button usually
-            btn.style.zIndex = '1000';
-            
-            btn.addEventListener('click', () => this.showLeaderboard());
-            
-            // Append to container.
-            this.container.appendChild(btn);
-        }
 
         /**
          * Show Leaderboard modal.
