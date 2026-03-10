@@ -103,7 +103,6 @@ class save_hotspot extends external_api {
         $hotspot->title = $params['title'];
         $hotspot->content = $params['content'];
         $hotspot->position = $params['position'];
-        $hotspot->position = $params['position'];
         $hotspot->icon = $params['icon'];
         $hotspot->config = $params['config'];
 

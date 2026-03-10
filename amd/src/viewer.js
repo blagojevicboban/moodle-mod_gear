@@ -792,8 +792,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             popup.classList.add('active');
 
             // Track interaction.
-            if (typeof this.trackInteraction === 'function') {
-                this.trackInteraction('hotspot_click', {hotspotId: hotspot.id, title: hotspot.title});
+            if (typeof this.trackEvent === 'function') {
+                this.trackEvent('hotspot_click', {hotspotId: hotspot.id, title: hotspot.title});
             }
         }
 

@@ -282,10 +282,11 @@ function gear_update_grades($gear, $userid = 0, $nullifnone = true) {
  * @return int 0 if ok, error code otherwise
  */
 function gear_grade_item_update($gear, $grades = null) {
-    global $CFG;
+    global $CFG, $DB;
     require_once($CFG->libdir.'/gradelib.php');
 
-    $params = array('itemname' => $gear->name, 'idnumber' => $gear->cmidnumber);
+    $cm = get_coursemodule_from_instance('gear', $gear->id, $gear->course, false, MUST_EXIST);
+    $params = array('itemname' => $gear->name, 'idnumber' => $cm->idnumber);
 
     if (isset($gear->grade) && $gear->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;

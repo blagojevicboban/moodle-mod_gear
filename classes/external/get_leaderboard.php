@@ -72,7 +72,7 @@ class get_leaderboard extends external_api {
         // the score is inside the JSON data.
         // Note: For high scale, this should be cached or stored in a dedicated table.
         
-        $sql = "SELECT t.userid, u.firstname, u.lastname, t.data
+        $sql = "SELECT t.id, t.userid, u.firstname, u.lastname, t.data
                   FROM {gear_tracking} t
                   JOIN {user} u ON u.id = t.userid
                  WHERE t.gearid = :gearid

@@ -14,7 +14,8 @@
 | 🎮 **3D Viewer** | Display glTF/GLB models with orbit controls |
 | 📱 **AR Mode** | View 3D content in augmented reality |
 | 🥽 **VR Mode** | Immersive VR experience with headsets |
-| 📍 **Hotspots** | Interactive information points |
+| 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio) |
+| ✨ **AI Assist** | Generate hotspot content and quizzes using AI |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
 | 🏆 **Leaderboards** | Gamification with top score display |
@@ -27,11 +28,12 @@
 
 ## 📋 Requirements
 
-- **Moodle**: 4.4 - 5.1
+- **Moodle**: 4.4+
 - **PHP**: 8.1+
 - **Database**: MySQL, MariaDB, or PostgreSQL
 - **Browser**: Chrome, Firefox, Safari, Edge (WebGL support)
 - **AR/VR**: WebXR-compatible browser
+- **OpenAI API Key**: Required for AI Assistant features
 
 ## 🚀 Installation
 
@@ -50,17 +52,35 @@ php admin/cli/upgrade.php
 ## 📖 Usage
 
 ### For Teachers
-1. Enable editing in your course
-2. Add activity → GEAR
-3. Configure name and settings
-4. Upload 3D models (glTF/GLB)
-5. Add interactive hotspots
+
+1.  **Activity Setup**:
+    -   Add activity → **GEAR**.
+    -   Upload a **3D model** (.glb recommended).
+2.  **Interactive Scene**:
+    -   Open the activity and click the **Edit** (pencil) icon.
+    -   **Shift + Click** anywhere on the 3D model to add a hotspot.
+3.  **Hotspot Types**:
+    -   **Info**: Simple text description.
+    -   **Quiz**: Multiple choice questions with automated grading.
+    -   **Audio**: Positional audio (upload .mp3/wav URL).
+4.  **✨ AI Assistant**:
+    -   In the Hotspot editor, enter a short prompt and click **AI Assist**.
+    -   For **Quizzes**, the AI will automatically generate options and select the correct answer.
 
 ### For Students
-1. Open the GEAR activity
-2. Interact with 3D model (rotate, zoom)
-3. Click hotspots for information
-4. Use AR/VR buttons on supported devices
+
+1.  **Exploration**: Rotate, zoom, and move around the 3D model.
+2.  **Interaction**: Click hotspots to view info, take quizzes, or listen to audio guides.
+3.  **Collaboration**: See other students in the same scene as 3D avatars.
+4.  **Spatial Audio**: Move closer to audio hotspots to hear them louder. Use headphones for the best experience.
+
+## ⚙️ Configuration
+
+To use the **AI Assistant**, you must configure the OpenAI API:
+1. Go to **Site Administration → Plugins → Activity Modules → GEAR**.
+2. Select **OpenAI** as the AI Provider.
+3. Enter your **OpenAI API Key**.
+4. (Optional) Choose the model (e.g., `gpt-4o-mini`).
 
 ## 🎨 Supported Formats
 
@@ -73,21 +93,16 @@ php admin/cli/upgrade.php
 
 ```bash
 # Clone repository
-cd /path/to/moodle/mod
 git clone https://github.com/blagojevicboban/moodle-mod_gear.git gear
 
-# Run tests
-vendor/bin/phpunit --testsuite mod_gear_testsuite
-
-# Check code style
-vendor/bin/phpcs --standard=moodle mod/gear
-
-# Build AMD modules
+# Install dependencies
 npm install
+
+# Build & Minify JS
 npx grunt amd
 
-# Watch for changes
-npx grunt watch
+# Run PHP tests
+vendor/bin/phpunit --testsuite mod_gear_testsuite
 ```
 
 ## 📁 Structure

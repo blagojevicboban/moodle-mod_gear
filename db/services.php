@@ -73,4 +73,11 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',
     ],
+    'mod_gear_track_event' => [
+        'classname'     => 'mod_gear\external\track_event',
+        'description'   => 'Track user event',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:view',
+    ],
 ];

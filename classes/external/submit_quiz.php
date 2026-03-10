@@ -22,6 +22,8 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
 
+require_once(__DIR__ . '/../../lib.php');
+
 /**
  * Submit a quiz answer.
  *
