@@ -21,6 +21,19 @@ module.exports = function (grunt) {
                 }
             }
         },
+        stylelint: {
+            css: {
+                src: ['styles.css']
+            }
+        },
+        eslint: {
+            options: {
+                quiet: !grunt.option('show-lint-warnings')
+            },
+            amd: {
+                src: ['amd/src/**/*.js']
+            }
+        },
         watch: {
             js: {
                 files: ['amd/src/*.js'],
