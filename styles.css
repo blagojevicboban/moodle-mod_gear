@@ -23,9 +23,11 @@
 /* Viewer */
 .gear-viewer-container {
     border-radius: 12px;
-    overflow: hidden;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    /* Allow dropdowns/dropups to overflow the container */
+    position: relative;
+    overflow: visible;
 }
 
 .gear-viewer {
@@ -33,6 +35,10 @@
     width: 100%;
     aspect-ratio: 16 / 9;
     min-height: 400px;
+    /* Ensure border-radius is respected by canvas while container is visible */
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    overflow: hidden;
 }
 
 .gear-canvas {
@@ -70,6 +76,16 @@
     padding: 1rem;
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
+    /* Raise above other content to ensure dropup visibility */
+    position: relative;
+    z-index: 1050; /* Higher than Three.js canvas and other overlays */
+}
+
+/* Force visible when toggled via JS */
+.dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .gear-controls-left,
@@ -439,7 +455,27 @@
     border-radius: 12px;
     padding: 0.5rem;
     min-width: 220px;
-    margin-top: 0.5rem;
+    margin-top: 0 !important;
+    margin-bottom: 0.5rem !important;
+    z-index: 2000;
+}
+
+.gear-delete-hotspot {
+    border-color: rgba(220, 53, 69, 0.6) !important;
+    color: #ff4d4d !important;
+    background: transparent !important;
+}
+
+.gear-delete-hotspot:hover {
+    background: #dc3545 !important;
+    color: #fff !important;
+}
+
+.gear-edit-hotspot {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
 }
 
 .dropdown-item.gear-hotspot-nav-item {

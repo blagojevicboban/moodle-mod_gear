@@ -257,6 +257,32 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 leaderBtn.addEventListener('click', () => this.showLeaderboard());
             }
 
+            // Manual dropdown toggle for hotspots (sometimes data-toggle reflects late in Moodle AMD).
+            var hsToggle = document.getElementById('gear-hotspots-toggle-' + this.cmid);
+            if (hsToggle) {
+                hsToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    var dropdown = hsToggle.closest('.dropdown, .dropup');
+                    if (dropdown) {
+                        dropdown.classList.toggle('show');
+                        var menu = dropdown.querySelector('.dropdown-menu');
+                        if (menu) menu.classList.toggle('show');
+                    }
+                });
+                
+                // Close when clicking outside.
+                document.addEventListener('click', (e) => {
+                    if (!hsToggle.contains(e.target)) {
+                        var dropdown = hsToggle.closest('.dropdown, .dropup');
+                        if (dropdown) {
+                            dropdown.classList.remove('show');
+                            var menu = dropdown.querySelector('.dropdown-menu');
+                            if (menu) menu.classList.remove('show');
+                        }
+                    }
+                });
+            }
+
             // Initialize tooltips for control hints using native Bootstrap API.
             // We avoid jQuery's .tooltip() plugin as it may not be available in Moodle 4.x AMD context.
             try {
@@ -700,6 +726,39 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         }
 
         /**
+         * Delete a hotspot.
+         * 
+         * @param {number} id
+         */
+        deleteHotspot(id) {
+            Ajax.call([{
+                methodname: 'mod_gear_delete_hotspot',
+                args: { id: id }
+            }])[0].then(() => {
+                // Remove from data array.
+                this.hotspotsData = this.hotspotsData.filter(h => h.id != id);
+                
+                // Remove from scene.
+                var meshIdx = this.hotspotMeshes.findIndex(m => m.userData.id == id);
+                if (meshIdx !== -1) {
+                    var mesh = this.hotspotMeshes[meshIdx];
+                    this.scene.remove(mesh);
+                    if (mesh.geometry) mesh.geometry.dispose();
+                    if (mesh.material) mesh.material.dispose();
+                    this.hotspotMeshes.splice(meshIdx, 1);
+                }
+
+                // Refresh Nav.
+                this.renderHotspotsNav();
+
+                Notification.addNotification({
+                    message: 'Hotspot deleted',
+                    type: 'success'
+                });
+            }).catch(Notification.exception);
+        }
+
+        /**
          * Render horizontal hotspots navigation (now a dropdown).
          */
         renderHotspotsNav() {
@@ -858,26 +917,41 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 content.appendChild(audioControls);
             }
 
-            // If editing is allowed for managers, add an Edit button.
+            // If editing is allowed for managers, add Edit and Delete buttons.
             if (this.canManage && this.hotspotsEditable) {
+                var btnGroup = document.createElement('div');
+                btnGroup.className = 'btn-group ml-2';
+
+                // Edit button.
                 var editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-secondary gear-edit-hotspot';
-                editBtn.textContent = 'Edit';
-                editBtn.style.marginLeft = '0.5rem';
-                // When clicked, open the form populated with hotspot data.
+                editBtn.className = 'btn btn-sm btn-outline-secondary gear-edit-hotspot';
+                editBtn.innerHTML = '<i class="fa fa-pencil-alt"></i> Edit';
                 editBtn.addEventListener('click', () => {
-                    // Use the hotspot position to open the form in edit mode.
                     var pos = hotspot.position || {x: 0, y: 0, z: 0};
                     this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
                     popup.classList.remove('active');
                 });
+                btnGroup.appendChild(editBtn);
 
-                // Append edit button next to title if possible.
+                // Delete button.
+                var delBtn = document.createElement('button');
+                delBtn.className = 'btn btn-sm btn-outline-danger gear-delete-hotspot';
+                delBtn.innerHTML = '<i class="fa fa-trash"></i>';
+                delBtn.title = 'Delete';
+                delBtn.addEventListener('click', () => {
+                    if (window.confirm('Are you sure you want to delete this hotspot?')) {
+                        this.deleteHotspot(hotspot.id);
+                        popup.classList.remove('active');
+                    }
+                });
+                btnGroup.appendChild(delBtn);
+
+                // Append buttons next to title if possible.
                 var titleEl = popup.querySelector('.gear-hotspot-title');
                 if (titleEl) {
-                    titleEl.appendChild(editBtn);
+                    titleEl.appendChild(btnGroup);
                 } else {
-                    popup.querySelector('.gear-hotspot-popup-inner').appendChild(editBtn);
+                    popup.querySelector('.gear-hotspot-popup-inner').appendChild(btnGroup);
                 }
             }
 
