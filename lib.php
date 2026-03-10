@@ -93,7 +93,7 @@ function gear_add_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): in
             'mod_gear',
             'model',
             0,
-            ['subdirs' => 0, 'maxfiles' => 10]
+            ['subdirs' => 1, 'maxfiles' => 20]
         );
 
         // Create gear_models records for each uploaded file.
@@ -144,7 +144,7 @@ function gear_update_instance(stdClass $gear, ?mod_gear_mod_form $mform = null):
             'mod_gear',
             'model',
             0,
-            ['subdirs' => 0, 'maxfiles' => 10]
+            ['subdirs' => 1, 'maxfiles' => 20]
         );
 
         // Sync gear_models records.
@@ -172,18 +172,33 @@ function gear_sync_model_records(int $gearid, int $contextid): void {
     $existing = $DB->get_records('gear_models', ['gearid' => $gearid], '', 'filepath, id');
 
     $processed = [];
-    foreach ($files as $file) {
-        $filepath = $file->get_filename();
-        $processed[$filepath] = true;
+    $mainformats = ['glb', 'gltf', 'obj', 'fbx'];
 
-        if (!isset($existing[$filepath])) {
+    foreach ($files as $file) {
+        if ($file->is_directory()) {
+            continue;
+        }
+
+        $filename = $file->get_filename();
+        $filepath = $file->get_filepath();
+        $fullPath = ltrim($filepath . $filename, '/');
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        // Skip non-model entry points (textures, .bin files, etc.) from being independent models.
+        if (!in_array($ext, $mainformats)) {
+            continue;
+        }
+
+        $processed[$fullPath] = true;
+
+        if (!isset($existing[$fullPath])) {
             // Add new model record.
             $record = new stdClass();
             $record->gearid = $gearid;
-            $record->name = pathinfo($filepath, PATHINFO_FILENAME);
-            $record->filepath = $filepath;
+            $record->name = $filename;
+            $record->filepath = $fullPath;
             $record->filesize = $file->get_filesize();
-            $record->format = pathinfo($filepath, PATHINFO_EXTENSION);
+            $record->format = $ext;
             $record->scale = 1.0;
             $record->timecreated = time();
             $DB->insert_record('gear_models', $record);
@@ -286,8 +301,25 @@ function gear_grade_item_update($gear, $grades = null) {
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
 
-    $cm = get_coursemodule_from_instance('gear', $gear->id, $gear->course, false, MUST_EXIST);
-    $params = ['itemname' => $gear->name, 'idnumber' => $cm->idnumber];
+    $params = ['itemname' => $gear->name];
+
+    // Get idnumber. Priority: $gear object (form data) > direct DB lookup.
+    if (isset($gear->idnumber)) {
+        $params['idnumber'] = $gear->idnumber;
+    } else {
+        $idnumber = '';
+        if (!empty($gear->coursemodule)) {
+            // Creating new instance: fetch directly from course_modules by ID.
+            $idnumber = $DB->get_field('course_modules', 'idnumber', ['id' => $gear->coursemodule]);
+        } else {
+            // Existing instance: fetch using instance ID.
+            $modid = $DB->get_field('modules', 'id', ['name' => 'gear']);
+            if ($modid) {
+                $idnumber = $DB->get_field('course_modules', 'idnumber', ['module' => $modid, 'instance' => $gear->id]);
+            }
+        }
+        $params['idnumber'] = (string)$idnumber;
+    }
 
     if (isset($gear->grade) && $gear->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
@@ -395,13 +427,21 @@ function gear_get_models(int $gearid, int $contextid): array {
     $result = [];
 
     foreach ($models as $model) {
+        // Explode path to handle subdirs in make_pluginfile_url.
+        $parts = explode('/', $model->filepath);
+        $filename = array_pop($parts);
+        $filepath = '/' . implode('/', $parts);
+        if (strlen($filepath) > 1) {
+            $filepath .= '/';
+        }
+
         $url = moodle_url::make_pluginfile_url(
             $contextid,
             'mod_gear',
             'model',
             0,
-            '/',
-            $model->filepath
+            $filepath,
+            $filename
         );
         $model->url = $url->out();
         $result[] = $model;

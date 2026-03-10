@@ -68,10 +68,10 @@ class mod_gear_mod_form extends moodleform_mod {
             get_string('modelfiles', 'gear'),
             null,
             [
-                'subdirs' => 0,
+                'subdirs' => 1,
                 'maxbytes' => $maxbytes,
                 'maxfiles' => 10,
-                'accepted_types' => ['.gltf', '.glb', '.obj', '.fbx'],
+                'accepted_types' => '*',
             ]
         );
         $mform->addHelpButton('modelfiles', 'modelfiles', 'gear');
