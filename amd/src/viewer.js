@@ -66,6 +66,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.raycaster = null;
             this.mouse = new THREE.Vector2();
             this.audioListener = null;
+            this.modelContainer = new THREE.Group();
             this.movingHotspotId = null; // Track hotspot being moved.
 
             this.init();
@@ -142,6 +143,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.renderer.setPixelRatio(window.devicePixelRatio);
             this.renderer.outputEncoding = THREE.sRGBEncoding;
             this.renderer.xr.enabled = true;
+
+            // Create model container and add to scene.
+            this.scene.add(this.modelContainer);
 
             // Audio Listener.
             this.audioListener = new THREE.AudioListener();
@@ -605,7 +609,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         // Apply default scale.
                         this.model.scale.setScalar(1);
 
-                        this.scene.add(this.model);
+                        this.modelContainer.add(this.model);
 
                         // Center camera on model.
                         this.centerCameraOnModel(this.model);
@@ -637,7 +641,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 roughness: 0.4
             });
             this.model = new THREE.Mesh(geometry, material);
-            this.scene.add(this.model);
+            this.modelContainer.add(this.model);
         }
 
         /**
@@ -665,8 +669,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          */
         animate() {
             this.renderer.setAnimationLoop(() => {
-                if (this.isAutoRotating && this.model) {
-                    this.model.rotation.y += 0.005;
+                if (this.isAutoRotating) {
+                    this.modelContainer.rotation.y += 0.005;
                 }
 
                 this.controls.update();
@@ -798,7 +802,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 if (this.movingHotspotId !== null && this.canManage) {
                     var moveIntersects = this.raycaster.intersectObject(this.model, true);
                     if (moveIntersects.length > 0) {
-                        this.updateHotspotPosition(this.movingHotspotId, moveIntersects[0].point);
+                        var worldPoint = moveIntersects[0].point;
+                        var localPoint = this.modelContainer.worldToLocal(worldPoint.clone());
+                        this.updateHotspotPosition(this.movingHotspotId, localPoint);
                         return;
                     }
                 }
@@ -807,8 +813,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 if (event.shiftKey && this.canManage && this.model && this.hotspotsEnabled) {
                     var modelIntersects = this.raycaster.intersectObject(this.model, true);
                     if (modelIntersects.length > 0) {
-                        var point = modelIntersects[0].point;
-                        this.showAddHotspotForm(point);
+                        var worldPoint = modelIntersects[0].point;
+                        var localPoint = this.modelContainer.worldToLocal(worldPoint.clone());
+                        this.showAddHotspotForm(localPoint);
                         return;
                     }
                 }
@@ -917,7 +924,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     }
                 }
 
-                this.scene.add(sphere);
+                this.modelContainer.add(sphere);
                 this.hotspotMeshes.push(sphere);
             }
 
@@ -941,7 +948,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 var meshIdx = this.hotspotMeshes.findIndex(m => m.userData.id == id);
                 if (meshIdx !== -1) {
                     var mesh = this.hotspotMeshes[meshIdx];
-                    this.scene.remove(mesh);
+                    this.modelContainer.remove(mesh);
                     if (mesh.geometry) mesh.geometry.dispose();
                     if (mesh.material) mesh.material.dispose();
                     this.hotspotMeshes.splice(meshIdx, 1);
@@ -1016,7 +1023,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             }
 
             // Move Camera.
-            var targetPos = mesh.position.clone();
+            var targetPos = new THREE.Vector3();
+            mesh.getWorldPosition(targetPos);
             
             // Calculate a nice camera position relative to hotspot.
             // We want to look AT the hotspot from a short distance.
@@ -1466,7 +1474,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                                 icon: (type === 'quiz') ? 'question' : 'info',
                                 config: JSON.stringify(config)
                             };
-                            this.scene.add(sphere);
+                            this.modelContainer.add(sphere);
                             this.hotspotMeshes.push(sphere);
                         }
                 } else {
@@ -1484,7 +1492,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         let sphere = new THREE.Mesh(geometry, material);
                         sphere.position.set(position.x, position.y, position.z);
                         sphere.userData = sphereData;
-                        this.scene.add(sphere);
+                        this.modelContainer.add(sphere);
                         this.hotspotMeshes.push(sphere);
                 }
 
