@@ -973,7 +973,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 // Edit button.
                 var editBtn = document.createElement('button');
                 editBtn.className = 'btn btn-sm btn-outline-secondary gear-edit-hotspot';
-                editBtn.innerHTML = '<i class="fa fa-pencil-alt"></i> Edit';
+                editBtn.innerHTML = '<i class="fa fa-pencil-alt"></i>';
+                editBtn.title = 'Edit';
                 editBtn.addEventListener('click', () => {
                     var pos = hotspot.position || {x: 0, y: 0, z: 0};
                     this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
