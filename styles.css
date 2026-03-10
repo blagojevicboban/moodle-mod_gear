@@ -437,14 +437,45 @@
 }
 
 
-/* Hotspots Dropdown */
-.gear-hotspots-dropdown {
-    margin: 0 1rem;
+/* Scene Overlay Controls (Floating on Scene top-right) */
+.gear-scene-overlay {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1100;
 }
 
-.gear-hotspots-dropdown .gear-control-btn {
-    font-size: 0.9rem;
-    height: 40px;
+.gear-overlay-btn {
+    background: rgba(0, 0, 0, 0.45) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.gear-overlay-btn:hover {
+    background: rgba(0, 0, 0, 0.6) !important;
+    transform: scale(1.1);
+    border-color: var(--primary) !important;
+}
+
+.gear-overlay-btn::after {
+    display: none !important; /* Remove bootstrap arrow */
+}
+
+/* Hotspots Dropdown */
+.gear-hotspots-dropdown {
+    position: relative;
 }
 
 .gear-hotspots-menu {
@@ -455,8 +486,9 @@
     border-radius: 12px;
     padding: 0.5rem;
     min-width: 220px;
-    margin-top: 0 !important;
-    margin-bottom: 0.5rem !important;
+    margin-top: 5px !important;
+    right: 0 !important; /* Dynamic in JS handles left usually, but we force right alignment */
+    left: auto !important;
     z-index: 2000;
 }
 

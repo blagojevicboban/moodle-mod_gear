@@ -257,31 +257,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 leaderBtn.addEventListener('click', () => this.showLeaderboard());
             }
 
-            // Manual dropdown toggle for hotspots (sometimes data-toggle reflects late in Moodle AMD).
-            var hsToggle = document.getElementById('gear-hotspots-toggle-' + this.cmid);
-            if (hsToggle) {
-                hsToggle.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    var dropdown = hsToggle.closest('.dropdown, .dropup');
-                    if (dropdown) {
-                        dropdown.classList.toggle('show');
-                        var menu = dropdown.querySelector('.dropdown-menu');
-                        if (menu) menu.classList.toggle('show');
-                    }
-                });
-                
-                // Close when clicking outside.
-                document.addEventListener('click', (e) => {
-                    if (!hsToggle.contains(e.target)) {
-                        var dropdown = hsToggle.closest('.dropdown, .dropup');
-                        if (dropdown) {
-                            dropdown.classList.remove('show');
-                            var menu = dropdown.querySelector('.dropdown-menu');
-                            if (menu) menu.classList.remove('show');
-                        }
-                    }
-                });
-            }
+            // Overlay controls (Floating on scene).
+            this.setupOverlayControls();
 
             // Initialize tooltips for control hints using native Bootstrap API.
             // We avoid jQuery's .tooltip() plugin as it may not be available in Moodle 4.x AMD context.
@@ -295,6 +272,71 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 // Tooltip initialisation is non-critical; silently ignore failures.
                 window.console.warn('GEAR: tooltip init failed', e);
             }
+        }
+
+        /**
+         * Setup overlay controls (Hotspots & Leaderboard floating on scene).
+         */
+        setupOverlayControls() {
+            var overlay = document.createElement('div');
+            overlay.className = 'gear-scene-overlay';
+            overlay.id = 'gear-scene-overlay-' + this.cmid;
+            this.container.appendChild(overlay);
+
+            this.setupHotspotsButton(overlay);
+            this.setupLeaderboardButton(overlay);
+        }
+
+        /**
+         * Setup hotspots dropdown floating on scene.
+         * 
+         * @param {HTMLElement} parent
+         */
+        setupHotspotsButton(parent) {
+            var container = document.createElement('div');
+            container.className = 'gear-hotspots-dropdown dropdown';
+            container.id = 'gear-hotspots-nav-' + this.cmid;
+            
+            container.innerHTML = `
+                <button class="btn btn-secondary gear-control-btn gear-overlay-btn dropdown-toggle" type="button" 
+                        id="gear-hotspots-toggle-${this.cmid}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa fa-map-marker-alt"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right gear-hotspots-menu" aria-labelledby="gear-hotspots-toggle-${this.cmid}">
+                    <!-- Dynamically populated -->
+                </div>
+            `;
+
+            parent.appendChild(container);
+
+            var toggle = container.querySelector('.dropdown-toggle');
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                container.classList.toggle('show');
+                container.querySelector('.dropdown-menu').classList.toggle('show');
+            });
+
+            // Close when clicking outside.
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    container.classList.remove('show');
+                    container.querySelector('.dropdown-menu').classList.remove('show');
+                }
+            });
+        }
+
+        /**
+         * Setup leaderboard button floating on scene.
+         * 
+         * @param {HTMLElement} parent
+         */
+        setupLeaderboardButton(parent) {
+            var btn = document.createElement('button');
+            btn.className = 'btn btn-secondary gear-control-btn gear-overlay-btn';
+            btn.innerHTML = '<i class="fa fa-trophy"></i>';
+            btn.title = 'Leaderboard';
+            btn.addEventListener('click', () => this.showLeaderboard());
+            parent.appendChild(btn);
         }
 
 
@@ -759,13 +801,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         }
 
         /**
-         * Render horizontal hotspots navigation (now a dropdown).
+         * Render hotspot list in the floating dropdown.
          */
         renderHotspotsNav() {
-            var container = document.getElementById('gear-hotspots-nav-' + this.cmid);
-            if (!container) return;
-
-            var menu = container.querySelector('.gear-hotspots-menu');
+            var menu = this.container.querySelector('.gear-hotspots-menu');
             if (!menu) return;
 
             menu.innerHTML = '';
@@ -786,7 +825,16 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 if (hotspot.type === 'audio') icon = 'fa-volume-up';
                 
                 item.innerHTML = `<i class="fa ${icon} mr-2"></i> ${hotspot.title || 'Point'}`;
-                item.addEventListener('click', () => this.focusHotspot(hotspot.id));
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.focusHotspot(hotspot.id);
+                    // Close dropdown after selection.
+                    var dropdown = item.closest('.dropdown');
+                    if (dropdown) {
+                        dropdown.classList.remove('show');
+                        dropdown.querySelector('.dropdown-menu').classList.remove('show');
+                    }
+                });
                 menu.appendChild(item);
             });
         }
