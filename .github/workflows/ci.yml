@@ -64,20 +64,20 @@ jobs:
 
       - name: PHP Lint
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phplint
+        run: moodle-plugin-ci phplint --ignore=node_modules,vendor
 
       - name: PHP Mess Detector
         continue-on-error: true
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpmd
+        run: moodle-plugin-ci phpmd --ignore=node_modules,vendor
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpcs --max-warnings 0
+        run: moodle-plugin-ci phpcs --max-warnings 0 --ignore=node_modules,vendor
 
       - name: Moodle PHPDoc Checker
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpdoc --max-warnings 0
+        run: moodle-plugin-ci phpdoc --max-warnings 0 --ignore=node_modules,vendor
 
       - name: Validating
         if: ${{ !cancelled() }}
