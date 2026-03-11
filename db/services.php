@@ -95,4 +95,11 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',
     ],
+    'mod_gear_save_scene_config' => [
+        'classname'     => 'mod_gear\external\save_scene_config',
+        'description'   => 'Save scene configuration (currently just camera settings)',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
 ];

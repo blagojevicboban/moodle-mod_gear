@@ -168,7 +168,7 @@ class mod_gear_mod_form extends moodleform_mod {
                 'mod_gear',
                 'model',
                 0,
-                ['subdirs' => 0, 'maxfiles' => 10]
+                ['subdirs' => 1, 'maxfiles' => 20]
             );
             $defaultvalues['modelfiles'] = $draftitemid;
         }

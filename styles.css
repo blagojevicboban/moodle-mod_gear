@@ -32,7 +32,7 @@
 }
 
 .gear-viewer {
-    position: relative;
+    position: relative !important;
     width: 100%;
     aspect-ratio: 16 / 9;
     min-height: 400px;
@@ -441,12 +441,12 @@
 /* Scene Overlay Controls (Floating on Scene top-right) */
 .gear-scene-overlay {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 20px;
+    right: 20px;
     display: flex;
     flex-direction: row;
     gap: 12px;
-    z-index: 1100;
+    z-index: 100; /* Stay below Moodle navigation (1000+) */
 }
 
 .gear-overlay-btn {
@@ -570,4 +570,43 @@
         width: 100% !important;
         justify-content: center;
     }
+}
+
+.gear-control-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #fff;
+    margin-left: 5px;
+}
+
+.gear-hotspot-scale-slider {
+    width: 80px;
+    cursor: pointer;
+}
+
+.gear-color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #fff;
+    cursor: pointer;
+}
+
+.gear-hotspot-color-picker {
+    padding: 0;
+    margin: 0;
+    width: 140%;
+    height: 140%;
+    border: none;
+    cursor: pointer;
+    background: none;
 }

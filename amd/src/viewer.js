@@ -46,6 +46,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 this.hotspotsEnabled = true;
             }
             this.hotspotsEditable = (this.config.hotspots && !!this.config.hotspots.edit) || false;
+            this.hotspotScale = (this.config.camera && this.config.camera.hotspotScale) || 1.0;
+            this.hotspotColor = (this.config.camera && this.config.camera.hotspotColor) || '#6366f1';
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
             this.modelsData = [];
@@ -294,13 +296,39 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 leaderBtn.addEventListener('click', () => this.showLeaderboard());
             }
 
+            // Save view button (from template).
+            var saveBtn = document.getElementById('gear-saveview-' + this.cmid);
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => this.saveCurrentView());
+            }
+
+            // Hotspot scale slider.
+            var scaleSlider = document.getElementById('gear-hotspot-scale-' + this.cmid);
+            if (scaleSlider) {
+                scaleSlider.value = this.hotspotScale;
+                scaleSlider.addEventListener('input', (e) => {
+                    this.hotspotScale = parseFloat(e.target.value);
+                    this.updateHotspotsScale();
+                });
+            }
+
+            // Hotspot color picker.
+            var colorPicker = document.getElementById('gear-hotspot-color-' + this.cmid);
+            if (colorPicker) {
+                colorPicker.value = this.hotspotColor;
+                colorPicker.addEventListener('input', (e) => {
+                    this.hotspotColor = e.target.value;
+                    this.updateHotspotsColor();
+                });
+            }
+
             // Overlay controls (Floating on scene).
             this.setupOverlayControls();
 
             // Initialize tooltips for control hints using native Bootstrap API.
             // We avoid jQuery's .tooltip() plugin as it may not be available in Moodle 4.x AMD context.
             try {
-                document.querySelectorAll('.gear-help-hint').forEach(function(el) {
+                document.querySelectorAll('.gear-help-hint, .gear-control-btn').forEach(function(el) {
                     if (window.bootstrap && window.bootstrap.Tooltip) {
                         new window.bootstrap.Tooltip(el, {trigger: 'click hover focus'});
                     }
@@ -323,6 +351,74 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             this.setupHotspotsButton(overlay);
             this.setupLeaderboardButton(overlay);
             this.setupHelpButton(overlay);
+        }
+
+
+
+        /**
+         * Update all existing hotspots with current scale.
+         */
+        updateHotspotsScale() {
+            if (!this.hotspotMeshes) return;
+            this.hotspotMeshes.forEach(mesh => {
+                mesh.scale.set(this.hotspotScale, this.hotspotScale, this.hotspotScale);
+            });
+        }
+
+        /**
+         * Update all existing hotspots with current color.
+         */
+        updateHotspotsColor() {
+            if (!this.hotspotMeshes) return;
+            const color = new THREE.Color(this.hotspotColor);
+            this.hotspotMeshes.forEach(mesh => {
+                // Audio hotspots have their own color logic but we can apply the general one
+                // unless it is specifically overridden.
+                mesh.material.color.copy(color);
+            });
+        }
+
+        /**
+         * Save current camera and model state.
+         */
+        saveCurrentView() {
+            const camPos = this.camera.position;
+            const targetPos = this.controls.target;
+            
+            // 1. Save Camera Config (Scene level).
+            const scenePromise = Ajax.call([{
+                methodname: 'mod_gear_save_scene_config',
+                args: {
+                    gearid: this.gearid,
+                    camera: JSON.stringify({
+                        position: [camPos.x, camPos.y, camPos.z],
+                        target: [targetPos.x, targetPos.y, targetPos.z],
+                        hotspotScale: this.hotspotScale,
+                        hotspotColor: this.hotspotColor
+                    })
+                }
+            }])[0];
+
+            // 2. Save Model Transform (Main model).
+            let modelPromise = Promise.resolve();
+            if (this.model && this.modelsData.length > 0) {
+                modelPromise = Ajax.call([{
+                    methodname: 'mod_gear_save_model_transform',
+                    args: {
+                        id: this.modelsData[0].id,
+                        position: JSON.stringify({x: this.model.position.x, y: this.model.position.y, z: this.model.position.z}),
+                        rotation: JSON.stringify({x: this.model.rotation.x, y: this.model.rotation.y, z: this.model.rotation.z}),
+                        scale: this.model.scale.x
+                    }
+                }])[0];
+            }
+
+            Promise.all([scenePromise, modelPromise]).then(() => {
+                Notification.addNotification({
+                    message: 'Scene view saved successfully',
+                    type: 'success'
+                });
+            }).catch(Notification.exception);
         }
 
         /**
@@ -638,13 +734,37 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
                         this.model = gltf.scene;
 
-                        // Apply default scale.
-                        this.model.scale.setScalar(1);
+                        // Apply saved transform if available.
+                        if (modelData.position) {
+                            try {
+                                const p = (typeof modelData.position === 'string') ? JSON.parse(modelData.position) : modelData.position;
+                                this.model.position.set(p.x, p.y, p.z);
+                            } catch (e) { window.console.warn('GEAR: Failed to parse model position', e); }
+                        }
+                        if (modelData.rotation) {
+                            try {
+                                const r = (typeof modelData.rotation === 'string') ? JSON.parse(modelData.rotation) : modelData.rotation;
+                                this.model.rotation.set(r.x, r.y, r.z);
+                            } catch (e) { window.console.warn('GEAR: Failed to parse model rotation', e); }
+                        }
+                        if (modelData.scale) {
+                            this.model.scale.setScalar(parseFloat(modelData.scale));
+                        } else {
+                            this.model.scale.setScalar(1);
+                        }
 
                         this.modelContainer.add(this.model);
 
-                        // Center camera on model.
-                        this.centerCameraOnModel(this.model);
+                        // If scene config has saved camera, use it, otherwise center.
+                        if (this.config.camera && this.config.camera.position) {
+                            const cp = this.config.camera.position;
+                            const ct = this.config.camera.target || [0, 0, 0];
+                            this.camera.position.set(cp[0], cp[1], cp[2]);
+                            this.controls.target.set(ct[0], ct[1], ct[2]);
+                            this.controls.update();
+                        } else {
+                            this.centerCameraOnModel(this.model);
+                        }
                     }
 
                     // Mark as loaded.
@@ -922,13 +1042,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             // Hotspot sphere geometry.
             geometry = new THREE.SphereGeometry(0.08, 16, 16);
             material = new THREE.MeshBasicMaterial({
-                color: 0x6366f1,
+                color: new THREE.Color(this.hotspotColor),
                 transparent: true,
                 opacity: 0.9
             });
 
             for (const hotspot of this.hotspotsData) {
                 sphere = new THREE.Mesh(geometry, material.clone());
+                sphere.scale.set(this.hotspotScale, this.hotspotScale, this.hotspotScale);
                 pos = hotspot.position || {x: 0, y: 0, z: 0};
                 sphere.position.set(pos.x, pos.y, pos.z);
                 sphere.userData = hotspot;

@@ -76,6 +76,17 @@
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-autorotate-{{cmid}}" title="{{#str}}autorotate, mod_gear{{/str}}">
                     <i class="fa fa-sync" aria-hidden="true"></i>
                 </button>
+                {{#can_manage}}
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-saveview-{{cmid}}" title="{{#str}}saveview, mod_gear{{/str}}">
+                    <i class="fa fa-save" aria-hidden="true"></i>
+                </button>
+                <div class="gear-control-slider-container">
+                    <div class="gear-color-picker-wrapper">
+                        <input type="color" class="gear-hotspot-color-picker" id="gear-hotspot-color-{{cmid}}" value="#6366f1" title="{{#str}}hotspotcolor, mod_gear{{/str}}">
+                    </div>
+                    <input type="range" class="gear-hotspot-scale-slider" id="gear-hotspot-scale-{{cmid}}" min="0.1" max="3" step="0.1" value="1" title="{{#str}}hotspotscale, mod_gear{{/str}}">
+                </div>
+                {{/can_manage}}
             </div>
 
 

@@ -125,6 +125,7 @@ $templatedata = [
     'models' => array_values($models),
     'hotspots' => array_values($hotspots),
     'cmid' => $cm->id,
+    'can_manage' => $canmanage,
     'sesskey' => sesskey(),
 ];
 
