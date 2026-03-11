@@ -5,6 +5,17 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-11
+
+### Added
+- Localized editor instructions for adding hotspots (Shift + Click)
+- Enhanced Instructions modal with localized strings for all controls
+- New language strings for help modal categories
+
+### Changed
+- Improved "Save Current View" label to "Save Current View (Set as default)" for clarity
+- Minified viewer.js and updated sourcemaps
+
 ## [1.0.0] - 2026-03-10
 
 ### Added
@@ -55,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD
 - Moodle 4.4+ compatibility
 
-[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.2.0...v1.0.0
+[0.2.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/blagojevicboban/moodle-mod_gear/releases/tag/v0.1.0
