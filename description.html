@@ -1,52 +1,80 @@
-<div class="mod-gear-description" style="line-height: 1.6; color: #333;">
-  <h1 style="color: #007bff; margin-bottom: 10px;">GEAR: Immersive AR/VR
-    Learning</h1>
-  <p style="font-size: 1.2em; font-style: italic; color: #555;">Bring your
-    lessons to life with interactive 3D content directly inside Moodle.</p>
-  <h2 style="color: #2c3e50;">🚀 Overview</h2>
-  <p><strong>GEAR</strong> is a powerful Moodle activity module that bridges the
-    gap between traditional e-learning and immersive 3D technology. It allows
-    educators to effortlessly upload, manage, and present 3D models (glTF/GLB)
-    in a fully interactive spatial environment. Whether you are teaching
-    anatomy, engineering, or art, GEAR provides the tools to make your content
-    truly 3D-native.</p>
-  <h2 style="color: #2c3e50;">✨ Key Features</h2>
-  <ul style="list-style: none; padding-left: 0;">
-    <li
-      style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-left: 5px solid #007bff; border-radius: 4px;">
-      <strong>🎮 Full 3D Interaction:</strong> Students can rotate, zoom, and
-      pan around complex models with smooth orbital controls and physics-based
-      navigation.</li>
-    <li
-      style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-left: 5px solid #28a745; border-radius: 4px;">
-      <strong>📍 Interactive Hotspots:</strong> Add multimedia annotations
-      (text, images, links) directly onto any point of the 3D model to guide the
-      learning process.</li>
-    <li
-      style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-left: 5px solid #ffc107; border-radius: 4px;">
-      <strong>🧪 Spatial Quizzes:</strong> Embed assessment points within the 3D
-      scene. Results are automatically synced with the <strong>Moodle
-        Gradebook</strong>.</li>
-    <li
-      style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-left: 5px solid #17a2b8; border-radius: 4px;">
-      <strong>🥽 VR &amp; AR Ready:</strong> One-click support for immersive
-      headsets (WebXR) and AR devices, providing a true sense of scale and
-      presence.</li>
+<div class="mod-gear-description" style="line-height: 1.6; color: #333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <h1 style="color: #007bff; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px;">GEAR: Immersive AR/VR Learning</h1>
+  <p style="font-size: 1.2em; font-style: italic; color: #555;">Bring your lessons to life with interactive 3D content directly inside Moodle.</p>
+  
+  <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml" target="_blank">
+      <img src="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml/badge.svg" alt="Moodle Plugin CI">
+    </a>
+    <a href="https://moodle.org" target="_blank">
+      <img src="https://img.shields.io/badge/Moodle-4.1%20to%205.1-orange.svg" alt="Moodle">
+    </a>
+    <a href="https://php.net" target="_blank">
+      <img src="https://img.shields.io/badge/PHP-8.1%2B-purple.svg" alt="PHP">
+    </a>
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank">
+      <img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License">
+    </a>
+  </div>
+
+  <h2 style="color: #2c3e50; border-left: 4px solid #007bff; padding-left: 10px;">🚀 Overview</h2>
+  <p><strong>GEAR</strong> (Geospatial Educational Augmented Reality) is a powerful Moodle activity module that bridges the gap between traditional e-learning and immersive 3D technology. It allows educators to effortlessly upload, manage, and present 3D models in a fully interactive spatial environment.</p>
+
+  <h2 style="color: #2c3e50; border-left: 4px solid #28a745; padding-left: 10px;">✨ Core Features</h2>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 25px;">
+    <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <strong style="color: #007bff;">🎮 3D Viewer & Interaction</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Smooth orbital controls, physics-based navigation, and high-performance glTF/GLB rendering.</p>
+    </div>
+    <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <strong style="color: #28a745;">📍 Interactive Hotspots</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Multimedia annotations (Text, Images, Audio, Links) placed precisely on 3D geometry.</p>
+    </div>
+    <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <strong style="color: #ffc107;">🧪 Spatial Quizzes</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Embed assessment points in 3D. Results are automatically synced with the <strong>Moodle Gradebook</strong>.</p>
+    </div>
+    <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <strong style="color: #17a2b8;">✨ AI Assistant</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Generate hotspot descriptions and quiz questions instantly using the integrated AI engine.</p>
+    </div>
+    <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <strong style="color: #6610f2;">👥 Collaborative Mode</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Real-time multi-user sessions with 3D avatars, allowing students to explore together.</p>
+    </div>
+    <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <strong style="color: #e83e8c;">🔊 Spatial Audio</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Positional audio guides that react to the student's distance and orientation in the scene.</p>
+    </div>
+  </div>
+
+  <h2 style="color: #2c3e50; border-left: 4px solid #ffc107; padding-left: 10px;">🥽 AR/VR & Mobile</h2>
+  <ul style="list-style-type: none; padding-left: 0;">
+    <li style="margin-bottom: 10px; padding: 10px; background: #fffbe6; border-radius: 6px;"><strong>WebXR Ready:</strong> One-click support for VR headsets and AR devices without any app installation.</li>
+    <li style="margin-bottom: 10px; padding: 10px; background: #e6f7ff; border-radius: 6px;"><strong>Moodle App support:</strong> Fully optimized for the Moodle Mobile App for on-the-go learning.</li>
   </ul>
-  <h2 style="color: #0056b3;">🛠 How it Works</h2>
-  <ol>
-    <li><strong>Upload:</strong> Simply drag and drop your .GLB or .GLTF models.
-    </li>
-    <li><strong>Annotate:</strong> Use the built-in editor to place hotspots and
-      information points.</li>
-    <li><strong>Engage:</strong> Students enter the scene, explore the model,
-      and complete integrated quizzes.</li>
+
+  <h2 style="color: #2c3e50; border-left: 4px solid #17a2b8; padding-left: 10px;">📋 Requirements</h2>
+  <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.9em;">
+    <ul style="margin: 0; padding-left: 20px;">
+      <li><strong>Moodle:</strong> 4.1 to 5.1+</li>
+      <li><strong>PHP:</strong> 8.1+</li>
+      <li><strong>Browser:</strong> Modern browser with WebGL support (Chrome, Edge, Firefox, Safari)</li>
+      <li><strong>Privacy:</strong> Fully GDPR compliant via Moodle Privacy API</li>
+    </ul>
+  </div>
+
+  <h2 style="color: #2c3e50; border-left: 4px solid #6c757d; padding-left: 10px;">🛠 How it Works</h2>
+  <ol style="padding-left: 20px;">
+    <li><strong>Upload:</strong> Drag and drop your .GLB or .GLTF models.</li>
+    <li><strong>Annotate:</strong> Use the scene editor to place hotspots and assessment points.</li>
+    <li><strong>Engage:</strong> Students explore, collaborate, and complete integrated activities.</li>
   </ol>
-  <h2 style="color: #2c3e50;">📱 Why Choose GEAR?</h2>
-  <p>Unlike external 3D players, GEAR is <strong>fully integrated into
-      Moodle</strong>. It respects your privacy settings, uses Moodle's internal
-    file system, and works seamlessly across Desktop and Mobile (Moodle App).
-    It's designed for scalability, performance, and accessibility.</p>
-  Developed with passion by <strong>Boban Blagojević</strong> • 2026 Stable
-  Release
+
+  <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+  
+  <p style="font-size: 0.85em; text-align: center; color: #777;">
+    Developed with passion by <strong>Boban Blagojević</strong> • 2026 Stable Release<br>
+    <em>Geospatial Educational Augmented Reality</em>
+  </p>
 </div>
