@@ -59,11 +59,14 @@ php admin/cli/upgrade.php
 2.  **Interactive Scene**:
     -   Open the activity and click the **Edit** (pencil) icon.
     -   **Shift + Click** anywhere on the 3D model to add a hotspot.
-3.  **Hotspot Types**:
+3.  **Scene Configuration**:
+    -   Adjust the camera to your preferred starting position and zoom level.
+    -   Click **Save Current View (Set as default)** to save the initial state for all students.
+4.  **Hotspot Types**:
     -   **Info**: Simple text description.
     -   **Quiz**: Multiple choice questions with automated grading.
     -   **Audio**: Positional audio (upload .mp3/wav URL).
-4.  **✨ AI Assistant**:
+5.  **✨ AI Assistant**:
     -   In the Hotspot editor, enter a short prompt and click **AI Assist**.
     -   For **Quizzes**, the AI will automatically generate options and select the correct answer.
 
