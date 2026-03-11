@@ -22,7 +22,6 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Save model transformation (position, rotation, scale).
@@ -75,7 +74,7 @@ class save_model_transform extends external_api {
 
         $update = new \stdClass();
         $update->id = $model->id;
-        
+
         if ($params['position'] !== null) {
             $update->position = $params['position'];
         }
