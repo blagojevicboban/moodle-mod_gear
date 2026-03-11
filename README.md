@@ -1,7 +1,7 @@
 # GEAR - Immersive AR/VR Learning for Moodle
 
 [![Moodle Plugin CI](https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml/badge.svg)](https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml)
-[![Moodle](https://img.shields.io/badge/Moodle-4.1%20to%205.1-orange.svg)](https://moodle.org)
+[![Moodle](https://img.shields.io/badge/Moodle-4.4%20to%205.1-orange.svg)](https://moodle.org)
 [![PHP](https://img.shields.io/badge/PHP-8.1%2B-purple.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 
@@ -28,7 +28,7 @@
 
 ## 📋 Requirements
 
-- **Moodle**: 4.1+
+- **Moodle**: 4.4+
 - **PHP**: 8.1+
 - **Database**: MySQL, MariaDB, or PostgreSQL
 - **Browser**: Chrome, Firefox, Safari, Edge (WebGL support)
