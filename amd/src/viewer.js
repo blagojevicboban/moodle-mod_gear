@@ -493,22 +493,43 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         showHelp() {
             var modal = document.getElementById('gear-help-modal-' + this.cmid);
             if (!modal) {
-                modal = this.createHelpModal();
+                // Fetch localized strings.
+                Str.get_strings([
+                    {key: 'instructions', component: 'mod_gear'},
+                    {key: 'modal_rotate', component: 'mod_gear'},
+                    {key: 'modal_pan', component: 'mod_gear'},
+                    {key: 'modal_zoom', component: 'mod_gear'},
+                    {key: 'modal_hotspots', component: 'mod_gear'},
+                    {key: 'addhotspothint', component: 'mod_gear'}
+                ]).then((results) => {
+                    var strings = {
+                        help: results[0],
+                        rotate: results[1],
+                        pan: results[2],
+                        zoom: results[3],
+                        hotspots: results[4],
+                        addhotspot: results[5]
+                    };
+                    modal = this.createHelpModal(strings);
+                    modal.classList.add('active');
+                    modal.style.display = 'flex';
+                }).catch(Notification.exception);
+            } else {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
             }
-            modal.classList.add('active');
-            modal.style.display = 'flex';
         }
 
         /**
          * Create Help modal.
          * @returns {HTMLElement}
          */
-        createHelpModal() {
+        createHelpModal(strings) {
             var modal = document.createElement('div');
             modal.id = 'gear-help-modal-' + this.cmid;
             modal.className = 'gear-modal';
             
-            // Basic Styles (matches leaderboard style but we can move to CSS).
+            // Basic Styles matches leaderboard style.
             modal.style.position = 'absolute';
             modal.style.top = '0';
             modal.style.left = '0';
@@ -521,14 +542,17 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             modal.style.alignItems = 'center';
             modal.style.backdropFilter = 'blur(5px)';
             
-            // Try to get strings from page if possible, or use defaults.
-            var strings = {
-                help: 'Instructions',
-                rotate: 'Rotate: Left Click + Drag',
-                pan: 'Pan: Right Click + Drag',
-                zoom: 'Zoom: Scroll Mouse Wheel',
-                hotspots: 'Hotspots: Click on spheres to interact'
-            };
+            var editorRow = '';
+            if (this.canManage) {
+                editorRow = `
+                    <div style="display:flex; align-items:center; gap:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                        <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fa fa-plus-circle text-success"></i>
+                        </div>
+                        <span style="font-weight: 500;">${strings.addhotspot}</span>
+                    </div>
+                `;
+            }
 
             modal.innerHTML = `
                 <div class="gear-modal-dialog" style="background:#1a1a2e; color:white; padding:30px; border-radius:15px; max-width:400px; width:90%; position:relative; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
@@ -561,6 +585,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                             </div>
                             <span>${strings.hotspots}</span>
                         </div>
+                        ${editorRow}
                     </div>
                 </div>
             `;

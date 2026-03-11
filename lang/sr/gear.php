@@ -23,6 +23,7 @@
  */
 
 $string['addhotspot'] = 'Dodaj hotspot';
+$string['addhotspothint'] = 'Dodaj hotspot: Shift + Klik';
 $string['addmodel'] = 'Dodaj 3D model';
 $string['ai_prompt'] = 'O čemu je ovaj hotspot?';
 $string['ai_settings'] = 'AI Generator sadržaja';
@@ -61,6 +62,11 @@ $string['hotspotcolor'] = 'Boja hotspotova';
 $string['hotspotcontent'] = 'Sadržaj hotspota';
 $string['hotspothint'] = 'Interakcija';
 $string['hotspothint_desc'] = 'Kliknite ili dodirnite ikone hotspota da vidite više informacija, rešavate kvizove ili slušate audio.';
+$string['instructions'] = 'Uputstvo';
+$string['modal_rotate'] = 'Rotacija: Levi klik + Prevlačenje';
+$string['modal_pan'] = 'Pomeranje: Desni klik + Prevlačenje';
+$string['modal_zoom'] = 'Zumiranje: Točkić miša';
+$string['modal_hotspots'] = 'Hotspotovi: Kliknite na sfere za interakciju';
 $string['hotspots'] = 'Hotspotovi';
 $string['hotspotscale'] = 'Prečnik hotspotova';
 $string['hotspottitle'] = 'Naslov hotspota';
@@ -96,7 +102,7 @@ $string['privacy:metadata:gear_tracking:timecreated'] = 'Vreme kada je akcija za
 $string['privacy:metadata:gear_tracking:userid'] = 'ID korisnika.';
 $string['rotatehint'] = 'Rotacija';
 $string['rotatehint_desc'] = 'Računar: Levi klik i prevlačenje. Mobilni uređaj: Prevlačenje jednim prstom.';
-$string['saveview'] = 'Sačuvaj trenutni pogled';
+$string['saveview'] = 'Sačuvaj trenutni pogled (Postavi kao podrazumevani)';
 $string['scenesettings'] = 'Podešavanja scene';
 $string['supportedformats'] = 'Podržani formati: glTF, GLB';
 $string['vr_enabled'] = 'Omogući VR režim';

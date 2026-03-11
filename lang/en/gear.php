@@ -23,6 +23,7 @@
  */
 
 $string['addhotspot'] = 'Add hotspot';
+$string['addhotspothint'] = 'Add Hotspot: Shift + Click';
 $string['addmodel'] = 'Add 3D model';
 $string['ai_prompt'] = 'What is this hotspot about?';
 $string['ai_settings'] = 'AI Content Generator';
@@ -61,6 +62,11 @@ $string['hotspotcolor'] = 'Hotspot Colour';
 $string['hotspotcontent'] = 'Hotspot content';
 $string['hotspothint'] = 'Interact';
 $string['hotspothint_desc'] = 'Click or tap on hotspot icons to see more information, take quizzes, or play audio.';
+$string['instructions'] = 'Instructions';
+$string['modal_rotate'] = 'Rotate: Left Click + Drag';
+$string['modal_pan'] = 'Pan: Right Click + Drag';
+$string['modal_zoom'] = 'Zoom: Scroll Mouse Wheel';
+$string['modal_hotspots'] = 'Hotspots: Click on spheres to interact';
 $string['hotspots'] = 'Hotspots';
 $string['hotspotscale'] = 'Hotspot Diameter';
 $string['hotspottitle'] = 'Hotspot title';
@@ -96,7 +102,7 @@ $string['privacy:metadata:gear_tracking:timecreated'] = 'The time when the actio
 $string['privacy:metadata:gear_tracking:userid'] = 'The ID of the user.';
 $string['rotatehint'] = 'Rotate';
 $string['rotatehint_desc'] = 'Desktop: Left-click and drag. Mobile: One finger swipe.';
-$string['saveview'] = 'Save Current View';
+$string['saveview'] = 'Save Current View (Set as default)';
 $string['scenesettings'] = 'Scene Settings';
 $string['supportedformats'] = 'Supported formats: glTF, GLB';
 $string['vr_enabled'] = 'Enable VR mode';
