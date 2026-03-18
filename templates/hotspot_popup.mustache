@@ -1,0 +1,56 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_gear/hotspot_popup
+
+    Hotspot popup content.
+
+    @copyright  2026 Boban Blagojevic
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div id="gear-hotspot-popup-{{cmid}}" class="gear-hotspot-popup">
+    <div class="gear-hotspot-popup-inner">
+        <button class="gear-hotspot-close" aria-label="{{#str}}close, core{{/str}}">&times;</button>
+        <h4 class="gear-hotspot-title">
+            <span class="gear-hotspot-title-text">{{title}}</span>
+            {{#canManage}}
+            <div class="btn-group ml-2">
+                <button class="btn btn-sm btn-outline-secondary gear-edit-hotspot" title="{{#str}}edit{{/str}}">
+                    <i class="fa fa-pencil-alt"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info gear-move-hotspot" title="{{#str}}move, mod_gear{{/str}}">
+                    <i class="fa fa-arrows-alt"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger gear-delete-hotspot" title="{{#str}}delete{{/str}}">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+            {{/canManage}}
+        </h4>
+        <div class="gear-hotspot-content">
+            {{{content}}}
+            {{#isAudio}}
+            <div class="gear-audio-controls mt-2">
+                <button class="btn btn-sm btn-info gear-audio-toggle">
+                    <i class="fa {{audioIcon}}"></i> {{audioText}}
+                </button>
+                <div class="small text-muted mt-1"><i class="fa fa-volume-up"></i> {{#str}}spatialaudio, mod_gear{{/str}}</div>
+            </div>
+            {{/isAudio}}
+        </div>
+    </div>
+</div>

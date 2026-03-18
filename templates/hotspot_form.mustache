@@ -1,0 +1,78 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_gear/hotspot_form
+
+    Form for adding/editing hotspots.
+
+    @copyright  2026 Boban Blagojevic
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div id="gear-hotspot-form-{{cmid}}" class="gear-hotspot-popup active" data-pos-x="{{posX}}" data-pos-y="{{posY}}" data-pos-z="{{posZ}}" {{#hotspotId}}data-hotspot-id="{{hotspotId}}"{{/hotspotId}}>
+    <div class="gear-hotspot-popup-inner gear-hotspot-form-inner">
+        <h4 class="gear-hotspot-title">{{#hotspotId}}{{#str}}edithotspot, mod_gear{{/str}}{{/hotspotId}}{{^hotspotId}}{{#str}}addhotspot, mod_gear{{/str}}{{/hotspotId}}</h4>
+        
+        <div class="gear-form-group">
+            <label for="gear-hotspot-input-title-{{cmid}}">{{#str}}title, mod_gear{{/str}}</label>
+            <input type="text" id="gear-hotspot-input-title-{{cmid}}" class="form-control" placeholder="{{#str}}entertitle, mod_gear{{/str}}" value="{{title}}">
+        </div>
+
+        <div class="gear-form-group">
+            <label for="gear-hotspot-input-type-{{cmid}}">{{#str}}hotspottype, mod_gear{{/str}}</label>
+            <div class="d-flex">
+                <select id="gear-hotspot-input-type-{{cmid}}" class="form-control mr-2">
+                    <option value="info" {{#isInfo}}selected{{/isInfo}}>{{#str}}hotspottype_info, mod_gear{{/str}}</option>
+                    <option value="quiz" {{#isQuiz}}selected{{/isQuiz}}>{{#str}}hotspottype_quiz, mod_gear{{/str}}</option>
+                    <option value="audio" {{#isAudio}}selected{{/isAudio}}>{{#str}}hotspottype_audio, mod_gear{{/str}}</option>
+                </select>
+                <button type="button" class="btn btn-info gear-ai-btn" title="{{#str}}aiassist_help, mod_gear{{/str}}">{{#str}}aiassist, mod_gear{{/str}}</button>
+            </div>
+        </div>
+
+        <div id="gear-hotspot-quiz-fields-{{cmid}}" style="{{^isQuiz}}display:none;{{/isQuiz}}">
+            <div class="gear-form-group">
+                <label for="gear-hotspot-input-options-{{cmid}}">{{#str}}quizoptions, mod_gear{{/str}}</label>
+                <input type="text" id="gear-hotspot-input-options-{{cmid}}" class="form-control" placeholder="{{#str}}quizoptions_help, mod_gear{{/str}}" value="{{options}}">
+            </div>
+            <div class="gear-form-group">
+                <label for="gear-hotspot-input-correct-{{cmid}}">{{#str}}quizcorrect, mod_gear{{/str}}</label>
+                <input type="number" id="gear-hotspot-input-correct-{{cmid}}" class="form-control" value="{{correctAnswer}}" min="0">
+            </div>
+            <div class="gear-form-group">
+                <label for="gear-hotspot-input-points-{{cmid}}">{{#str}}quizpoints, mod_gear{{/str}}</label>
+                <input type="number" id="gear-hotspot-input-points-{{cmid}}" class="form-control" value="{{points}}" min="1">
+            </div>
+        </div>
+
+        <div id="gear-hotspot-audio-fields-{{cmid}}" style="{{^isAudio}}display:none;{{/isAudio}}">
+            <div class="gear-form-group">
+                <label for="gear-hotspot-input-audiourl-{{cmid}}">{{#str}}audiourl, mod_gear{{/str}}</label>
+                <input type="text" id="gear-hotspot-input-audiourl-{{cmid}}" class="form-control" placeholder="https://example.com/audio.mp3" value="{{audioUrl}}">
+            </div>
+        </div>
+
+        <div class="gear-form-group">
+            <label for="gear-hotspot-input-content-{{cmid}}">{{#str}}hotspotcontent, mod_gear{{/str}}</label>
+            <textarea id="gear-hotspot-input-content-{{cmid}}" class="form-control" rows="3" placeholder="{{#str}}entercontent, mod_gear{{/str}}">{{content}}</textarea>
+        </div>
+
+        <div class="gear-form-actions">
+            <button type="button" class="btn btn-secondary gear-cancel-btn">{{#str}}cancel, core{{/str}}</button>
+            <button type="button" class="btn btn-primary gear-save-btn">{{#str}}save, core{{/str}}</button>
+        </div>
+    </div>
+</div>

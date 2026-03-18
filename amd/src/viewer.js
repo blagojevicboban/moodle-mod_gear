@@ -23,7 +23,7 @@
 
 /* global THREE */
 
-define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Ajax, Notification, Str) {
+define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'], function($, Ajax, Notification, Str, Templates) {
     'use strict';
 
     /**
@@ -323,7 +323,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             }
 
             // Overlay controls (Floating on scene).
-            this.setupOverlayControls();
+            this.setupOverlay();
 
             // Initialize tooltips for control hints using native Bootstrap API.
             // We avoid jQuery's .tooltip() plugin as it may not be available in Moodle 4.x AMD context.
@@ -342,15 +342,53 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         /**
          * Setup overlay controls (Hotspots & Leaderboard floating on scene).
          */
-        setupOverlayControls() {
-            var overlay = document.createElement('div');
-            overlay.className = 'gear-scene-overlay';
-            overlay.id = 'gear-scene-overlay-' + this.cmid;
-            this.container.appendChild(overlay);
+        setupOverlay() {
+            Templates.render('mod_gear/overlay_controls', {
+                cmid: this.cmid,
+                canManage: this.canManage
+            }).then((html, js) => {
+                Templates.appendNodeContents(this.container, html, js);
+                this.setupOverlayEventListeners();
+            }).catch(Notification.exception);
+        }
 
-            this.setupHotspotsButton(overlay);
-            this.setupLeaderboardButton(overlay);
-            this.setupHelpButton(overlay);
+        /**
+         * Setup event listeners for the overlay controls.
+         */
+        setupOverlayEventListeners() {
+            var overlay = document.getElementById('gear-scene-overlay-' + this.cmid);
+            if (!overlay) return;
+
+            // Help button.
+            var helpBtn = document.getElementById('gear-help-btn-' + this.cmid);
+            if (helpBtn) {
+                helpBtn.addEventListener('click', () => this.showHelp());
+            }
+
+            // Leaderboard button.
+            var leaderBtn = document.getElementById('gear-leaderboard-btn-' + this.cmid);
+            if (leaderBtn) {
+                leaderBtn.addEventListener('click', () => this.showLeaderboard());
+            }
+
+            // Hotspots dropdown toggle.
+            var hotspotsNav = document.getElementById('gear-hotspots-nav-' + this.cmid);
+            if (hotspotsNav) {
+                var toggle = hotspotsNav.querySelector('.dropdown-toggle');
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    hotspotsNav.classList.toggle('show');
+                    hotspotsNav.querySelector('.dropdown-menu').classList.toggle('show');
+                });
+
+                // Close when clicking outside.
+                document.addEventListener('click', (e) => {
+                    if (!hotspotsNav.contains(e.target)) {
+                        hotspotsNav.classList.remove('show');
+                        hotspotsNav.querySelector('.dropdown-menu').classList.remove('show');
+                    }
+                });
+            }
         }
 
 
@@ -421,71 +459,6 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             }).catch(Notification.exception);
         }
 
-        /**
-         * Setup help button floating on scene.
-         * 
-         * @param {HTMLElement} parent
-         */
-        setupHelpButton(parent) {
-            var btn = document.createElement('button');
-            btn.className = 'btn btn-secondary gear-control-btn gear-overlay-btn';
-            btn.innerHTML = '<i class="fa fa-question"></i>';
-            btn.title = 'Help';
-            btn.addEventListener('click', () => this.showHelp());
-            parent.appendChild(btn);
-        }
-
-        /**
-         * Setup hotspots dropdown floating on scene.
-         * 
-         * @param {HTMLElement} parent
-         */
-        setupHotspotsButton(parent) {
-            var container = document.createElement('div');
-            container.className = 'gear-hotspots-dropdown dropdown';
-            container.id = 'gear-hotspots-nav-' + this.cmid;
-            
-            container.innerHTML = `
-                <button class="btn btn-secondary gear-control-btn gear-overlay-btn dropdown-toggle" type="button" 
-                        id="gear-hotspots-toggle-${this.cmid}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fa fa-map-marker-alt"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-right gear-hotspots-menu" aria-labelledby="gear-hotspots-toggle-${this.cmid}">
-                    <!-- Dynamically populated -->
-                </div>
-            `;
-
-            parent.appendChild(container);
-
-            var toggle = container.querySelector('.dropdown-toggle');
-            toggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                container.classList.toggle('show');
-                container.querySelector('.dropdown-menu').classList.toggle('show');
-            });
-
-            // Close when clicking outside.
-            document.addEventListener('click', (e) => {
-                if (!container.contains(e.target)) {
-                    container.classList.remove('show');
-                    container.querySelector('.dropdown-menu').classList.remove('show');
-                }
-            });
-        }
-
-        /**
-         * Setup leaderboard button floating on scene.
-         * 
-         * @param {HTMLElement} parent
-         */
-        setupLeaderboardButton(parent) {
-            var btn = document.createElement('button');
-            btn.className = 'btn btn-secondary gear-control-btn gear-overlay-btn';
-            btn.innerHTML = '<i class="fa fa-trophy"></i>';
-            btn.title = 'Leaderboard';
-            btn.addEventListener('click', () => this.showLeaderboard());
-            parent.appendChild(btn);
-        }
 
         /**
          * Show Help modal.
@@ -493,24 +466,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         showHelp() {
             var modal = document.getElementById('gear-help-modal-' + this.cmid);
             if (!modal) {
-                // Fetch localized strings.
-                Str.get_strings([
-                    {key: 'instructions', component: 'mod_gear'},
-                    {key: 'modal_rotate', component: 'mod_gear'},
-                    {key: 'modal_pan', component: 'mod_gear'},
-                    {key: 'modal_zoom', component: 'mod_gear'},
-                    {key: 'modal_hotspots', component: 'mod_gear'},
-                    {key: 'addhotspothint', component: 'mod_gear'}
-                ]).then((results) => {
-                    var strings = {
-                        help: results[0],
-                        rotate: results[1],
-                        pan: results[2],
-                        zoom: results[3],
-                        hotspots: results[4],
-                        addhotspot: results[5]
-                    };
-                    modal = this.createHelpModal(strings);
+                Templates.render('mod_gear/help_modal', {
+                    cmid: this.cmid,
+                    canManage: this.canManage
+                }).then((html, js) => {
+                    Templates.appendNodeContents(this.container, html, js);
+                    modal = document.getElementById('gear-help-modal-' + this.cmid);
+                    
+                    // Close logic.
+                    modal.querySelector('.close').addEventListener('click', () => {
+                        modal.classList.remove('active');
+                        modal.style.display = 'none';
+                    });
+
                     modal.classList.add('active');
                     modal.style.display = 'flex';
                 }).catch(Notification.exception);
@@ -520,85 +488,6 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             }
         }
 
-        /**
-         * Create Help modal.
-         * @returns {HTMLElement}
-         */
-        createHelpModal(strings) {
-            var modal = document.createElement('div');
-            modal.id = 'gear-help-modal-' + this.cmid;
-            modal.className = 'gear-modal';
-            
-            // Basic Styles matches leaderboard style.
-            modal.style.position = 'absolute';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.background = 'rgba(0,0,0,0.85)';
-            modal.style.display = 'none';
-            modal.style.zIndex = '2000';
-            modal.style.justifyContent = 'center';
-            modal.style.alignItems = 'center';
-            modal.style.backdropFilter = 'blur(5px)';
-            
-            var editorRow = '';
-            if (this.canManage) {
-                editorRow = `
-                    <div style="display:flex; align-items:center; gap:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-                        <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                            <i class="fa fa-plus-circle text-success"></i>
-                        </div>
-                        <span style="font-weight: 500;">${strings.addhotspot}</span>
-                    </div>
-                `;
-            }
-
-            modal.innerHTML = `
-                <div class="gear-modal-dialog" style="background:#1a1a2e; color:white; padding:30px; border-radius:15px; max-width:400px; width:90%; position:relative; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-                    <button class="close" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
-                    <h3 style="margin-top:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; display:flex; align-items:center;">
-                        <i class="fa fa-question-circle mr-3 text-info"></i> ${strings.help}
-                    </h3>
-                    <div style="display:flex; flex-direction:column; gap:20px; font-size:0.95rem;">
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                                <i class="fa fa-mouse-pointer text-info"></i>
-                            </div>
-                            <span>${strings.rotate}</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                                <i class="fa fa-arrows-alt text-info"></i>
-                            </div>
-                            <span>${strings.pan}</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                                <i class="fa fa-search-plus text-info"></i>
-                            </div>
-                            <span>${strings.zoom}</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                                <i class="fa fa-dot-circle text-info"></i>
-                            </div>
-                            <span>${strings.hotspots}</span>
-                        </div>
-                        ${editorRow}
-                    </div>
-                </div>
-            `;
-            
-            // Close logic.
-            modal.querySelector('.close').addEventListener('click', () => {
-                modal.classList.remove('active');
-                modal.style.display = 'none';
-            });
-            
-            this.container.appendChild(modal);
-            return modal;
-        }
 
 
         /**
@@ -607,11 +496,33 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         showLeaderboard() {
             var modal = document.getElementById('gear-leaderboard-modal-' + this.cmid);
             if (!modal) {
-                modal = this.createLeaderboardModal();
+                Templates.render('mod_gear/leaderboard_modal', {
+                    cmid: this.cmid
+                }).then((html, js) => {
+                    Templates.appendNodeContents(this.container, html, js);
+                    modal = document.getElementById('gear-leaderboard-modal-' + this.cmid);
+                    
+                    // Close logic.
+                    modal.querySelector('.close').addEventListener('click', () => {
+                        modal.classList.remove('active');
+                        modal.style.display = 'none';
+                    });
+
+                    this.fetchAndRenderLeaderboard(modal);
+                }).catch(Notification.exception);
+            } else {
+                this.fetchAndRenderLeaderboard(modal);
             }
-            
-            // Show modal with loading state.
+        }
+
+        /**
+         * Fetch data and render leaderboard content.
+         * 
+         * @param {HTMLElement} modal
+         */
+        fetchAndRenderLeaderboard(modal) {
              modal.classList.add('active');
+             modal.style.display = 'flex';
              var content = modal.querySelector('.gear-leaderboard-content');
              content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
              
@@ -623,82 +534,38 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     limit: 10
                 }
             }])[0].then((scores) => {
-                this.renderLeaderboard(content, scores);
+                this.renderLeaderboardTable(content, scores);
             }).catch(Notification.exception);
         }
 
-        /**
-         * Create Leaderboard modal element.
-         */
-        createLeaderboardModal() {
-            var modal = document.createElement('div');
-            modal.id = 'gear-leaderboard-modal-' + this.cmid;
-            modal.className = 'gear-modal';
-            // Simple overlay styles (can be moved to CSS).
-            modal.style.position = 'absolute';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.background = 'rgba(0,0,0,0.8)';
-            modal.style.display = 'none';
-            modal.style.zIndex = '2000';
-            modal.style.justifyContent = 'center';
-            modal.style.alignItems = 'center';
-            
-            modal.innerHTML = `
-                <div class="gear-modal-dialog" style="background:white; padding:20px; border-radius:8px; max-width:500px; width:90%; position:relative;">
-                    <button class="close" style="position:absolute; top:10px; right:10px;">&times;</button>
-                    <h3><i class="fa fa-trophy text-warning"></i> Leaderboard</h3>
-                    <div class="gear-leaderboard-content"></div>
-                </div>
-            `;
-            
-            // Close logic.
-            modal.querySelector('.close').addEventListener('click', () => {
-                modal.classList.remove('active');
-                modal.style.display = 'none';
-            });
-            
-            // Override display when active.
-            var style = document.createElement('style');
-            style.textContent = `#gear-leaderboard-modal-${this.cmid}.active { display: flex !important; }`;
-            document.head.appendChild(style);
-            
-            this.container.appendChild(modal);
-            return modal;
-        }
 
         /**
-         * Render leaderboard table.
+         * Render leaderboard table using mustache.
+         * 
          * @param {HTMLElement} container 
          * @param {Array} scores 
          */
-        renderLeaderboard(container, scores) {
-            if (scores.length === 0) {
-                container.innerHTML = '<p class="text-muted text-center">No scores yet. Be the first!</p>';
-                return;
-            }
+        renderLeaderboardTable(container, scores) {
+            var context = {
+                has_scores: scores.length > 0,
+                scores: scores.map((entry, index) => {
+                    var badge = '';
+                    if (index === 0) badge = '🥇';
+                    else if (index === 1) badge = '🥈';
+                    else if (index === 2) badge = '🥉';
+                    
+                    return {
+                        rank: index + 1,
+                        badge: badge,
+                        fullname: entry.fullname,
+                        score: entry.score
+                    };
+                })
+            };
             
-            var html = '<table class="table table-striped">';
-            html += '<thead><tr><th>#</th><th>User</th><th>Score</th></tr></thead>';
-            html += '<tbody>';
-            
-            scores.forEach((entry, index) => {
-                var badge = '';
-                if (index === 0) badge = '🥇';
-                else if (index === 1) badge = '🥈';
-                else if (index === 2) badge = '🥉';
-                
-                html += `<tr>
-                    <td>${index + 1} ${badge}</td>
-                    <td>${entry.fullname}</td>
-                    <td><strong>${entry.score}</strong></td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            
-            container.innerHTML = html;
+            Templates.render('mod_gear/leaderboard_table', context).then((html, js) => {
+                Templates.replaceNodeContents(container, html, js);
+            }).catch(Notification.exception);
         }
 
         /**
@@ -1157,27 +1024,28 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             }
 
             this.hotspotsData.forEach((hotspot) => {
-                var item = document.createElement('button');
-                item.className = 'dropdown-item gear-hotspot-nav-item';
-                item.type = 'button';
-                item.id = 'gear-hotspot-nav-item-' + hotspot.id;
-                
                 var icon = 'fa-dot-circle';
                 if (hotspot.type === 'quiz') icon = 'fa-question-circle';
                 if (hotspot.type === 'audio') icon = 'fa-volume-up';
-                
-                item.innerHTML = `<i class="fa ${icon} mr-2"></i> ${hotspot.title || 'Point'}`;
-                item.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.focusHotspot(hotspot.id);
-                    // Close dropdown after selection.
-                    var dropdown = item.closest('.dropdown');
-                    if (dropdown) {
-                        dropdown.classList.remove('show');
-                        dropdown.querySelector('.dropdown-menu').classList.remove('show');
-                    }
-                });
-                menu.appendChild(item);
+
+                Templates.render('mod_gear/hotspot_nav_item', {
+                    id: hotspot.id,
+                    icon: icon,
+                    title: hotspot.title || 'Point'
+                }).then((html, js) => {
+                    Templates.appendNodeContents(menu, html, js);
+                    var item = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.focusHotspot(hotspot.id);
+                        // Close dropdown after selection.
+                        var dropdown = item.closest('.dropdown');
+                        if (dropdown) {
+                            dropdown.classList.remove('show');
+                            dropdown.querySelector('.dropdown-menu').classList.remove('show');
+                        }
+                    });
+                }).catch(Notification.exception);
             });
         }
 
@@ -1243,304 +1111,211 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
         }
 
         /**
-         * Show hotspot popup.
+         * Show hotspot popup using mustache.
          *
          * @param {Object} hotspot Hotspot data
          */
         showHotspotPopup(hotspot) {
-            var popup = document.getElementById('gear-hotspot-popup-' + this.cmid);
-            var title;
-            var content;
-            var closeBtn;
-
-            if (!popup) {
-                // Create popup if it doesn't exist.
-                popup = document.createElement('div');
-                popup.id = 'gear-hotspot-popup-' + this.cmid;
-                popup.className = 'gear-hotspot-popup';
-                popup.innerHTML = '<div class="gear-hotspot-popup-inner">' +
-                    '<button class="gear-hotspot-close" aria-label="Close">&times;</button>' +
-                    '<h4 class="gear-hotspot-title"></h4>' +
-                    '<div class="gear-hotspot-content"></div>' +
-                    '</div>';
-                this.container.appendChild(popup);
-
-                // Close button handler.
-                closeBtn = popup.querySelector('.gear-hotspot-close');
-                closeBtn.addEventListener('click', () => {
-                    popup.classList.remove('active');
-                });
+            var audioContext = {};
+            if (hotspot.type === 'audio' && hotspot.sound) {
+                audioContext = {
+                    isAudio: true,
+                    audioIcon: hotspot.sound.isPlaying ? 'fa-pause' : 'fa-play',
+                    audioText: hotspot.sound.isPlaying ? Str.get_string('audio_pause', 'mod_gear') : Str.get_string('audio_play', 'mod_gear')
+                };
             }
 
-            // Update content.
-            title = popup.querySelector('.gear-hotspot-title');
-            content = popup.querySelector('.gear-hotspot-content');
-            title.textContent = hotspot.title || 'Info';
-            content.innerHTML = hotspot.content || '';
+            var context = {
+                cmid: this.cmid,
+                canManage: this.canManage,
+                title: hotspot.title || 'Info',
+                content: hotspot.content || '',
+                isAudio: hotspot.type === 'audio',
+                ...audioContext
+            };
 
-            if (hotspot.type === 'quiz') {
-                this.renderQuizInPopup(popup, hotspot);
-            } else if (hotspot.type === 'audio' && hotspot.sound) {
-                // Add play/pause controls.
-                var audioControls = document.createElement('div');
-                audioControls.className = 'gear-audio-controls mt-2';
-                var btnText = hotspot.sound.isPlaying ? 'Pause Audio' : 'Play Audio';
-                var btnIcon = hotspot.sound.isPlaying ? 'fa-pause' : 'fa-play';
-                
-                audioControls.innerHTML = `
-                    <button class="btn btn-sm btn-info gear-audio-toggle">
-                        <i class="fa ${btnIcon}"></i> ${btnText}
-                    </button>
-                    <div class="small text-muted mt-1"><i class="fa fa-volume-up"></i> Spatial Audio</div>
-                `;
-                
-                var toggleBtn = audioControls.querySelector('.gear-audio-toggle');
-                toggleBtn.addEventListener('click', () => {
-                   if (hotspot.sound.isPlaying) {
-                       hotspot.sound.pause();
-                       toggleBtn.innerHTML = '<i class="fa fa-play"></i> Play Audio';
-                   } else {
-                       hotspot.sound.play();
-                       toggleBtn.innerHTML = '<i class="fa fa-pause"></i> Pause Audio';
-                   }
-                });
-                
-                content.appendChild(audioControls);
-            }
-
-            // If editing is allowed for managers, add Edit and Delete buttons.
-            if (this.canManage && this.hotspotsEditable) {
-                var btnGroup = document.createElement('div');
-                btnGroup.className = 'btn-group ml-2';
-
-                // Edit button.
-                var editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-outline-secondary gear-edit-hotspot';
-                editBtn.innerHTML = '<i class="fa fa-pencil-alt"></i>';
-                editBtn.title = 'Edit';
-                editBtn.addEventListener('click', () => {
-                    var pos = hotspot.position || {x: 0, y: 0, z: 0};
-                    this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
-                    popup.classList.remove('active');
-                });
-                btnGroup.appendChild(editBtn);
-
-                // Move button.
-                var moveBtn = document.createElement('button');
-                moveBtn.className = 'btn btn-sm btn-outline-info gear-move-hotspot';
-                moveBtn.innerHTML = '<i class="fa fa-arrows-alt"></i>';
-                moveBtn.title = 'Move';
-                moveBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.movingHotspotId = hotspot.id;
-                    this.canvas.style.cursor = 'move';
-                    popup.classList.remove('active');
-                    Notification.addNotification({
-                        message: 'Click on the model to place the hotspot',
-                        type: 'info'
-                    });
-                });
-                btnGroup.appendChild(moveBtn);
-
-                // Delete button.
-                var delBtn = document.createElement('button');
-                delBtn.className = 'btn btn-sm btn-outline-danger gear-delete-hotspot';
-                delBtn.innerHTML = '<i class="fa fa-trash"></i>';
-                delBtn.title = 'Delete';
-                delBtn.addEventListener('click', () => {
-                    if (window.confirm('Are you sure you want to delete this hotspot?')) {
-                        this.deleteHotspot(hotspot.id);
-                        popup.classList.remove('active');
-                    }
-                });
-                btnGroup.appendChild(delBtn);
-
-                // Append buttons next to title if possible.
-                var titleEl = popup.querySelector('.gear-hotspot-title');
-                if (titleEl) {
-                    titleEl.appendChild(btnGroup);
+            Templates.render('mod_gear/hotspot_popup', context).then((html, js) => {
+                var existing = document.getElementById('gear-hotspot-popup-' + this.cmid);
+                if (existing) {
+                    Templates.replaceNode(existing, html, js);
                 } else {
-                    popup.querySelector('.gear-hotspot-popup-inner').appendChild(btnGroup);
+                    Templates.appendNodeContents(this.container, html, js);
                 }
-            }
+                
+                var popup = document.getElementById('gear-hotspot-popup-' + this.cmid);
+                popup.classList.add('active');
 
-            // Highlight in Nav.
-            document.querySelectorAll('.gear-hotspot-nav-item').forEach(el => el.classList.remove('active'));
-            var navItem = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
-            if (navItem) {
-                navItem.classList.add('active');
-                navItem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-            }
+                // Event Listeners.
+                popup.querySelector('.gear-hotspot-close').addEventListener('click', () => {
+                    popup.classList.remove('active');
+                });
 
-            // Show popup.
-            popup.classList.add('active');
+                if (this.canManage) {
+                    popup.querySelector('.gear-edit-hotspot')?.addEventListener('click', () => {
+                        var pos = hotspot.position || {x: 0, y: 0, z: 0};
+                        this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
+                        popup.classList.remove('active');
+                    });
 
-            // Track interaction.
-            if (typeof this.trackEvent === 'function') {
+                    popup.querySelector('.gear-move-hotspot')?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.movingHotspotId = hotspot.id;
+                        this.canvas.style.cursor = 'move';
+                        popup.classList.remove('active');
+                        Notification.addNotification({
+                            message: 'Click on the model to place the hotspot',
+                            type: 'info'
+                        });
+                    });
+
+                    popup.querySelector('.gear-delete-hotspot')?.addEventListener('click', () => {
+                        if (window.confirm('Are you sure you want to delete this hotspot?')) {
+                            this.deleteHotspot(hotspot.id);
+                            popup.classList.remove('active');
+                        }
+                    });
+                }
+
+                if (hotspot.type === 'quiz') {
+                    this.renderQuizInPopup(popup, hotspot);
+                } else if (hotspot.type === 'audio' && hotspot.sound) {
+                    var toggleBtn = popup.querySelector('.gear-audio-toggle');
+                    toggleBtn.addEventListener('click', async () => {
+                       if (hotspot.sound.isPlaying) {
+                           hotspot.sound.pause();
+                           toggleBtn.innerHTML = '<i class="fa fa-play"></i> ' + await Str.get_string('audio_play', 'mod_gear');
+                       } else {
+                           hotspot.sound.play();
+                           toggleBtn.innerHTML = '<i class="fa fa-pause"></i> ' + await Str.get_string('audio_pause', 'mod_gear');
+                       }
+                    });
+                }
+
+                // Highlight in Nav.
+                document.querySelectorAll('.gear-hotspot-nav-item').forEach(el => el.classList.remove('active'));
+                var navItem = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
+                if (navItem) {
+                    navItem.classList.add('active');
+                    navItem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                }
+
+                // Track interaction.
                 this.trackEvent('hotspot_click', {hotspotId: hotspot.id, title: hotspot.title});
-            }
+
+            }).catch(Notification.exception);
         }
 
         /**
-         * Show form to add a new hotspot.
+         * Show form to add/edit a hotspot using mustache.
          *
          * @param {Object} point THREE.Vector3 position
          * @param {Object} [hotspotToEdit] Optional hotspot object when editing
          */
         showAddHotspotForm(point, hotspotToEdit) {
-            var form = document.getElementById('gear-hotspot-form-' + this.cmid);
-            var saveBtn;
-            var cancelBtn;
+            var context = {
+                cmid: this.cmid,
+                posX: point.x.toFixed(3),
+                posY: point.y.toFixed(3),
+                posZ: point.z.toFixed(3),
+                isInfo: true
+            };
 
-            if (!form) {
-                // Create form.
-                form = document.createElement('div');
-                form.id = 'gear-hotspot-form-' + this.cmid;
-                form.className = 'gear-hotspot-popup active';
-                form.innerHTML = '<div class="gear-hotspot-popup-inner gear-hotspot-form-inner">' +
-                    '<h4 class="gear-hotspot-title">Add Hotspot</h4>' +
-                    '<div class="gear-form-group">' +
-                    '<label for="gear-hotspot-input-title-' + this.cmid + '">Title</label>' +
-                    '<input type="text" id="gear-hotspot-input-title-' + this.cmid +
-                    '" class="form-control" placeholder="Enter title">' +
-                    '</div>' +
-                    '<div class="gear-form-group">' +
-                    '<label for="gear-hotspot-input-type-' + this.cmid + '">Type</label>' +
-                    '<div class="d-flex">' +
-                    '<select id="gear-hotspot-input-type-' + this.cmid + '" class="form-control mr-2">' +
-                    '<option value="info">Info</option>' +
-                    '<option value="quiz">Quiz</option>' +
-                    '<option value="audio">Audio</option>' +
-                    '</select>' +
-                    '<button type="button" class="btn btn-info gear-ai-btn" title="AI Assist">✨ AI Assist</button>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div id="gear-hotspot-quiz-fields-' + this.cmid + '" style="display:none;">' +
-                    '<div class="gear-form-group">' +
-                    '<label for="gear-hotspot-input-options-' + this.cmid + '">Options (comma separated)</label>' +
-                    '<input type="text" id="gear-hotspot-input-options-' + this.cmid +
-                    '" class="form-control" placeholder="Option A, Option B, Option C">' +
-                    '</div>' +
-                    '<div class="gear-form-group">' +
-                    '<label for="gear-hotspot-input-correct-' + this.cmid + '">Correct Answer (Index 0-N)</label>' +
-                    '<input type="number" id="gear-hotspot-input-correct-' + this.cmid +
-                    '" class="form-control" value="0" min="0">' +
-                    '</div>' +
-                    '<div class="gear-form-group">' +
-                    '<label for="gear-hotspot-input-points-' + this.cmid + '">Points</label>' +
-                    '<input type="number" id="gear-hotspot-input-points-' + this.cmid +
-                    '" class="form-control" value="10" min="1">' +
-                    '</div>' +
-                    '</div>' +
-                    '<div id="gear-hotspot-audio-fields-' + this.cmid + '" style="display:none;">' +
-                    '<div class="gear-form-group">' +
-                    '<label for="gear-hotspot-input-audiourl-' + this.cmid + '">Audio URL (MP3/WAV)</label>' +
-                    '<input type="text" id="gear-hotspot-input-audiourl-' + this.cmid +
-                    '" class="form-control" placeholder="https://example.com/audio.mp3">' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="gear-form-group">' +
-                    '<label for="gear-hotspot-input-content-' + this.cmid + '">Content</label>' +
-                    '<textarea id="gear-hotspot-input-content-' + this.cmid +
-                    '" class="form-control" rows="3" placeholder="Enter content"></textarea>' +
-                    '</div>' +
-                    '<div class="gear-form-actions">' +
-                    '<button type="button" class="btn btn-secondary gear-cancel-btn">Cancel</button>' +
-                    '<button type="button" class="btn btn-primary gear-save-btn">Save</button>' +
-                    '</div>' +
-                    '</div>';
-                this.container.appendChild(form);
-
-                // Type change handler.
-                var typeSelect = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
-                var quizFields = form.querySelector('#gear-hotspot-quiz-fields-' + this.cmid);
-                var audioFields = form.querySelector('#gear-hotspot-audio-fields-' + this.cmid);
-                typeSelect.addEventListener('change', () => {
-                    quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
-                    audioFields.style.display = (typeSelect.value === 'audio') ? 'block' : 'none';
-                });
-
-                // AI Assist button.
-                var aiBtn = form.querySelector('.gear-ai-btn');
-                aiBtn.addEventListener('click', () => {
-                    var type = typeSelect.value;
-                    var prompt = window.prompt("What should this hotspot be about?", "");
-                    if (prompt) {
-                        aiBtn.disabled = true;
-                        aiBtn.textContent = 'Generating...';
-                        this.generateContent(prompt, type).then((data) => {
-                            aiBtn.disabled = false;
-                            aiBtn.textContent = '✨ AI Assist';
-                            
-                            if (type === 'quiz') {
-                                try {
-                                    var json = JSON.parse(data);
-                                    form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = json.question || '';
-                                    form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = json.options ? json.options.join(', ') : '';
-                                    form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = json.correct || 0;
-                                } catch (e) {
-                                    Notification.alert('Error', 'Failed to parse AI response');
-                                }
-                            } else if (type === 'info') {
-                                form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = prompt; // Use prompt as title
-                                form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = data;
-                            }
-                        }).catch((err) => {
-                            aiBtn.disabled = false;
-                            aiBtn.textContent = '✨ AI Assist';
-                            Notification.alert('AI Error', err.message || 'Generation failed');
-                        });
-                    }
-                });
-
-                // Cancel button.
-                cancelBtn = form.querySelector('.gear-cancel-btn');
-                cancelBtn.addEventListener('click', () => {
-                    form.classList.remove('active');
-                });
-            } else {
-                // Reset form or populate for edit.
-                form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = '';
-                form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = '';
-                form.removeAttribute('data-hotspot-id');
-                form.classList.add('active');
-            }
-
-            // If editing an existing hotspot, populate fields and set id.
             if (hotspotToEdit) {
-                form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = hotspotToEdit.title || '';
-                form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = hotspotToEdit.content || '';
-                form.dataset.hotspotId = hotspotToEdit.id;
-                
-                var typeSelect = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
-                typeSelect.value = hotspotToEdit.type || 'info';
-                typeSelect.dispatchEvent(new Event('change'));
+                var pos = hotspotToEdit.position || point;
+                context.hotspotId = hotspotToEdit.id;
+                context.title = hotspotToEdit.title || '';
+                context.content = hotspotToEdit.content || '';
+                context.posX = pos.x.toFixed(3);
+                context.posY = pos.y.toFixed(3);
+                context.posZ = pos.z.toFixed(3);
+                context.isInfo = hotspotToEdit.type === 'info';
+                context.isQuiz = hotspotToEdit.type === 'quiz';
+                context.isAudio = hotspotToEdit.type === 'audio';
 
                 if (hotspotToEdit.type === 'quiz' && hotspotToEdit.config) {
                     var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
-                    form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = config.options ? config.options.join(', ') : '';
-                    form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = config.correctAnswer || 0;
-                    form.querySelector('#gear-hotspot-input-points-' + this.cmid).value = config.points || 10;
+                    context.options = config.options ? config.options.join(', ') : '';
+                    context.correctAnswer = config.correctAnswer || 0;
+                    context.points = config.points || 10;
                 } else if (hotspotToEdit.type === 'audio' && hotspotToEdit.config) {
                     var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
-                    form.querySelector('#gear-hotspot-input-audiourl-' + this.cmid).value = config.audioUrl || '';
+                    context.audioUrl = config.audioUrl || '';
                 }
-                
-                // Use hotspot position if present, otherwise provided point.
-                var usedPos = hotspotToEdit.position || point;
-                form.dataset.posX = usedPos.x.toFixed(3);
-                form.dataset.posY = usedPos.y.toFixed(3);
-                form.dataset.posZ = usedPos.z.toFixed(3);
-            } else {
-                // Store position for new hotspot.
-                form.dataset.posX = point.x.toFixed(3);
-                form.dataset.posY = point.y.toFixed(3);
-                form.dataset.posZ = point.z.toFixed(3);
             }
 
-            // Save button (re-bind to use current position).
-            saveBtn = form.querySelector('.gear-save-btn');
-            saveBtn.onclick = () => this.saveNewHotspot(form);
+            Templates.render('mod_gear/hotspot_form', context).then((html, js) => {
+                var existing = document.getElementById('gear-hotspot-form-' + this.cmid);
+                if (existing) {
+                    Templates.replaceNode(existing, html, js);
+                } else {
+                    Templates.appendNodeContents(this.container, html, js);
+                }
+
+                var form = document.getElementById('gear-hotspot-form-' + this.cmid);
+                form.classList.add('active');
+
+                this.setupHotspotFormEventListeners(form);
+
+            }).catch(Notification.exception);
+        }
+
+        /**
+         * Setup event listeners for the hotspot form.
+         * 
+         * @param {HTMLElement} form
+         */
+        setupHotspotFormEventListeners(form) {
+            var typeSelect = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
+            var quizFields = form.querySelector('#gear-hotspot-quiz-fields-' + this.cmid);
+            var audioFields = form.querySelector('#gear-hotspot-audio-fields-' + this.cmid);
+            
+            typeSelect.addEventListener('change', () => {
+                quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
+                audioFields.style.display = (typeSelect.value === 'audio') ? 'block' : 'none';
+            });
+
+            // AI Assist button.
+            var aiBtn = form.querySelector('.gear-ai-btn');
+            aiBtn.addEventListener('click', async () => {
+                var type = typeSelect.value;
+                var prompt = window.prompt(await Str.get_string('ai_prompt', 'mod_gear'), "");
+                if (prompt) {
+                    aiBtn.disabled = true;
+                    aiBtn.textContent = 'Generating...';
+                    this.generateContent(prompt, type).then(async (data) => {
+                        aiBtn.disabled = false;
+                        aiBtn.textContent = await Str.get_string('aiassist', 'mod_gear');
+                        
+                        if (type === 'quiz') {
+                            try {
+                                var json = JSON.parse(data);
+                                form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = json.question || '';
+                                form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = json.options ? json.options.join(', ') : '';
+                                form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = json.correct || 0;
+                            } catch (e) {
+                                Notification.alert('Error', 'Failed to parse AI response');
+                            }
+                        } else if (type === 'info') {
+                            form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = prompt;
+                            form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = data;
+                        }
+                    }).catch(async (err) => {
+                        aiBtn.disabled = false;
+                        aiBtn.textContent = await Str.get_string('aiassist', 'mod_gear');
+                        Notification.alert('AI Error', err.message || 'Generation failed');
+                    });
+                }
+            });
+
+            // Cancel button.
+            form.querySelector('.gear-cancel-btn').addEventListener('click', () => {
+                form.classList.remove('active');
+            });
+
+            // Save button.
+            form.querySelector('.gear-save-btn').addEventListener('click', () => {
+                this.saveNewHotspot(form);
+            });
         }
 
         /**
@@ -1694,42 +1469,51 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * @param {HTMLElement} popup
          * @param {Object} hotspot
          */
+        /**
+         * Render quiz content using mustache.
+         * 
+         * @param {HTMLElement} popup
+         * @param {Object} hotspot
+         */
         renderQuizInPopup(popup, hotspot) {
             var contentDiv = popup.querySelector('.gear-hotspot-content');
             var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
             
             if (!config || !config.options) {
-                contentDiv.innerHTML += '<p class="text-danger">Invalid quiz configuration</p>';
+                Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
+                    contentDiv.innerHTML += '<p class="text-danger">' + msg + '</p>';
+                });
                 return;
             }
 
-            var html = '<div class="gear-quiz-container">';
-            html += '<form id="gear-quiz-form-' + hotspot.id + '">';
-            
-            config.options.forEach((opt, index) => {
-                html += '<div class="form-check">';
-                html += '<input class="form-check-input" type="radio" name="gear-quiz-option" id="q-opt-' + hotspot.id + '-' + index + '" value="' + index + '">';
-                html += '<label class="form-check-label" for="q-opt-' + hotspot.id + '-' + index + '">' + opt + '</label>';
-                html += '</div>';
-            });
-            
-            html += '<button type="button" class="btn btn-primary btn-sm mt-2 gear-quiz-submit">Submit</button>';
-            html += '<div class="gear-quiz-feedback mt-2"></div>';
-            html += '</form></div>';
-            
-            contentDiv.innerHTML += html;
-            
-            var submitBtn = popup.querySelector('.gear-quiz-submit');
-            submitBtn.addEventListener('click', () => {
-                var selected = popup.querySelector('input[name="gear-quiz-option"]:checked');
-                if (!selected) {
-                    Notification.alert('Warning', 'Please select an answer');
-                    return;
-                }
-                this.submitQuizAnswer(hotspot, selected.value, popup);
-            });
+            var context = {
+                id: hotspot.id,
+                options: config.options.map((opt, index) => ({
+                    index: index,
+                    text: opt
+                }))
+            };
+
+            Templates.render('mod_gear/quiz', context).then((html, js) => {
+                Templates.appendNodeContents(contentDiv, html, js);
+                
+                var submitBtn = popup.querySelector('.gear-quiz-submit');
+                submitBtn.addEventListener('click', () => {
+                    var selected = popup.querySelector('input[name="gear-quiz-option"]:checked');
+                    if (!selected) {
+                        Str.get_string('warning', 'core').then((warning) => {
+                            Notification.alert(warning, 'Please select an answer');
+                        });
+                        return;
+                    }
+                    this.submitQuizAnswer(hotspot, selected.value, popup);
+                });
+            }).catch(Notification.exception);
         }
 
+        /**
+         * Submit quiz answer.
+         */
         /**
          * Submit quiz answer.
          */
@@ -1741,18 +1525,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     hotspotid: hotspot.id,
                     answer: answer
                 }
-            }])[0].then((response) => {
+            }])[0].then(async (response) => {
                 var feedbackDiv = popup.querySelector('.gear-quiz-feedback');
                 var submitBtn = popup.querySelector('.gear-quiz-submit');
                 
                 if (response.correct) {
-                    feedbackDiv.innerHTML = '<span class="badge badge-success">Correct!</span> +' + response.score + ' pts';
+                    var msg = await Str.get_string('quiz_correct', 'mod_gear');
+                    feedbackDiv.innerHTML = '<span class="badge badge-success">' + msg + '</span> +' + response.score + ' pts';
                 } else {
-                    feedbackDiv.innerHTML = '<span class="badge badge-danger">Incorrect</span>';
+                    var msg = await Str.get_string('quiz_incorrect', 'mod_gear');
+                    feedbackDiv.innerHTML = '<span class="badge badge-danger">' + msg + '</span>';
                 }
                 
                 submitBtn.disabled = true;
-                // update tracking/grades UI if necessary
             }).catch(Notification.exception);
         }
         /**
