@@ -31,7 +31,8 @@ use core_privacy\local\request\writer;
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider {
+    \core_privacy\local\request\plugin\provider,
+    \core_privacy\local\request\userlist\provider {
     /**
      * Returns meta data about this system.
      *
@@ -46,6 +47,14 @@ class provider implements
             'duration' => 'privacy:metadata:gear_tracking:duration',
             'timecreated' => 'privacy:metadata:gear_tracking:timecreated',
         ], 'privacy:metadata:gear_tracking');
+
+        $collection->add_database_table('gear_sessions', [
+            'userid' => 'privacy:metadata:gear_sessions:userid',
+            'gearid' => 'privacy:metadata:gear_sessions:gearid',
+            'position' => 'privacy:metadata:gear_sessions:position',
+            'rotation' => 'privacy:metadata:gear_sessions:rotation',
+            'timemodified' => 'privacy:metadata:gear_sessions:timemodified',
+        ], 'privacy:metadata:gear_sessions');
 
         return $collection;
     }
@@ -64,12 +73,14 @@ class provider implements
                JOIN {course_modules} cm ON cm.id = c.instanceid AND c.contextlevel = :contextlevel
                JOIN {modules} m ON m.id = cm.module AND m.name = :modname
                JOIN {gear} g ON g.id = cm.instance
-               JOIN {gear_tracking} gt ON gt.gearid = g.id
-              WHERE gt.userid = :userid",
+               LEFT JOIN {gear_tracking} gt ON gt.gearid = g.id AND gt.userid = :userid1
+               LEFT JOIN {gear_sessions} gs ON gs.gearid = g.id AND gs.userid = :userid2
+              WHERE gt.id IS NOT NULL OR gs.id IS NOT NULL",
             [
                 'contextlevel' => CONTEXT_MODULE,
                 'modname' => 'gear',
-                'userid' => $userid,
+                'userid1' => $userid,
+                'userid2' => $userid,
             ]
         );
 
@@ -116,6 +127,24 @@ class provider implements
             if (!empty($data)) {
                 writer::with_context($context)->export_data([get_string('pluginname', 'mod_gear')], (object) ['tracking' => $data]);
             }
+
+            // Export session data.
+            $sessions = $DB->get_records('gear_sessions', ['gearid' => $cm->instance, 'userid' => $user->id]);
+            $sessiondata = [];
+            foreach ($sessions as $session) {
+                $sessiondata[] = (object) [
+                    'position' => $session->position,
+                    'rotation' => $session->rotation,
+                    'timemodified' => transform::datetime($session->timemodified),
+                ];
+            }
+
+            if (!empty($sessiondata)) {
+                writer::with_context($context)->export_related_data([
+                    get_string('hotspots', 'mod_gear'),
+                    get_string('leaderboard', 'mod_gear')
+                ], 'sessions', (object) ['sessions' => $sessiondata]);
+            }
         }
     }
 
@@ -137,6 +166,7 @@ class provider implements
         }
 
         $DB->delete_records('gear_tracking', ['gearid' => $cm->instance]);
+        $DB->delete_records('gear_sessions', ['gearid' => $cm->instance]);
     }
 
     /**
@@ -164,6 +194,72 @@ class provider implements
             }
 
             $DB->delete_records('gear_tracking', ['gearid' => $cm->instance, 'userid' => $userid]);
+            $DB->delete_records('gear_sessions', ['gearid' => $cm->instance, 'userid' => $userid]);
         }
+    }
+
+    /**
+     * Get the list of users who have data within a context.
+     *
+     * @param   \core_privacy\local\request\userlist $userlist The userlist to add the users to.
+     */
+    public static function get_users_in_context(\core_privacy\local\request\userlist $userlist) {
+        $context = $userlist->get_context();
+
+        if ($context->contextlevel != CONTEXT_MODULE) {
+            return;
+        }
+
+        $params = [
+            'instanceid' => $context->instanceid,
+            'modname' => 'gear',
+        ];
+
+        $sql = "SELECT userid
+                  FROM {gear_tracking} gt
+                  JOIN {gear} g ON g.id = gt.gearid
+                  JOIN {course_modules} cm ON cm.instance = g.id
+                  JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                 WHERE cm.id = :instanceid";
+
+        $userlist->add_from_sql('userid', $sql, $params);
+
+        $sql = "SELECT userid
+                  FROM {gear_sessions} gs
+                  JOIN {gear} g ON g.id = gs.gearid
+                  JOIN {course_modules} cm ON cm.instance = g.id
+                  JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                 WHERE cm.id = :instanceid";
+
+        $userlist->add_from_sql('userid', $sql, $params);
+    }
+
+    /**
+     * Delete multiple users within a single context.
+     *
+     * @param   \core_privacy\local\request\approved_userlist $userlist The approved context and user information to
+     * delete information for.
+     */
+    public static function delete_data_for_users(\core_privacy\local\request\approved_userlist $userlist) {
+        global $DB;
+
+        $context = $userlist->get_context();
+
+        if ($context->contextlevel != CONTEXT_MODULE) {
+            return;
+        }
+
+        $cm = get_coursemodule_from_id('gear', $context->instanceid);
+        if (!$cm) {
+            return;
+        }
+
+        $userids = $userlist->get_userids();
+
+        list($insql, $inparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $inparams['gearid'] = $cm->instance;
+
+        $DB->delete_records_select('gear_tracking', "gearid = :gearid AND userid $insql", $inparams);
+        $DB->delete_records_select('gear_sessions', "gearid = :gearid AND userid $insql", $inparams);
     }
 }
