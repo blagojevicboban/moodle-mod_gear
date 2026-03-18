@@ -5,6 +5,22 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-18
+
+### Added
+- Fully implemented Privacy Provider (GDPR) for mod_gear (metadata, export, and deletion of user tracking and session data)
+- Declared external location link (OpenAI) in Privacy Provider for transparency
+
+### Changed
+- Replaced direct PHP `curl_init()` with Moodle's `\curl` wrapper for OpenAI API calls to support site proxy and security settings
+- Reordered language strings (English and Serbian) alphabetically per Moodle standards
+- Successfully minified `viewer.js` with correct `async/await` syntax in AMD modules
+- Updated plugin version to 2026031800
+
+### Fixed
+- HTML validation error in `hotspot_popup.mustache` (moved `div` out of `h4`)
+- Repaired `async/await` scope issues in `viewer.js` that was preventing minification
+
 ## [1.1.0] - 2026-03-11
 
 ### Added
@@ -66,7 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD
 - Moodle 4.4+ compatibility
 
-[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.2.0...v1.0.0
 [0.2.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.1.1...v0.2.0
