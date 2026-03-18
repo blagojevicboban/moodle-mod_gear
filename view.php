@@ -64,9 +64,6 @@ $PAGE->set_title(format_string($gear->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
-// Load required CSS.
-$PAGE->requires->css('/mod/gear/styles.css');
-
 // Load Three.js BEFORE AMD to avoid RequireJS conflicts.
 // Using r128 which supports global THREE.OrbitControls and THREE.GLTFLoader.
 $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'), true);
