@@ -15,12 +15,16 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_gear/help_modal
-
-    Help modal for the GEAR viewer.
-
     @copyright  2026 Boban Blagojevic
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    @template mod_gear/help_modal
+
+    Example context (json):
+    {
+        "cmid": 123,
+        "canManage": true
+    }
 }}
 <div id="gear-help-modal-{{cmid}}" class="gear-modal" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
     <div class="gear-modal-dialog" style="background:#1a1a2e; color:white; padding:30px; border-radius:15px; max-width:400px; width:90%; position:relative; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">

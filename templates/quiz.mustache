@@ -15,12 +15,19 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_gear/quiz
-
-    Quiz form for hotspots.
-
     @copyright  2026 Boban Blagojevic
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    @template mod_gear/quiz
+
+    Example context (json):
+    {
+        "id": 1,
+        "options": [
+            {"index": 0, "text": "Option 1"},
+            {"index": 1, "text": "Option 2"}
+        ]
+    }
 }}
 <div class="gear-quiz-container">
     <form id="gear-quiz-form-{{id}}">

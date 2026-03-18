@@ -15,12 +15,19 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_gear/leaderboard_table
-
-    Leaderboard table content.
-
     @copyright  2026 Boban Blagojevic
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    @template mod_gear/leaderboard_table
+
+    Example context (json):
+    {
+        "has_scores": true,
+        "scores": [
+            {"rank": 1, "badge": "🏆", "fullname": "John Doe", "score": 100},
+            {"rank": 2, "badge": "🥈", "fullname": "Jane Smith", "score": 80}
+        ]
+    }
 }}
 {{#has_scores}}
 <table class="table table-striped">

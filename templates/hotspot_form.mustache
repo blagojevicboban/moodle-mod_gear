@@ -15,12 +15,28 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_gear/hotspot_form
-
-    Form for adding/editing hotspots.
-
     @copyright  2026 Boban Blagojevic
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    @template mod_gear/hotspot_form
+
+    Example context (json):
+    {
+        "cmid": 123,
+        "posX": 1,
+        "posY": 2,
+        "posZ": 3,
+        "hotspotId": 456,
+        "title": "Existing Hotspot",
+        "isInfo": true,
+        "isQuiz": false,
+        "isAudio": false,
+        "options": "Option 1, Option 2",
+        "correctAnswer": 0,
+        "points": 1,
+        "audioUrl": "",
+        "content": "This is existing content"
+    }
 }}
 <div id="gear-hotspot-form-{{cmid}}" class="gear-hotspot-popup active" data-pos-x="{{posX}}" data-pos-y="{{posY}}" data-pos-z="{{posZ}}" {{#hotspotId}}data-hotspot-id="{{hotspotId}}"{{/hotspotId}}>
     <div class="gear-hotspot-popup-inner gear-hotspot-form-inner">

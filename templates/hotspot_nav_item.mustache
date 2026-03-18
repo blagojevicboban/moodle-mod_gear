@@ -15,12 +15,17 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_gear/hotspot_nav_item
-
-    A single item in the hotspot navigation dropdown.
-
     @copyright  2026 Boban Blagojevic
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    @template mod_gear/hotspot_nav_item
+
+    Example context (json):
+    {
+        "id": 1,
+        "icon": "fa-info-circle",
+        "title": "Example Hotspot"
+    }
 }}
 <button class="dropdown-item gear-hotspot-nav-item" type="button" id="gear-hotspot-nav-item-{{id}}">
     <i class="fa {{icon}} mr-2"></i> {{title}}
