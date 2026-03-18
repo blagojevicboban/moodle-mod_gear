@@ -321,12 +321,21 @@ function gear_grade_item_update($gear, $grades = null) {
         $params['idnumber'] = (string)$idnumber;
     }
 
-    if (isset($gear->grade) && $gear->grade > 0) {
-        $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax'] = $gear->grade;
-        $params['grademin'] = 0;
-    } else {
-        $params['gradetype'] = GRADE_TYPE_NONE;
+    if (isset($gear->grade)) {
+        if ($gear->grade > 0) {
+            $params['gradetype'] = GRADE_TYPE_VALUE;
+            $params['grademax']  = $gear->grade;
+            $params['grademin']  = 0;
+        } else if ($gear->grade < 0) {
+            $params['gradetype'] = GRADE_TYPE_SCALE;
+            $params['scaleid']   = -$gear->grade;
+        } else {
+            $params['gradetype'] = GRADE_TYPE_NONE;
+        }
+    }
+
+    if (isset($gear->gradepass)) {
+        $params['gradepass'] = $gear->gradepass;
     }
 
     if ($grades === 'reset') {

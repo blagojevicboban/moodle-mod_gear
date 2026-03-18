@@ -114,6 +114,7 @@ class mod_gear_mod_form extends moodleform_mod {
         $mform->addHelpButton('edithotspots', 'edithotspots', 'gear');
 
         // Standard course module elements.
+        $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
 
         // Action buttons.
