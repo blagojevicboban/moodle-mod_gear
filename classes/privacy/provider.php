@@ -56,6 +56,10 @@ class provider implements
             'timemodified' => 'privacy:metadata:gear_sessions:timemodified',
         ], 'privacy:metadata:gear_sessions');
 
+        $collection->add_external_location_link('openai', [
+            'data' => 'privacy:metadata:external_openai:data',
+        ], 'privacy:metadata:external_openai');
+
         return $collection;
     }
 
@@ -142,7 +146,7 @@ class provider implements
             if (!empty($sessiondata)) {
                 writer::with_context($context)->export_related_data([
                     get_string('hotspots', 'mod_gear'),
-                    get_string('leaderboard', 'mod_gear')
+                    get_string('leaderboard', 'mod_gear'),
                 ], 'sessions', (object) ['sessions' => $sessiondata]);
             }
         }
@@ -256,7 +260,7 @@ class provider implements
 
         $userids = $userlist->get_userids();
 
-        list($insql, $inparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $inparams['gearid'] = $cm->instance;
 
         $DB->delete_records_select('gear_tracking', "gearid = :gearid AND userid $insql", $inparams);
