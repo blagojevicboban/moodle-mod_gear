@@ -142,7 +142,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
             if (typeof THREE === 'undefined') {
-                throw new Error('Three.js not loaded. Please check view.php.');
+                throw new Error(await Str.get_string('loading', 'mod_gear') + ': Three.js not loaded. Please check view.php.');
             }
         }
 
@@ -419,7 +419,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
         /**
          * Save current camera and model state.
          */
-        saveCurrentView() {
+        async saveCurrentView() {
             const camPos = this.camera.position;
             const targetPos = this.controls.target;
             
@@ -451,9 +451,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 }])[0];
             }
 
-            Promise.all([scenePromise, modelPromise]).then(() => {
+            Promise.all([scenePromise, modelPromise]).then(async () => {
                 Notification.addNotification({
-                    message: 'Scene view saved successfully',
+                    message: await Str.get_string('saveviewsuccess', 'mod_gear'),
                     type: 'success'
                 });
             }).catch(Notification.exception);
@@ -520,11 +520,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
          * 
          * @param {HTMLElement} modal
          */
-        fetchAndRenderLeaderboard(modal) {
+        async fetchAndRenderLeaderboard(modal) {
              modal.classList.add('active');
              modal.style.display = 'flex';
              var content = modal.querySelector('.gear-leaderboard-content');
-             content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+             content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> ' + await Str.get_string('loading', 'mod_gear') + '</div>';
              
              // Fetch data.
              Ajax.call([{
@@ -899,7 +899,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     icon: hotspot.icon || '',
                     config: (typeof hotspot.config === 'object') ? JSON.stringify(hotspot.config) : (hotspot.config || '')
                 }
-            }])[0].then(() => {
+            }])[0].then(async () => {
                 // Update mesh.
                 var mesh = this.hotspotMeshes.find(m => m.userData.id == id);
                 if (mesh) {
@@ -912,7 +912,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 this.canvas.style.cursor = 'auto';
 
                 Notification.addNotification({
-                    message: 'Hotspot moved successfully',
+                    message: await Str.get_string('hotspotmoved', 'mod_gear'),
                     type: 'success'
                 });
             }).catch(Notification.exception);
@@ -985,7 +985,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             Ajax.call([{
                 methodname: 'mod_gear_delete_hotspot',
                 args: { id: id }
-            }])[0].then(() => {
+            }])[0].then(async () => {
                 // Remove from data array.
                 this.hotspotsData = this.hotspotsData.filter(h => h.id != id);
                 
@@ -1003,7 +1003,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 this.renderHotspotsNav();
 
                 Notification.addNotification({
-                    message: 'Hotspot deleted',
+                    message: await Str.get_string('hotspotdeleted', 'mod_gear'),
                     type: 'success'
                 });
             }).catch(Notification.exception);
@@ -1012,41 +1012,47 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
         /**
          * Render hotspot list in the floating dropdown.
          */
-        renderHotspotsNav() {
+        async renderHotspotsNav() {
             var menu = this.container.querySelector('.gear-hotspots-menu');
             if (!menu) return;
 
             menu.innerHTML = '';
             
             if (this.hotspotsData.length === 0) {
-                menu.innerHTML = '<span class="dropdown-item-text text-muted">No hotspots yet</span>';
+                menu.innerHTML = '<span class="dropdown-item-text text-muted">' + await Str.get_string('nohotspots', 'mod_gear') + '</span>';
                 return;
             }
 
-            this.hotspotsData.forEach((hotspot) => {
+            for (const hotspot of this.hotspotsData) {
                 var icon = 'fa-dot-circle';
                 if (hotspot.type === 'quiz') icon = 'fa-question-circle';
                 if (hotspot.type === 'audio') icon = 'fa-volume-up';
 
-                Templates.render('mod_gear/hotspot_nav_item', {
-                    id: hotspot.id,
-                    icon: icon,
-                    title: hotspot.title || 'Point'
-                }).then((html, js) => {
-                    Templates.appendNodeContents(menu, html, js);
-                    var item = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
-                    item.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.focusHotspot(hotspot.id);
-                        // Close dropdown after selection.
-                        var dropdown = item.closest('.dropdown');
-                        if (dropdown) {
-                            dropdown.classList.remove('show');
-                            dropdown.querySelector('.dropdown-menu').classList.remove('show');
-                        }
+                try {
+                    const html = await Templates.render('mod_gear/hotspot_nav_item', {
+                        id: hotspot.id,
+                        icon: icon,
+                        title: hotspot.title || await Str.get_string('point', 'mod_gear')
                     });
-                }).catch(Notification.exception);
-            });
+                    
+                    Templates.appendNodeContents(menu, html, "");
+                    var item = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
+                    if (item) {
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.focusHotspot(hotspot.id);
+                            // Close dropdown after selection.
+                            var dropdown = item.closest('.dropdown');
+                            if (dropdown) {
+                                dropdown.classList.remove('show');
+                                dropdown.querySelector('.dropdown-menu').classList.remove('show');
+                            }
+                        });
+                    }
+                } catch (e) {
+                    Notification.exception(e);
+                }
+            }
         }
 
         /**
@@ -1115,7 +1121,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
          *
          * @param {Object} hotspot Hotspot data
          */
-        showHotspotPopup(hotspot) {
+        async showHotspotPopup(hotspot) {
             var audioContext = {};
             if (hotspot.type === 'audio' && hotspot.sound) {
                 audioContext = {
@@ -1128,7 +1134,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             var context = {
                 cmid: this.cmid,
                 canManage: this.canManage,
-                title: hotspot.title || 'Info',
+                title: hotspot.title || await Str.get_string('hotspottype_info', 'mod_gear'),
                 content: hotspot.content || '',
                 isAudio: hotspot.type === 'audio',
                 ...audioContext
@@ -1157,19 +1163,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                         popup.classList.remove('active');
                     });
 
-                    popup.querySelector('.gear-move-hotspot')?.addEventListener('click', (e) => {
+                    popup.querySelector('.gear-move-hotspot')?.addEventListener('click', async (e) => {
                         e.stopPropagation();
                         this.movingHotspotId = hotspot.id;
                         this.canvas.style.cursor = 'move';
                         popup.classList.remove('active');
                         Notification.addNotification({
-                            message: 'Click on the model to place the hotspot',
+                            message: await Str.get_string('clicktoplace', 'mod_gear'),
                             type: 'info'
                         });
                     });
 
-                    popup.querySelector('.gear-delete-hotspot')?.addEventListener('click', () => {
-                        if (window.confirm('Are you sure you want to delete this hotspot?')) {
+                    popup.querySelector('.gear-delete-hotspot')?.addEventListener('click', async () => {
+                        if (window.confirm(await Str.get_string('deletehotspotconfirm', 'mod_gear'))) {
                             this.deleteHotspot(hotspot.id);
                             popup.classList.remove('active');
                         }
@@ -1281,7 +1287,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 var prompt = window.prompt(await Str.get_string('ai_prompt', 'mod_gear'), "");
                 if (prompt) {
                     aiBtn.disabled = true;
-                    aiBtn.textContent = 'Generating...';
+                    aiBtn.textContent = await Str.get_string('generating', 'mod_gear');
                     this.generateContent(prompt, type).then(async (data) => {
                         aiBtn.disabled = false;
                         aiBtn.textContent = await Str.get_string('aiassist', 'mod_gear');
@@ -1293,7 +1299,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                                 form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = json.options ? json.options.join(', ') : '';
                                 form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = json.correct || 0;
                             } catch (e) {
-                                Notification.alert('Error', 'Failed to parse AI response');
+                                Notification.alert(
+                                    await Str.get_string('error', 'core'),
+                                    await Str.get_string('aifail', 'mod_gear')
+                                );
                             }
                         } else if (type === 'info') {
                             form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = prompt;
@@ -1302,7 +1311,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     }).catch(async (err) => {
                         aiBtn.disabled = false;
                         aiBtn.textContent = await Str.get_string('aiassist', 'mod_gear');
-                        Notification.alert('AI Error', err.message || 'Generation failed');
+                        Notification.alert(
+                            await Str.get_string('error', 'core'),
+                            err.message || await Str.get_string('generationfailed', 'mod_gear')
+                        );
                     });
                 }
             });
@@ -1323,7 +1335,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
          *
          * @param {HTMLElement} form The form element
          */
-        saveNewHotspot(form) {
+        async saveNewHotspot(form) {
             var titleInput = form.querySelector('#gear-hotspot-input-title-' + this.cmid);
             var contentInput = form.querySelector('#gear-hotspot-input-content-' + this.cmid);
             var title = titleInput.value.trim();
@@ -1348,7 +1360,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 config.points = parseInt(points, 10);
                 
                 if (config.options.length < 2) {
-                     Notification.alert('Error', 'Please provide at least 2 options');
+                     Notification.alert(
+                        await Str.get_string('error', 'core'),
+                        await Str.get_string('quiz_minoptions', 'mod_gear')
+                     );
                      return;
                 }
             } else if (type === 'audio') {
@@ -1357,7 +1372,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             }
 
             if (!title) {
-                Notification.alert('Error', 'Please enter a title');
+                Notification.alert(
+                    await Str.get_string('error', 'core'),
+                    await Str.get_string('entertitle_error', 'mod_gear')
+                );
                 return;
             }
 
@@ -1378,7 +1396,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     icon: (type === 'quiz') ? 'question' : 'info',
                     config: JSON.stringify(config)
                 }
-            }])[0].then((response) => {
+            }])[0].then(async (response) => {
                 // Add hotspot mesh.
                 var geometry = new THREE.SphereGeometry(0.08, 16, 16);
                 var material = new THREE.MeshBasicMaterial({
@@ -1454,7 +1472,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 // Close form.
                 form.classList.remove('active');
                 Notification.addNotification({
-                    message: 'Hotspot saved successfully',
+                    message: await Str.get_string('hotspotsaved', 'mod_gear'),
                     type: 'success'
                 });
 
@@ -1498,12 +1516,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 Templates.appendNodeContents(contentDiv, html, js);
                 
                 var submitBtn = popup.querySelector('.gear-quiz-submit');
-                submitBtn.addEventListener('click', () => {
+                submitBtn.addEventListener('click', async () => {
                     var selected = popup.querySelector('input[name="gear-quiz-option"]:checked');
                     if (!selected) {
-                        Str.get_string('warning', 'core').then((warning) => {
-                            Notification.alert(warning, 'Please select an answer');
-                        });
+                        Notification.alert(
+                            await Str.get_string('warning', 'core'),
+                            await Str.get_string('quiz_selectanswer', 'mod_gear')
+                        );
                         return;
                     }
                     this.submitQuizAnswer(hotspot, selected.value, popup);
@@ -1547,7 +1566,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
          * @param {string} type Content type (info/quiz).
          * @return {Promise}
          */
-        generateContent(prompt, type) {
+        async generateContent(prompt, type) {
             return Ajax.call([{
                 methodname: 'mod_gear_generate_content',
                 args: {
@@ -1555,11 +1574,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     prompt: prompt,
                     type: type
                 }
-            }])[0].then((response) => {
+            }])[0].then(async (response) => {
                 if (response.success) {
                     return response.content;
                 } else {
-                    return Promise.reject('Generation failed');
+                    return Promise.reject(await Str.get_string('generationfailed', 'mod_gear'));
                 }
             });
         }

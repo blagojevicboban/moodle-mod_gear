@@ -36,20 +36,20 @@
         <button class="gear-hotspot-close" aria-label="{{#str}}close, core{{/str}}">&times;</button>
         <h4 class="gear-hotspot-title">
             <span class="gear-hotspot-title-text">{{title}}</span>
-            {{#canManage}}
-            <div class="btn-group ml-2">
-                <button class="btn btn-sm btn-outline-secondary gear-edit-hotspot" title="{{#str}}edit{{/str}}">
-                    <i class="fa fa-pencil-alt"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-info gear-move-hotspot" title="{{#str}}move, mod_gear{{/str}}">
-                    <i class="fa fa-arrows-alt"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger gear-delete-hotspot" title="{{#str}}delete{{/str}}">
-                    <i class="fa fa-trash"></i>
-                </button>
-            </div>
-            {{/canManage}}
         </h4>
+        {{#canManage}}
+        <div class="btn-group ml-2 mb-2">
+            <button class="btn btn-sm btn-outline-secondary gear-edit-hotspot" title="{{#str}}edit{{/str}}">
+                <i class="fa fa-pencil-alt"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-info gear-move-hotspot" title="{{#str}}move, mod_gear{{/str}}">
+                <i class="fa fa-arrows-alt"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger gear-delete-hotspot" title="{{#str}}delete{{/str}}">
+                <i class="fa fa-trash"></i>
+            </button>
+        </div>
+        {{/canManage}}
         <div class="gear-hotspot-content">
             {{{content}}}
             {{#isAudio}}
