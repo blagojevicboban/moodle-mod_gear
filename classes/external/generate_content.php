@@ -102,19 +102,16 @@ class generate_content extends external_api {
             'temperature' => 0.7,
         ];
 
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($apidata));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        require_once($CFG->libdir . '/filelib.php');
+        $curl = new \curl();
+        $curl->setHeader([
             'Content-Type: application/json',
             'Authorization: Bearer ' . $apikey,
         ]);
-        // Moodle proxy support if needed, simpler for now.
 
-        $response = curl_exec($ch);
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        $response = $curl->post($url, json_encode($apidata));
+        $info = $curl->get_info();
+        $httpcode = $info['http_code'] ?? 0;
 
         if ($httpcode !== 200 || !$response) {
             throw new \moodle_exception('error:apierror', 'mod_gear', '', $httpcode);
