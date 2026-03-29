@@ -20,7 +20,23 @@ jobs:
       - name: Create release zip
         run: |
           mkdir -p release/gear
-          rsync -av --exclude='.git' --exclude='.github' --exclude='tests' --exclude='.gitignore' ./ release/gear/
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='.eslintignore' \
+            --exclude='.stylelintignore' \
+            --exclude='.phpcs.xml.dist' \
+            --exclude='.moodle-plugin-ci.yml' \
+            --exclude='tests' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='Gruntfile.js' \
+            --exclude='package.json' \
+            --exclude='package-lock.json' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            ./ release/gear/
           cd release && zip -r ../moodle-mod_gear-${{ steps.version.outputs.VERSION }}.zip gear
 
       - name: Create GitHub Release
