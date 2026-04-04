@@ -84,6 +84,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 this.setupControls();
                 this.setupRaycaster();
                 this.setupEventListeners();
+                
+                // Wait for overlay UI to be added to DOM before proceeding
+                await this.setupOverlay();
 
                 // Fetch data from server to avoid large arguments in js_call_amd.
                 await this.fetchSceneData();
@@ -322,8 +325,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 });
             }
 
-            // Overlay controls (Floating on scene).
-            this.setupOverlay();
+            // (Overlay controls are now awaited in init)
 
             // Initialize tooltips for control hints using native Bootstrap API.
             // We avoid jQuery's .tooltip() plugin as it may not be available in Moodle 4.x AMD context.
@@ -342,8 +344,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
         /**
          * Setup overlay controls (Hotspots & Leaderboard floating on scene).
          */
-        setupOverlay() {
-            Templates.render('mod_gear/overlay_controls', {
+        async setupOverlay() {
+            return Templates.render('mod_gear/overlay_controls', {
                 cmid: this.cmid,
                 canManage: this.canManage
             }).then((html, js) => {
@@ -928,6 +930,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             var pos;
 
             if (!this.hotspotsData || this.hotspotsData.length === 0) {
+                this.renderHotspotsNav();
                 return;
             }
 
@@ -1033,7 +1036,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     const html = await Templates.render('mod_gear/hotspot_nav_item', {
                         id: hotspot.id,
                         icon: icon,
-                        title: hotspot.title || await Str.get_string('point', 'mod_gear')
+                        title: hotspot.title || await Str.get_string('point', 'mod_gear'),
+                        canManage: this.canManage
                     });
                     
                     Templates.appendNodeContents(menu, html, "");
@@ -1049,6 +1053,33 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                                 dropdown.querySelector('.dropdown-menu').classList.remove('show');
                             }
                         });
+
+                        if (this.canManage) {
+                            var editBtn = document.getElementById('gear-hotspot-nav-edit-' + hotspot.id);
+                            if (editBtn) {
+                                editBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    var pos = hotspot.position || {x: 0, y: 0, z: 0};
+                                    this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
+                                    // Close dropdown
+                                    var dropdown = item.closest('.dropdown');
+                                    if (dropdown) {
+                                        dropdown.classList.remove('show');
+                                        dropdown.querySelector('.dropdown-menu').classList.remove('show');
+                                    }
+                                });
+                            }
+
+                            var deleteBtn = document.getElementById('gear-hotspot-nav-delete-' + hotspot.id);
+                            if (deleteBtn) {
+                                deleteBtn.addEventListener('click', async (e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm(await Str.get_string('deletehotspotconfirm', 'mod_gear'))) {
+                                        this.deleteHotspot(hotspot.id);
+                                    }
+                                });
+                            }
+                        }
                     }
                 } catch (e) {
                     Notification.exception(e);
@@ -1136,9 +1167,37 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             if (hotspot.type === 'video' && hotspot.config) {
                 var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
                 if (config.videoUrl) {
+                    var finalUrl = config.videoUrl;
+                    var isIframe = false;
+
+                    if (finalUrl.indexOf('youtube.com') !== -1 || finalUrl.indexOf('youtu.be') !== -1) {
+                        isIframe = true;
+                        var videoId = '';
+                        if (finalUrl.indexOf('youtube.com/watch') !== -1) {
+                            var urlObj = new URL(finalUrl);
+                            var params = new URLSearchParams(urlObj.search);
+                            videoId = params.get('v');
+                        } else if (finalUrl.indexOf('youtu.be/') !== -1) {
+                            videoId = finalUrl.split('youtu.be/')[1].split('?')[0];
+                        } else if (finalUrl.indexOf('youtube.com/embed/') !== -1) {
+                            videoId = finalUrl.split('youtube.com/embed/')[1].split('?')[0];
+                        }
+                        if (videoId) {
+                            finalUrl = 'https://www.youtube.com/embed/' + videoId;
+                        }
+                    } else if (finalUrl.indexOf('vimeo.com') !== -1) {
+                        isIframe = true;
+                        if (finalUrl.indexOf('player.vimeo.com') === -1) {
+                            var vimeoId = finalUrl.split('vimeo.com/')[1].split('/')[0].split('?')[0];
+                            if (vimeoId) {
+                                finalUrl = 'https://player.vimeo.com/video/' + vimeoId;
+                            }
+                        }
+                    }
+
                     videoContext.isVideo = true;
-                    videoContext.videoUrl = config.videoUrl;
-                    videoContext.isIframe = config.videoUrl.indexOf('youtube.com') !== -1 || config.videoUrl.indexOf('youtu.be') !== -1 || config.videoUrl.indexOf('vimeo.com') !== -1;
+                    videoContext.videoUrl = finalUrl;
+                    videoContext.isIframe = isIframe;
                 }
             }
 
@@ -1162,24 +1221,34 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 
                 var popup = document.getElementById('gear-hotspot-popup-' + this.cmid);
                 popup.classList.add('active');
+                
+                const closePopup = () => {
+                    popup.classList.remove('active');
+                    popup.querySelectorAll('iframe').forEach(f => {
+                        var src = f.src;
+                        f.src = '';
+                        f.src = src;
+                    });
+                    popup.querySelectorAll('video, audio').forEach(m => m.pause());
+                };
 
                 // Event Listeners.
                 popup.querySelector('.gear-hotspot-close').addEventListener('click', () => {
-                    popup.classList.remove('active');
+                    closePopup();
                 });
 
                 if (this.canManage) {
                     popup.querySelector('.gear-edit-hotspot')?.addEventListener('click', () => {
                         var pos = hotspot.position || {x: 0, y: 0, z: 0};
                         this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
-                        popup.classList.remove('active');
+                        closePopup();
                     });
 
                     popup.querySelector('.gear-move-hotspot')?.addEventListener('click', async (e) => {
                         e.stopPropagation();
                         this.movingHotspotId = hotspot.id;
                         this.canvas.style.cursor = 'move';
-                        popup.classList.remove('active');
+                        closePopup();
                         Notification.addNotification({
                             message: await Str.get_string('clicktoplace', 'mod_gear'),
                             type: 'info'
@@ -1189,7 +1258,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     popup.querySelector('.gear-delete-hotspot')?.addEventListener('click', async () => {
                         if (window.confirm(await Str.get_string('deletehotspotconfirm', 'mod_gear'))) {
                             this.deleteHotspot(hotspot.id);
-                            popup.classList.remove('active');
+                            closePopup();
                         }
                     });
                 }

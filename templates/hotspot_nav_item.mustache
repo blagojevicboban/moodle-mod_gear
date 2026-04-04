@@ -27,6 +27,18 @@
         "title": "Example Hotspot"
     }
 }}
-<button class="dropdown-item gear-hotspot-nav-item" type="button" id="gear-hotspot-nav-item-{{id}}">
-    <i class="fa {{icon}} mr-2"></i> {{title}}
-</button>
+<div class="dropdown-item gear-hotspot-nav-item" id="gear-hotspot-nav-item-{{id}}" style="cursor: pointer; padding-right: 0.5rem;">
+    <div class="gear-hotspot-nav-title flex-grow-1 text-truncate" style="max-width: 180px;">
+        <i class="fa {{icon}} mr-2"></i> {{title}}
+    </div>
+    {{#canManage}}
+    <div class="gear-hotspot-nav-actions d-flex align-items-center">
+        <button type="button" class="btn btn-sm btn-link text-white p-1 ml-1 gear-nav-edit" id="gear-hotspot-nav-edit-{{id}}">
+            <i class="fa fa-edit"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-link text-danger p-1 ml-1 gear-nav-delete" id="gear-hotspot-nav-delete-{{id}}">
+            <i class="fa fa-trash"></i>
+        </button>
+    </div>
+    {{/canManage}}
+</div>

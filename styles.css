@@ -24,6 +24,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+:root {
+    --primary: #0f6cff;
+    --primary-dark: #0b57cc;
+}
+
 /* Container */
 .gear-activity {
     margin: 1rem 0;
@@ -497,12 +502,12 @@
 }
 
 .gear-hotspots-menu {
-    background: rgba(26, 26, 46, 0.95);
+    background: rgba(26, 26, 46, 0.95) !important;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
-    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+    border-radius: 12px !important;
+    padding: 0.5rem !important;
     min-width: 220px;
     margin-top: 5px !important;
     right: 0 !important; /* Dynamic in JS handles left usually, but we force right alignment */
@@ -519,6 +524,13 @@
 .gear-delete-hotspot:hover {
     background: #dc3545 !important;
     color: #fff !important;
+}
+
+.gear-hotspots-menu .dropdown-item-text {
+    color: rgba(255, 255, 255, 0.7) !important;
+    display: block;
+    text-align: center;
+    padding: 0.5rem;
 }
 
 .gear-edit-hotspot {
