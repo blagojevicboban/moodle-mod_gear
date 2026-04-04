@@ -1027,6 +1027,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 var icon = 'fa-dot-circle';
                 if (hotspot.type === 'quiz') icon = 'fa-question-circle';
                 if (hotspot.type === 'audio') icon = 'fa-volume-up';
+                if (hotspot.type === 'video') icon = 'fa-video';
 
                 try {
                     const html = await Templates.render('mod_gear/hotspot_nav_item', {
@@ -1131,13 +1132,24 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 };
             }
 
+            var videoContext = {};
+            if (hotspot.type === 'video' && hotspot.config) {
+                var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                if (config.videoUrl) {
+                    videoContext.isVideo = true;
+                    videoContext.videoUrl = config.videoUrl;
+                    videoContext.isIframe = config.videoUrl.indexOf('youtube.com') !== -1 || config.videoUrl.indexOf('youtu.be') !== -1 || config.videoUrl.indexOf('vimeo.com') !== -1;
+                }
+            }
+
             var context = {
                 cmid: this.cmid,
                 canManage: this.canManage,
                 title: hotspot.title || await Str.get_string('hotspottype_info', 'mod_gear'),
                 content: hotspot.content || '',
                 isAudio: hotspot.type === 'audio',
-                ...audioContext
+                ...audioContext,
+                ...videoContext
             };
 
             Templates.render('mod_gear/hotspot_popup', context).then((html, js) => {
@@ -1237,6 +1249,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 context.isInfo = hotspotToEdit.type === 'info';
                 context.isQuiz = hotspotToEdit.type === 'quiz';
                 context.isAudio = hotspotToEdit.type === 'audio';
+                context.isVideo = hotspotToEdit.type === 'video';
 
                 if (hotspotToEdit.type === 'quiz' && hotspotToEdit.config) {
                     var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
@@ -1246,6 +1259,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 } else if (hotspotToEdit.type === 'audio' && hotspotToEdit.config) {
                     var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
                     context.audioUrl = config.audioUrl || '';
+                } else if (hotspotToEdit.type === 'video' && hotspotToEdit.config) {
+                    var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
+                    context.videoUrl = config.videoUrl || '';
                 }
             }
 
@@ -1274,10 +1290,12 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             var typeSelect = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
             var quizFields = form.querySelector('#gear-hotspot-quiz-fields-' + this.cmid);
             var audioFields = form.querySelector('#gear-hotspot-audio-fields-' + this.cmid);
+            var videoFields = form.querySelector('#gear-hotspot-video-fields-' + this.cmid);
             
             typeSelect.addEventListener('change', () => {
                 quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
                 audioFields.style.display = (typeSelect.value === 'audio') ? 'block' : 'none';
+                videoFields.style.display = (typeSelect.value === 'video') ? 'block' : 'none';
             });
 
             // AI Assist button.
@@ -1369,6 +1387,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             } else if (type === 'audio') {
                 var audioUrl = form.querySelector('#gear-hotspot-input-audiourl-' + this.cmid).value.trim();
                 config.audioUrl = audioUrl;
+            } else if (type === 'video') {
+                var videoUrl = form.querySelector('#gear-hotspot-input-videourl-' + this.cmid).value.trim();
+                config.videoUrl = videoUrl;
             }
 
             if (!title) {

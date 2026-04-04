@@ -14,7 +14,8 @@
 | 🎮 **3D Viewer** | Display glTF/GLB models with orbit controls |
 | 📱 **AR Mode** | View 3D content in augmented reality |
 | 🥽 **VR Mode** | Immersive VR experience with headsets |
-| 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio) |
+| 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video) |
+| 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
 | ✨ **AI Assist** | Generate hotspot content and quizzes using AI |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
@@ -66,6 +67,7 @@ php admin/cli/upgrade.php
     -   **Info**: Simple text description.
     -   **Quiz**: Multiple choice questions with automated grading.
     -   **Audio**: Positional audio (upload .mp3/wav URL).
+    -   **Video**: Embed videos (MP4, YouTube, Vimeo URL).
 5.  **✨ AI Assistant**:
     -   In the Hotspot editor, enter a short prompt and click **AI Assist**.
     -   For **Quizzes**, the AI will automatically generate options and select the correct answer.

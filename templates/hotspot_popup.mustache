@@ -60,6 +60,18 @@
                 <div class="small text-muted mt-1"><i class="fa fa-volume-up"></i> {{#str}}spatialaudio, mod_gear{{/str}}</div>
             </div>
             {{/isAudio}}
+            {{#isVideo}}
+            <div class="gear-video-container mt-3">
+                {{#isIframe}}
+                <div class="embed-responsive embed-responsive-16by9">
+                    <iframe class="embed-responsive-item" src="{{videoUrl}}" allowfullscreen></iframe>
+                </div>
+                {{/isIframe}}
+                {{^isIframe}}
+                <video src="{{videoUrl}}" class="w-100" controls controlsList="nodownload"></video>
+                {{/isIframe}}
+            </div>
+            {{/isVideo}}
         </div>
     </div>
 </div>
