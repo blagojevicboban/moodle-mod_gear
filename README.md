@@ -14,8 +14,9 @@
 | 🎮 **3D Viewer** | Display glTF/GLB models with orbit controls |
 | 📱 **AR Mode** | View 3D content in augmented reality |
 | 🥽 **VR Mode** | Immersive VR experience with headsets |
-| 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video) |
+| 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video, Teleport) |
 | 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
+| 🧩 **Gamification** | Branching scenarios & escape-room style conditional unlocking |
 | ✨ **AI Assist** | Generate hotspot content and quizzes using AI |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
@@ -68,7 +69,10 @@ php admin/cli/upgrade.php
     -   **Quiz**: Multiple choice questions with automated grading.
     -   **Audio**: Positional audio (upload .mp3/wav URL).
     -   **Video**: Embed videos (MP4, YouTube, Vimeo URL).
-5.  **✨ AI Assistant**:
+    -   **Teleport**: Seamlessly fly the camera to new locations.
+5.  **Branching Scenarios**:
+    -   Set a **"Requires Quiz (Unlock)"** condition on any hotspot to hide it until a student correctly answers a specific 3D quiz.
+6.  **✨ AI Assistant**:
     -   In the Hotspot editor, enter a short prompt and click **AI Assist**.
     -   For **Quizzes**, the AI will automatically generate options and select the correct answer.
 

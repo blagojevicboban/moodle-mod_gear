@@ -5,6 +5,13 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-04-05
+
+### Added
+- **Gamification & Branching Scenarios**: Hotspots can now be locked until a specific quiz is completed correctly. This enables "Escape Room" style learning where solving puzzles unlocks new areas or information.
+- **Teleport Waypoints**: A new hotspot type that doesn't show a popup but instead seamlessly flies the camera to a new location in the 3D scene, ideal for guided navigation.
+- **Popup Animation**: Unlocked hotspots now appear with a smooth scaling "pop" animation when their condition is met.
+
 ## [1.3.0] - 2026-04-04
 
 ### Added
@@ -102,7 +109,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD
 - Moodle 4.4+ compatibility
 
-[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.0...v1.2.1

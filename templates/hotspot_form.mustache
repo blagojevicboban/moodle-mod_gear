@@ -55,6 +55,7 @@
                     <option value="quiz" {{#isQuiz}}selected{{/isQuiz}}>{{#str}}hotspottype_quiz, mod_gear{{/str}}</option>
                     <option value="audio" {{#isAudio}}selected{{/isAudio}}>{{#str}}hotspottype_audio, mod_gear{{/str}}</option>
                     <option value="video" {{#isVideo}}selected{{/isVideo}}>{{#str}}hotspottype_video, mod_gear{{/str}}</option>
+                    <option value="teleport" {{#isTeleport}}selected{{/isTeleport}}>{{#str}}hotspottype_teleport, mod_gear{{/str}}</option>
                 </select>
                 <button type="button" class="btn btn-info gear-ai-btn" title="{{#str}}aiassist_help, mod_gear{{/str}}">{{#str}}aiassist, mod_gear{{/str}}</button>
             </div>
@@ -87,6 +88,16 @@
                 <label for="gear-hotspot-input-videourl-{{cmid}}">{{#str}}videourl, mod_gear{{/str}}</label>
                 <input type="text" id="gear-hotspot-input-videourl-{{cmid}}" class="form-control" placeholder="{{#str}}videourl_help, mod_gear{{/str}}" value="{{videoUrl}}">
             </div>
+        </div>
+
+        <div class="gear-form-group">
+            <label for="gear-hotspot-input-requires-{{cmid}}" title="{{#str}}requires_hotspot_help, mod_gear{{/str}}">{{#str}}requires_hotspot, mod_gear{{/str}}</label>
+            <select id="gear-hotspot-input-requires-{{cmid}}" class="form-control">
+                <option value="">-</option>
+                {{#quizOptions}}
+                    <option value="{{id}}" {{#selected}}selected{{/selected}}>{{title}}</option>
+                {{/quizOptions}}
+            </select>
         </div>
 
         <div class="gear-form-group">

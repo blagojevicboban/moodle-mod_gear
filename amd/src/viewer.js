@@ -52,6 +52,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.vrEnabled = options.vr_enabled || false;
             this.modelsData = [];
             this.hotspotsData = [];
+            this.completedQuizzes = []; // Track gamification progress
             this.canManage = options.canmanage || false;
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
@@ -871,7 +872,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
 
                 if (intersects.length > 0) {
                     var hotspotMesh = intersects[0].object;
-                    this.showHotspotPopup(hotspotMesh.userData);
+                    if (hotspotMesh.visible) {
+                        if (hotspotMesh.userData.type === 'teleport') {
+                            this.focusHotspot(hotspotMesh.userData.id);
+                        } else {
+                            this.showHotspotPopup(hotspotMesh.userData);
+                        }
+                    }
                 }
             });
         }
@@ -948,6 +955,15 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 pos = hotspot.position || {x: 0, y: 0, z: 0};
                 sphere.position.set(pos.x, pos.y, pos.z);
                 sphere.userData = hotspot;
+
+                // Branching logic
+                if (hotspot.config) {
+                    var hConfig = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                    if (hConfig.requires_id && !this.completedQuizzes.includes(parseInt(hConfig.requires_id, 10)) && !this.canManage) {
+                        sphere.visible = false;
+                        sphere.userData.requires_id = parseInt(hConfig.requires_id, 10);
+                    }
+                }
                 
                 // Audio Support.
                 if (hotspot.type === 'audio' && hotspot.config) {
@@ -1027,10 +1043,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             }
 
             for (const hotspot of this.hotspotsData) {
+                // Check branching
+                if (hotspot.config) {
+                     var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                     if (config.requires_id && !this.completedQuizzes.includes(parseInt(config.requires_id, 10)) && !this.canManage) {
+                         continue; // Hide from students if locked
+                     }
+                }
+
                 var icon = 'fa-dot-circle';
                 if (hotspot.type === 'quiz') icon = 'fa-question-circle';
                 if (hotspot.type === 'audio') icon = 'fa-volume-up';
                 if (hotspot.type === 'video') icon = 'fa-video';
+                if (hotspot.type === 'teleport') icon = 'fa-street-view';
 
                 try {
                     const html = await Templates.render('mod_gear/hotspot_nav_item', {
@@ -1130,8 +1155,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             // Stop blinking after 3 seconds.
             setTimeout(() => this.stopBlinking(), 3000);
 
-            // Show popup.
-            this.showHotspotPopup(hotspotData);
+            if (hotspotData.type !== 'teleport') {
+                this.showHotspotPopup(hotspotData);
+            }
         }
 
         /**
@@ -1307,6 +1333,15 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 isInfo: true
             };
 
+            var quizOptions = this.hotspotsData
+                .filter(h => h.type === 'quiz' && (!hotspotToEdit || h.id != hotspotToEdit.id))
+                .map(h => ({
+                    id: h.id,
+                    title: h.title,
+                    selected: hotspotToEdit && hotspotToEdit.config && (typeof hotspotToEdit.config === 'string' ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config).requires_id == h.id
+                }));
+            context.quizOptions = quizOptions;
+
             if (hotspotToEdit) {
                 var pos = hotspotToEdit.position || point;
                 context.hotspotId = hotspotToEdit.id;
@@ -1319,6 +1354,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 context.isQuiz = hotspotToEdit.type === 'quiz';
                 context.isAudio = hotspotToEdit.type === 'audio';
                 context.isVideo = hotspotToEdit.type === 'video';
+                context.isTeleport = hotspotToEdit.type === 'teleport';
 
                 if (hotspotToEdit.type === 'quiz' && hotspotToEdit.config) {
                     var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
@@ -1436,6 +1472,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             var typeInput = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
             var type = typeInput.value;
             var config = {};
+            
+            var requiresInput = form.querySelector('#gear-hotspot-input-requires-' + this.cmid);
+            if (requiresInput && requiresInput.value) {
+                config.requires_id = requiresInput.value;
+            }
             
             if (type === 'quiz') {
                 var optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
@@ -1641,6 +1682,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 if (response.correct) {
                     var msg = await Str.get_string('quiz_correct', 'mod_gear');
                     feedbackDiv.innerHTML = '<span class="badge badge-success">' + msg + '</span> +' + response.score + ' pts';
+                    this.completedQuizzes.push(hotspot.id);
+                    this.checkHotspotUnlocks();
                 } else {
                     var msg = await Str.get_string('quiz_incorrect', 'mod_gear');
                     feedbackDiv.innerHTML = '<span class="badge badge-danger">' + msg + '</span>';
@@ -1648,6 +1691,37 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 
                 submitBtn.disabled = true;
             }).catch(Notification.exception);
+        }
+
+        /**
+         * Check if gamification condition unlocks any hotspots
+         */
+        checkHotspotUnlocks() {
+            let unlocked = false;
+            if (this.hotspotMeshes) {
+                this.hotspotMeshes.forEach(mesh => {
+                    if (!mesh.visible && mesh.userData && mesh.userData.requires_id) {
+                        if (this.completedQuizzes.includes(parseInt(mesh.userData.requires_id, 10))) {
+                            mesh.visible = true;
+                            unlocked = true;
+                            // Add pop animation
+                            mesh.scale.set(0.01, 0.01, 0.01);
+                            let scaleTarget = this.hotspotScale;
+                            let growth = setInterval(() => {
+                                let curr = mesh.scale.x;
+                                if (curr >= scaleTarget) {
+                                    clearInterval(growth);
+                                } else {
+                                    mesh.scale.set(curr + 0.1, curr + 0.1, curr + 0.1);
+                                }
+                            }, 30);
+                        }
+                    }
+                });
+            }
+            if (unlocked) {
+                this.renderHotspotsNav();
+            }
         }
         /**
          * Generate content using AI.
