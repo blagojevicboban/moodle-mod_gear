@@ -2166,51 +2166,53 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             
             // Start sync if enabled.
             var sync = new SyncManager(viewer);
+
+            // UI listeners for collaboration (Voice & Chat).
             document.addEventListener('gear:scene:loaded', (e) => {
                 if (e.detail.cmid == options.cmid) {
                     sync.start();
+
+                    // Voice chat button listener.
+                    var voiceBtn = document.getElementById('gear-voice-btn-' + options.cmid);
+                    if (voiceBtn) {
+                        voiceBtn.addEventListener('click', () => {
+                            sync.joinVoiceChat();
+                        });
+                    }
+
+                    // Chat UI listeners.
+                    var chatToggleBtn = document.getElementById('gear-chat-toggle-btn-' + options.cmid);
+                    var chatPanel = document.getElementById('gear-chat-panel-' + options.cmid);
+                    var chatCloseBtn = document.getElementById('gear-chat-close-' + options.cmid);
+                    var chatInput = document.getElementById('gear-chat-input-' + options.cmid);
+                    var chatSend = document.getElementById('gear-chat-send-' + options.cmid);
+
+                    if (chatToggleBtn && chatPanel) {
+                        chatToggleBtn.addEventListener('click', () => {
+                            chatPanel.classList.toggle('d-none');
+                            if (!chatPanel.classList.contains('d-none')) {
+                                chatInput.focus();
+                            }
+                        });
+                        chatCloseBtn.addEventListener('click', () => {
+                            chatPanel.classList.add('d-none');
+                        });
+
+                        chatSend.addEventListener('click', () => {
+                            if (chatInput.value.trim() !== '') {
+                                sync.sendChatMessage(chatInput.value.trim());
+                                chatInput.value = '';
+                            }
+                        });
+                        chatInput.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+                                sync.sendChatMessage(chatInput.value.trim());
+                                chatInput.value = '';
+                            }
+                        });
+                    }
                 }
             });
-            
-            // Voice chat button listener
-            var voiceBtn = document.getElementById('gear-voice-btn-' + options.cmid);
-            if (voiceBtn) {
-                voiceBtn.addEventListener('click', () => {
-                    sync.joinVoiceChat();
-                });
-            }
-
-            // Chat UI listeners
-            var chatToggleBtn = document.getElementById('gear-chat-toggle-btn-' + options.cmid);
-            var chatPanel = document.getElementById('gear-chat-panel-' + options.cmid);
-            var chatCloseBtn = document.getElementById('gear-chat-close-' + options.cmid);
-            var chatInput = document.getElementById('gear-chat-input-' + options.cmid);
-            var chatSend = document.getElementById('gear-chat-send-' + options.cmid);
-            
-            if (chatToggleBtn && chatPanel) {
-                chatToggleBtn.addEventListener('click', () => {
-                    chatPanel.classList.toggle('d-none');
-                    if (!chatPanel.classList.contains('d-none')) {
-                        chatInput.focus();
-                    }
-                });
-                chatCloseBtn.addEventListener('click', () => {
-                    chatPanel.classList.add('d-none');
-                });
-                
-                chatSend.addEventListener('click', () => {
-                    if (chatInput.value.trim() !== '') {
-                        sync.sendChatMessage(chatInput.value.trim());
-                        chatInput.value = '';
-                    }
-                });
-                chatInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && chatInput.value.trim() !== '') {
-                        sync.sendChatMessage(chatInput.value.trim());
-                        chatInput.value = '';
-                    }
-                });
-            }
         }
     };
 });

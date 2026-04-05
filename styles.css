@@ -484,12 +484,18 @@
     border-radius: 50% !important;
     transition: all 0.2s ease !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    cursor: pointer !important;
 }
 
 .gear-overlay-btn:hover {
     background: rgba(0, 0, 0, 0.6) !important;
     transform: scale(1.1);
     border-color: var(--primary) !important;
+}
+
+.gear-overlay-btn:active {
+    transform: scale(0.95);
+    background: var(--primary) !important;
 }
 
 .gear-overlay-btn::after {
