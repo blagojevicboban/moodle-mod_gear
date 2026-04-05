@@ -71,6 +71,7 @@ $PAGE->set_context($context);
 // Using r128 which supports global THREE.OrbitControls and THREE.GLTFLoader.
 $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'), true);
+$PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'), true);
 $PAGE->requires->js(new moodle_url('https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'), true);
 

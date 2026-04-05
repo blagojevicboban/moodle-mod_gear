@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.0] - 2026-04-05
 
 ### Added
+- **Visual Authoring Gizmo**: Integrated `THREE.TransformControls` so teachers can move and position hotspots seamlessly dragging them along X/Y/Z axes in the 3D space, instead of manually clicking points.
 - **WebRTC Spatial Voice Chat**: Integrated PeerJS for serverless P2P voice communication. Users' microphones are automatically spatialized as `THREE.PositionalAudio` attached to their collaborative avatars.
 - **Auto Text-to-Speech (TTS)**: Added a native browser-based Speech Synthesis engine. Users can click the speaker icon on any Info hotspot to have its content narrated aloud automatically.
 - **Gamification & Branching Scenarios**: Hotspots can now be locked until a specific quiz is completed correctly. This enables "Escape Room" style learning where solving puzzles unlocks new areas or information.

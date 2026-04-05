@@ -64,6 +64,7 @@ php admin/cli/upgrade.php
 2.  **Interactive Scene**:
     -   Open the activity and click the **Edit** (pencil) icon.
     -   **Shift + Click** anywhere on the 3D model to add a hotspot.
+    -   Use the **Visual Authoring Gizmo** (3D Arrows) to perfectly position hotspots along the X, Y, and Z axes.
 3.  **Scene Configuration**:
     -   Adjust the camera to your preferred starting position and zoom level.
     -   Click **Save Current View (Set as default)** to save the initial state for all students.

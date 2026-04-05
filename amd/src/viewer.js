@@ -270,6 +270,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.controls.minDistance = 0.5;
             this.controls.maxDistance = 50;
             this.controls.maxPolarAngle = Math.PI;
+
+            if (this.canManage && typeof THREE.TransformControls !== 'undefined') {
+                this.transformControl = new THREE.TransformControls(this.camera, this.renderer.domElement);
+                this.transformControl.setMode('translate');
+                this.transformControl.addEventListener('dragging-changed', (event) => {
+                    this.controls.enabled = !event.value;
+                    if (!event.value && this.movingHotspotId) {
+                        if (this.transformControl.object) {
+                            var pos = this.transformControl.object.position;
+                            this.updateHotspotPosition(this.movingHotspotId, pos);
+                        }
+                    }
+                });
+                this.scene.add(this.transformControl);
+            }
         }
 
         /**
@@ -858,6 +873,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
 
                 // Check if we are moving a hotspot (Managers only).
                 if (this.movingHotspotId !== null && this.canManage) {
+                    if (this.transformControl && this.transformControl.object) {
+                        this.transformControl.detach();
+                        this.movingHotspotId = null;
+                        this.controls.enabled = true;
+                        return;
+                    }
+
                     var moveIntersects = this.raycaster.intersectObject(this.model, true);
                     if (moveIntersects.length > 0) {
                         var worldPoint = moveIntersects[0].point;
@@ -1290,6 +1312,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                         this.movingHotspotId = hotspot.id;
                         this.canvas.style.cursor = 'move';
                         closePopup();
+                        
+                        if (this.transformControl) {
+                            var meshToMove = this.hotspotMeshes.find(m => m.userData.id == hotspot.id);
+                            if (meshToMove) {
+                                this.transformControl.attach(meshToMove);
+                            }
+                        }
                         Notification.addNotification({
                             message: await Str.get_string('clicktoplace', 'mod_gear'),
                             type: 'info'
