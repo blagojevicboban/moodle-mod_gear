@@ -18,8 +18,10 @@
 | 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
 | 🧩 **Gamification** | Branching scenarios & escape-room style conditional unlocking |
 | ✨ **AI Assist** | Generate hotspot content and quizzes using AI |
+| 🗣️ **Text-to-Speech**| Native auto-narration of informational hotspots |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
+| 🎙️ **Voice Chat** | Real-time Peer-to-Peer WebRTC spatial voice chat |
 | 🏆 **Leaderboards** | Gamification with top score display |
 | 🔊 **Spatial Audio** | Positional audio guides that react to distance |
 | 📊 **Tracking** | Built-in completion, grading, and activity tracking |
@@ -80,8 +82,9 @@ php admin/cli/upgrade.php
 
 1.  **Exploration**: Rotate, zoom, and move around the 3D model.
 2.  **Interaction**: Click hotspots to view info, take quizzes, or listen to audio guides.
-3.  **Collaboration**: See other students in the same scene as 3D avatars.
-4.  **Spatial Audio**: Move closer to audio hotspots to hear them louder. Use headphones for the best experience.
+3.  **Accessibility**: Use the Text-to-Speech button on info hotspots to have the content read aloud.
+4.  **Collaboration**: See other students in the same scene as 3D avatars. Connect via microphone for real-time WebRTC 3D voice chat.
+5.  **Spatial Audio**: Move closer to audio hotspots or other speaking students to hear them louder. Use headphones for the best experience.
 
 ## ⚙️ Configuration
 

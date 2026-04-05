@@ -52,8 +52,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.vrEnabled = options.vr_enabled || false;
             this.modelsData = [];
             this.hotspotsData = [];
+            this.hotspotsData = [];
             this.completedQuizzes = []; // Track gamification progress
             this.canManage = options.canmanage || false;
+            this.userid = options.userid || 0; // The current user ID for WebRTC
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -1232,6 +1234,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 canManage: this.canManage,
                 title: hotspot.title || await Str.get_string('hotspottype_info', 'mod_gear'),
                 content: hotspot.content || '',
+                isInfo: hotspot.type === 'info',
                 isAudio: hotspot.type === 'audio',
                 ...audioContext,
                 ...videoContext
@@ -1256,6 +1259,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                         f.src = src;
                     });
                     popup.querySelectorAll('video, audio').forEach(m => m.pause());
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                    }
                 };
 
                 // Event Listeners.
@@ -1301,6 +1307,36 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                            hotspot.sound.play();
                            toggleBtn.innerHTML = '<i class="fa fa-pause"></i> ' + await Str.get_string('audio_pause', 'mod_gear');
                        }
+                    });
+                }
+                
+                // Text to Speech
+                var ttsBtn = popup.querySelector('.gear-tts-btn');
+                if (ttsBtn && 'speechSynthesis' in window) {
+                    ttsBtn.addEventListener('click', () => {
+                        var isPlaying = ttsBtn.classList.contains('playing');
+                        if (isPlaying) {
+                            window.speechSynthesis.cancel();
+                            ttsBtn.classList.remove('playing');
+                            ttsBtn.innerHTML = '<i class="fa fa-volume-up text-secondary"></i>';
+                        } else {
+                            var div = document.createElement('div');
+                            div.innerHTML = hotspot.content;
+                            var plainText = (hotspot.title || '') + ". " + (div.textContent || div.innerText || '');
+                            var utterance = new SpeechSynthesisUtterance(plainText);
+                            utterance.lang = document.documentElement.lang || 'en-US';
+                            
+                            utterance.onend = function() {
+                                ttsBtn.classList.remove('playing');
+                                ttsBtn.innerHTML = '<i class="fa fa-volume-up text-secondary"></i>';
+                            };
+                            
+                            window.speechSynthesis.cancel();
+                            window.speechSynthesis.speak(utterance);
+                            
+                            ttsBtn.classList.add('playing');
+                            ttsBtn.innerHTML = '<i class="fa fa-stop-circle text-danger"></i>';
+                        }
                     });
                 }
 
@@ -1751,7 +1787,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
 
 
     /**
-     * SyncManager class for collaborative mode.
+     * SyncManager class for collaborative mode & WebRTC.
      */
     class SyncManager {
         constructor(viewer) {
@@ -1760,6 +1796,65 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.avatars = {}; // Map of userid -> { mesh }
             this.lastPosition = null;
             this.lastRotation = null;
+            
+            // WebRTC Voice
+            this.peer = null;
+            this.localStream = null;
+            this.calls = {}; // peerId -> call
+            this.voiceEnabled = false;
+        }
+
+        async joinVoiceChat() {
+            if (this.voiceEnabled) return;
+            try {
+                this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                this.voiceEnabled = true;
+                
+                var myPeerId = 'mod_gear_' + this.viewer.gearid + '_' + this.viewer.userid;
+                this.peer = new Peer(myPeerId);
+                
+                this.peer.on('call', (call) => {
+                    call.answer(this.localStream);
+                    this.handleCall(call);
+                });
+                
+                var btn = document.getElementById('gear-voice-btn-' + this.viewer.cmid);
+                if (btn) {
+                    btn.querySelector('i').className = 'fa fa-microphone text-success';
+                }
+                
+                Str.get_string('voicejoined', 'mod_gear').then(msg => {
+                    Notification.addNotification({ message: msg, type: 'success' });
+                });
+            } catch (e) {
+                Str.get_string('voicenotsupported', 'mod_gear').then(msg => {
+                    Notification.alert('Error', msg);
+                });
+            }
+        }
+
+        handleCall(call) {
+            call.on('stream', (remoteStream) => {
+                var parts = call.peer.split('_');
+                var peerUserId = parseInt(parts[parts.length - 1], 10);
+                
+                var avatar = this.avatars[peerUserId];
+                // Only attach if avatar exists and doesn't already have audio
+                if (avatar && !avatar.hasAudio) {
+                    var sound = new THREE.PositionalAudio(this.viewer.audioListener);
+                    // r128 PositionalAudio supports setMediaStreamSource
+                    if (typeof sound.setMediaStreamSource === 'function') {
+                        sound.setMediaStreamSource(remoteStream);
+                    } else {
+                        // Fallback
+                        sound.setNodeSource(sound.context.createMediaStreamSource(remoteStream));
+                    }
+                    sound.setRefDistance(2);
+                    avatar.mesh.add(sound);
+                    avatar.hasAudio = true;
+                }
+            });
+            this.calls[call.peer] = call;
         }
 
         start() {
@@ -1820,6 +1915,24 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     this.removeAvatar(id);
                 }
             });
+
+            // Connect uncalled voice peers
+            if (this.voiceEnabled && this.peer) {
+                users.forEach((user) => {
+                    if (user.userid != this.viewer.userid) {
+                        var pId = 'mod_gear_' + this.viewer.gearid + '_' + user.userid;
+                        if (!this.calls[pId]) {
+                            var call = this.peer.call(pId, this.localStream);
+                            if (call) {
+                                this.handleCall(call);
+                            } else {
+                                // Peer might not be online yet.
+                                this.calls[pId] = null;
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         createAvatar(user) {
@@ -1871,9 +1984,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 // Optional: dispose geometry/material.
             }
             delete this.avatars[userid];
+            
+            // Clean up WebRTC calls if disconnected
+            var peerId = 'mod_gear_' + this.viewer.gearid + '_' + userid;
+            if (this.calls[peerId]) {
+                if (this.calls[peerId].close) this.calls[peerId].close();
+                delete this.calls[peerId];
+            }
         }
-        
-
     }
 
     return {
@@ -1892,6 +2010,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     sync.start();
                 }
             });
+            
+            // Voice chat button listener
+            var voiceBtn = document.getElementById('gear-voice-btn-' + options.cmid);
+            if (voiceBtn) {
+                voiceBtn.addEventListener('click', () => {
+                    sync.joinVoiceChat();
+                });
+            }
         }
     };
 });

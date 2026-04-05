@@ -36,6 +36,11 @@
         <button class="gear-hotspot-close" aria-label="{{#str}}close, core{{/str}}">&times;</button>
         <h4 class="gear-hotspot-title">
             <span class="gear-hotspot-title-text">{{title}}</span>
+            {{#isInfo}}
+            <button class="btn btn-sm btn-link gear-tts-btn p-0 ml-2" title="{{#str}}tts_play, mod_gear{{/str}}">
+                <i class="fa fa-volume-up text-secondary"></i>
+            </button>
+            {{/isInfo}}
         </h4>
         {{#canManage}}
         <div class="btn-group ml-2 mb-2">

@@ -25,6 +25,9 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+global $USER;
+
+
 $id = optional_param('id', 0, PARAM_INT); // Course module ID.
 $g = optional_param('g', 0, PARAM_INT);   // GEAR instance ID.
 
@@ -69,6 +72,7 @@ $PAGE->set_context($context);
 $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'), true);
+$PAGE->requires->js(new moodle_url('https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'), true);
 
 // Get models for this activity (with file URLs).
 $models = gear_get_models($gear->id, $context->id);
@@ -109,6 +113,7 @@ $jsconfig = [
     'ar_enabled' => (bool) $gear->ar_enabled,
     'vr_enabled' => (bool) $gear->vr_enabled,
     'canmanage' => $canmanage,
+    'userid' => $USER->id,
 ];
 $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
 

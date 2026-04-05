@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.0] - 2026-04-05
 
 ### Added
+- **WebRTC Spatial Voice Chat**: Integrated PeerJS for serverless P2P voice communication. Users' microphones are automatically spatialized as `THREE.PositionalAudio` attached to their collaborative avatars.
+- **Auto Text-to-Speech (TTS)**: Added a native browser-based Speech Synthesis engine. Users can click the speaker icon on any Info hotspot to have its content narrated aloud automatically.
 - **Gamification & Branching Scenarios**: Hotspots can now be locked until a specific quiz is completed correctly. This enables "Escape Room" style learning where solving puzzles unlocks new areas or information.
 - **Teleport Waypoints**: A new hotspot type that doesn't show a popup but instead seamlessly flies the camera to a new location in the 3D scene, ideal for guided navigation.
 - **Popup Animation**: Unlocked hotspots now appear with a smooth scaling "pop" animation when their condition is met.
