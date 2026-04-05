@@ -168,3 +168,14 @@ $string['webxrnotavailable'] = 'WebXR is not available on this device.';
 $string['webxrnotsupported'] = 'WebXR is not supported in your browser.';
 $string['zoomhint'] = 'Zoom';
 $string['zoomhint_desc'] = 'Desktop: Mouse wheel. Mobile: Pinch to zoom.';
+
+// Analytics / Reports
+$string['action'] = 'Action';
+$string['analyticsfor'] = 'Analytics for {$a}';
+$string['clicks'] = 'Clicks';
+$string['count'] = 'Count';
+$string['generaltracking'] = 'General Event Tracking';
+$string['hotspot'] = 'Hotspot';
+$string['hotspotanalytics'] = 'Hotspot Interaction Analytics';
+$string['nodata'] = 'No analytics data available yet.';
+$string['reports'] = 'Analytics Reports';

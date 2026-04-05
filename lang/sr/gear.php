@@ -167,3 +167,14 @@ $string['vr_enabled_help'] = 'Dozvoli korisnicima da pregledaju sadržaj u virtu
 $string['webxrnotavailable'] = 'WebXR nije podržan u vašem pregledaču.';
 $string['zoomhint'] = 'Zumiranje';
 $string['zoomhint_desc'] = 'Računar: Točkić miša. Mobilni uređaj: Štipanje za zumiranje.';
+
+// Analytics / Reports
+$string['action'] = 'Akcija';
+$string['analyticsfor'] = 'Analitika za {$a}';
+$string['clicks'] = 'Klikovi';
+$string['count'] = 'Broj';
+$string['generaltracking'] = 'Opšte praćenje događaja';
+$string['hotspot'] = 'Hotspot';
+$string['hotspotanalytics'] = 'Analitika interakcija sa hotspotovima';
+$string['nodata'] = 'Još uvek nema analitičkih podataka.';
+$string['reports'] = 'Analitika (Izveštaji)';

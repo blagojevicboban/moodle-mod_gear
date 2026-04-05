@@ -130,6 +130,7 @@ $templatedata = [
     'cmid' => $cm->id,
     'can_manage' => $canmanage,
     'sesskey' => sesskey(),
+    'reporturl' => (new moodle_url('/mod/gear/report.php', ['id' => $cm->id]))->out(),
 ];
 
 // Output.

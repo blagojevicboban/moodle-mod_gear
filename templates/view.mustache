@@ -50,13 +50,22 @@
 }}
 
 <div class="gear-activity" data-cmid="{{cmid}}">
-    <div class="gear-header">
-        {{#name}}<h2>{{name}}</h2>{{/name}}
-        {{#intro}}
-        <div class="gear-intro">
-            {{{intro}}}
+    <div class="gear-header d-flex justify-content-between align-items-start">
+        <div>
+            {{#name}}<h2>{{name}}</h2>{{/name}}
+            {{#intro}}
+            <div class="gear-intro">
+                {{{intro}}}
+            </div>
+            {{/intro}}
         </div>
-        {{/intro}}
+        {{#can_manage}}
+        <div>
+            <a href="{{reporturl}}" class="btn btn-outline-info">
+                <i class="fa fa-bar-chart" aria-hidden="true"></i> {{#str}}reports, mod_gear{{/str}}
+            </a>
+        </div>
+        {{/can_manage}}
     </div>
 
     <div class="gear-viewer-container">

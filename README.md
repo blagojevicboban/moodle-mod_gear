@@ -24,7 +24,7 @@
 | 🎙️ **Voice Chat** | Real-time Peer-to-Peer WebRTC spatial voice chat |
 | 🏆 **Leaderboards** | Gamification with top score display |
 | 🔊 **Spatial Audio** | Positional audio guides that react to distance |
-| 📊 **Tracking** | Built-in completion, grading, and activity tracking |
+| 📊 **Analytics** | Teacher dashboard displaying hotspot click charts and event tracking |
 | 🌐 **WebXR** | No app installation required |
 | ⚡ **Performance** | Optimized WebGL & WebXR scaling for low-end mobile devices |
 | 🔒 **Privacy** | GDPR compliant (Privacy API) |
