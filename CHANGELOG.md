@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Teleport Waypoints**: A new hotspot type that doesn't show a popup but instead seamlessly flies the camera to a new location in the 3D scene, ideal for guided navigation.
 - **Popup Animation**: Unlocked hotspots now appear with a smooth scaling "pop" animation when their condition is met.
 
+### Changed
+- **Performance Optimization**: Significant framerate improvements for mobile devices and WebXR by dynamically capping device pixel ratios and hinting `high-performance` power preference to the GPU.
+
 ## [1.3.0] - 2026-04-04
 
 ### Added

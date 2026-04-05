@@ -173,16 +173,25 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             camPos = this.config.camera?.position || [0, 1.6, 3];
             this.camera.position.set(camPos[0], camPos[1], camPos[2]);
 
-            // Create renderer.
+            // Create renderer optimized for performance.
+            // Disable antialiasing on high-DPI screens since it is unnecessary and costly.
+            var isLowDPI = (window.devicePixelRatio < 2);
             this.renderer = new THREE.WebGLRenderer({
                 canvas: this.canvas,
-                antialias: true,
-                alpha: true
+                antialias: isLowDPI,
+                alpha: true,
+                powerPreference: 'high-performance'
             });
             this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-            this.renderer.setPixelRatio(window.devicePixelRatio);
+            // Cap the pixel ratio to 2 to prevent extreme performance hits on 3x-4x mobile screens.
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             this.renderer.outputEncoding = THREE.sRGBEncoding;
             this.renderer.xr.enabled = true;
+            
+            // Framebuffer scaling in WebXR to maintain high FPS in VR/AR.
+            if (this.renderer.xr.setFramebufferScaleFactor) {
+                this.renderer.xr.setFramebufferScaleFactor(0.8);
+            }
 
             // Create model container and add to scene.
             this.scene.add(this.modelContainer);
