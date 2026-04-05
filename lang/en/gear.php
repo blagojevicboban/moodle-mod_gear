@@ -183,5 +183,5 @@ $string['reports'] = 'Analytics Reports';
 // Text Chat.
 $string['chat'] = 'Chat';
 $string['send_message'] = 'Send';
-$string['type_message'] = 'Type a message...';
 $string['toggle_chat'] = 'Toggle Chat';
+$string['type_message'] = 'Type a message...';

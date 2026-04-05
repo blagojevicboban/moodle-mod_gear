@@ -182,5 +182,5 @@ $string['reports'] = 'Analitika (Izveštaji)';
 // Text Chat.
 $string['chat'] = 'Čet';
 $string['send_message'] = 'Pošalji';
-$string['type_message'] = 'Ukucajte poruku...';
 $string['toggle_chat'] = 'Uključi/isključi čet';
+$string['type_message'] = 'Ukucajte poruku...';
