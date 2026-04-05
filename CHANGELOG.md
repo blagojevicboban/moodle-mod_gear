@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Text Chat**: Added real-time Peer-to-Peer text chat using WebRTC Data Channels in the collaborative mode, alongside the existing voice chat.
 - **Analytics Dashboard**: Added `report.php` offering visual bar charts and tabular tracking metrics (hotspot clicks, VR starts, etc.) for teachers with `mod/gear:manage` capabilities.
 - Added Analytics button dynamically to the viewer header interface if the user has management permissions.
 

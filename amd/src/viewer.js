@@ -1835,11 +1835,31 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.lastPosition = null;
             this.lastRotation = null;
             
-            // WebRTC Voice
+            // WebRTC
             this.peer = null;
             this.localStream = null;
             this.calls = {}; // peerId -> call
+            this.dataConns = {}; // peerId -> dataConn
             this.voiceEnabled = false;
+        }
+
+        async initPeer() {
+            if (this.peer) return;
+            var myPeerId = 'mod_gear_' + this.viewer.gearid + '_' + this.viewer.userid;
+            this.peer = new Peer(myPeerId);
+            
+            this.peer.on('call', (call) => {
+                if (this.localStream) {
+                    call.answer(this.localStream);
+                } else {
+                    call.answer(); // empty stream
+                }
+                this.handleCall(call);
+            });
+
+            this.peer.on('connection', (conn) => {
+                this.handleDataConnection(conn);
+            });
         }
 
         async joinVoiceChat() {
@@ -1848,13 +1868,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 this.voiceEnabled = true;
                 
-                var myPeerId = 'mod_gear_' + this.viewer.gearid + '_' + this.viewer.userid;
-                this.peer = new Peer(myPeerId);
-                
-                this.peer.on('call', (call) => {
-                    call.answer(this.localStream);
-                    this.handleCall(call);
-                });
+                if (!this.peer) {
+                    await this.initPeer();
+                }
                 
                 var btn = document.getElementById('gear-voice-btn-' + this.viewer.cmid);
                 if (btn) {
@@ -1895,7 +1911,46 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.calls[call.peer] = call;
         }
 
+        handleDataConnection(conn) {
+            conn.on('open', () => {
+                this.dataConns[conn.peer] = conn;
+            });
+            conn.on('data', (data) => {
+                this.displayChatMessage(data.sender, data.text, 'other');
+            });
+            conn.on('close', () => {
+                delete this.dataConns[conn.peer];
+            });
+        }
+
+        connectData(peerId) {
+            if (this.dataConns[peerId]) return;
+            var conn = this.peer.connect(peerId);
+            this.handleDataConnection(conn);
+        }
+
+        sendChatMessage(text) {
+            var msg = { sender: 'User ' + this.viewer.userid, text: text };
+            Object.values(this.dataConns).forEach(conn => {
+                if (conn.open) {
+                    conn.send(msg);
+                }
+            });
+            this.displayChatMessage('Me', text, 'self');
+        }
+
+        displayChatMessage(sender, text, type) {
+            var messagesDiv = document.getElementById('gear-chat-messages-' + this.viewer.cmid);
+            if (!messagesDiv) return;
+            var msgDiv = document.createElement('div');
+            msgDiv.className = 'gear-chat-msg ' + type;
+            msgDiv.innerHTML = '<span class="gear-chat-sender">' + sender + '</span>' + text;
+            messagesDiv.appendChild(msgDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
         start() {
+            this.initPeer();
             this.interval = setInterval(() => this.sync(), 2000);
             this.sync(); // Initial call
         }
@@ -1955,18 +2010,21 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             });
 
             // Connect uncalled voice peers
-            if (this.voiceEnabled && this.peer) {
+            if (this.peer) {
                 users.forEach((user) => {
                     if (user.userid != this.viewer.userid) {
                         var pId = 'mod_gear_' + this.viewer.gearid + '_' + user.userid;
-                        if (!this.calls[pId]) {
+                        if (this.voiceEnabled && !this.calls[pId]) {
                             var call = this.peer.call(pId, this.localStream);
                             if (call) {
                                 this.handleCall(call);
                             } else {
-                                // Peer might not be online yet.
                                 this.calls[pId] = null;
                             }
+                        }
+                        // Connect text chat
+                        if (!this.dataConns[pId]) {
+                            this.connectData(pId);
                         }
                     }
                 });
@@ -2029,6 +2087,10 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                 if (this.calls[peerId].close) this.calls[peerId].close();
                 delete this.calls[peerId];
             }
+            if (this.dataConns[peerId]) {
+                if (this.dataConns[peerId].close) this.dataConns[peerId].close();
+                delete this.dataConns[peerId];
+            }
         }
     }
 
@@ -2054,6 +2116,38 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             if (voiceBtn) {
                 voiceBtn.addEventListener('click', () => {
                     sync.joinVoiceChat();
+                });
+            }
+
+            // Chat UI listeners
+            var chatToggleBtn = document.getElementById('gear-chat-toggle-btn-' + options.cmid);
+            var chatPanel = document.getElementById('gear-chat-panel-' + options.cmid);
+            var chatCloseBtn = document.getElementById('gear-chat-close-' + options.cmid);
+            var chatInput = document.getElementById('gear-chat-input-' + options.cmid);
+            var chatSend = document.getElementById('gear-chat-send-' + options.cmid);
+            
+            if (chatToggleBtn && chatPanel) {
+                chatToggleBtn.addEventListener('click', () => {
+                    chatPanel.classList.toggle('d-none');
+                    if (!chatPanel.classList.contains('d-none')) {
+                        chatInput.focus();
+                    }
+                });
+                chatCloseBtn.addEventListener('click', () => {
+                    chatPanel.classList.add('d-none');
+                });
+                
+                chatSend.addEventListener('click', () => {
+                    if (chatInput.value.trim() !== '') {
+                        sync.sendChatMessage(chatInput.value.trim());
+                        chatInput.value = '';
+                    }
+                });
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+                        sync.sendChatMessage(chatInput.value.trim());
+                        chatInput.value = '';
+                    }
                 });
             }
         }

@@ -21,7 +21,7 @@
 | 🗣️ **Text-to-Speech**| Native auto-narration of informational hotspots |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
-| 🎙️ **Voice Chat** | Real-time Peer-to-Peer WebRTC spatial voice chat |
+| 💬 **P2P Chat** | Real-time Peer-to-Peer WebRTC spatial voice and text chat |
 | 🏆 **Leaderboards** | Gamification with top score display |
 | 🔊 **Spatial Audio** | Positional audio guides that react to distance |
 | 📊 **Analytics** | Teacher dashboard displaying hotspot click charts and event tracking |
