@@ -914,6 +914,67 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
                     }
                 }
             });
+
+            this.setupVRControllers();
+        }
+
+        /**
+         * Setup WebXR Controllers for VR hand interactions.
+         */
+        setupVRControllers() {
+            var geometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, -5)
+            ]);
+            var lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+            
+            var addController = (index) => {
+                var controller = this.renderer.xr.getController(index);
+                controller.addEventListener('select', (evt) => this.onVRSelect(evt));
+                
+                var line = new THREE.Line(geometry, lineMaterial);
+                line.name = 'line';
+                line.scale.z = 5;
+                controller.add(line);
+                
+                this.scene.add(controller);
+                return controller;
+            };
+
+            this.vrControllers = [addController(0), addController(1)];
+        }
+
+        /**
+         * Handle VR Controller Select event (Trigger button).
+         */
+        onVRSelect(event) {
+            var controller = event.target;
+            var tempMatrix = new THREE.Matrix4();
+            tempMatrix.identity().extractRotation(controller.matrixWorld);
+            this.raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+            this.raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+
+            var intersects = this.raycaster.intersectObjects(this.hotspotMeshes, false);
+            if (intersects.length > 0) {
+                var hotspotMesh = intersects[0].object;
+                if (hotspotMesh.visible) {
+                    if (hotspotMesh.userData.type === 'teleport') {
+                        this.focusHotspot(hotspotMesh.userData.id);
+                    } else {
+                        this.showHotspotPopup(hotspotMesh.userData);
+                        
+                        // Toggle audio in VR directly since standard DOM popups are hard to click inside headset.
+                        if (hotspotMesh.userData.type === 'audio' && hotspotMesh.children.length > 0) {
+                             var audio = hotspotMesh.children[0];
+                             if (audio.isPlaying) {
+                                 audio.pause();
+                             } else {
+                                 audio.play();
+                             }
+                        }
+                    }
+                }
+            }
         }
 
         /**
