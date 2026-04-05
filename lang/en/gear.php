@@ -169,7 +169,7 @@ $string['webxrnotsupported'] = 'WebXR is not supported in your browser.';
 $string['zoomhint'] = 'Zoom';
 $string['zoomhint_desc'] = 'Desktop: Mouse wheel. Mobile: Pinch to zoom.';
 
-// Analytics / Reports
+// Analytics / Reports.
 $string['action'] = 'Action';
 $string['analyticsfor'] = 'Analytics for {$a}';
 $string['clicks'] = 'Clicks';
@@ -180,7 +180,7 @@ $string['hotspotanalytics'] = 'Hotspot Interaction Analytics';
 $string['nodata'] = 'No analytics data available yet.';
 $string['reports'] = 'Analytics Reports';
 
-// Text Chat
+// Text Chat.
 $string['chat'] = 'Chat';
 $string['send_message'] = 'Send';
 $string['type_message'] = 'Type a message...';

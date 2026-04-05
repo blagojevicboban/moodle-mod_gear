@@ -46,11 +46,11 @@ echo $OUTPUT->header();
 
 echo $OUTPUT->heading(get_string('analyticsfor', 'mod_gear', format_string($gear->name)));
 
-// Fetch summary data from gear_tracking
-$sql = "SELECT action, COUNT(id) as count 
-          FROM {gear_tracking} 
-         WHERE gearid = :gearid 
-      GROUP BY action 
+// Fetch summary data from gear_tracking.
+$sql = "SELECT action, COUNT(id) as count
+          FROM {gear_tracking}
+         WHERE gearid = :gearid
+      GROUP BY action
       ORDER BY count DESC";
 
 $summary = $DB->get_records_sql($sql, ['gearid' => $gear->id]);
@@ -58,56 +58,54 @@ $summary = $DB->get_records_sql($sql, ['gearid' => $gear->id]);
 if (empty($summary)) {
     echo $OUTPUT->notification(get_string('nodata', 'mod_gear'), 'info');
 } else {
-    // General Actions Table
+    // General Actions Table.
     $table = new html_table();
     $table->head = [get_string('action', 'mod_gear'), get_string('count', 'mod_gear')];
     $table->data = [];
-    
     foreach ($summary as $record) {
         $table->data[] = [$record->action, $record->count];
     }
-    
     echo html_writer::tag('h3', get_string('generaltracking', 'mod_gear'));
     echo html_writer::table($table);
 
-    // Fetch Hotspot metrics
-    $sql_hotspots = "SELECT t.id, t.userid, t.data, t.timecreated, u.firstname, u.lastname 
+    // Fetch Hotspot metrics.
+    $sqlhotspots = "SELECT t.id, t.userid, t.data, t.timecreated, u.firstname, u.lastname
                        FROM {gear_tracking} t
                        JOIN {user} u ON u.id = t.userid
                       WHERE t.gearid = :gearid AND t.action = 'hotspot_click'
                    ORDER BY t.timecreated DESC";
-    $hotspot_clicks = $DB->get_records_sql($sql_hotspots, ['gearid' => $gear->id]);
-    
-    if (!empty($hotspot_clicks)) {
-        // Aggregate by hotspot title
-        $hotspot_counts = [];
-        foreach ($hotspot_clicks as $hc) {
+    $hotspotclicks = $DB->get_records_sql($sqlhotspots, ['gearid' => $gear->id]);
+
+    if (!empty($hotspotclicks)) {
+        // Aggregate by hotspot title.
+        $hotspotcounts = [];
+        foreach ($hotspotclicks as $hc) {
             $data = json_decode($hc->data);
             $title = isset($data->title) ? $data->title : 'Unknown Hotspot';
-            if (!isset($hotspot_counts[$title])) {
-                $hotspot_counts[$title] = 0;
+            if (!isset($hotspotcounts[$title])) {
+                $hotspotcounts[$title] = 0;
             }
-            $hotspot_counts[$title]++;
+            $hotspotcounts[$title]++;
         }
-        
-        arsort($hotspot_counts);
-        
+
+        arsort($hotspotcounts);
+
         $htable = new html_table();
         $htable->head = [get_string('hotspot', 'mod_gear'), get_string('clicks', 'mod_gear')];
         $htable->data = [];
-        
-        foreach ($hotspot_counts as $title => $count) {
+
+        foreach ($hotspotcounts as $title => $count) {
             $htable->data[] = [$title, $count];
         }
 
         echo html_writer::tag('h3', get_string('hotspotanalytics', 'mod_gear'));
         echo html_writer::table($htable);
-        
-        // Render simple Bar chart
+
+        // Render simple Bar chart.
         $chart = new \core\chart_bar();
-        $series = new \core\chart_series(get_string('clicks', 'mod_gear'), array_values($hotspot_counts));
+        $series = new \core\chart_series(get_string('clicks', 'mod_gear'), array_values($hotspotcounts));
         $chart->add_series($series);
-        $chart->set_labels(array_keys($hotspot_counts));
+        $chart->set_labels(array_keys($hotspotcounts));
         echo $OUTPUT->render($chart);
     }
 }

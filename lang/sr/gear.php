@@ -168,7 +168,7 @@ $string['webxrnotavailable'] = 'WebXR nije podržan u vašem pregledaču.';
 $string['zoomhint'] = 'Zumiranje';
 $string['zoomhint_desc'] = 'Računar: Točkić miša. Mobilni uređaj: Štipanje za zumiranje.';
 
-// Analytics / Reports
+// Analytics / Reports.
 $string['action'] = 'Akcija';
 $string['analyticsfor'] = 'Analitika za {$a}';
 $string['clicks'] = 'Klikovi';
@@ -179,7 +179,7 @@ $string['hotspotanalytics'] = 'Analitika interakcija sa hotspotovima';
 $string['nodata'] = 'Još uvek nema analitičkih podataka.';
 $string['reports'] = 'Analitika (Izveštaji)';
 
-// Text Chat
+// Text Chat.
 $string['chat'] = 'Čet';
 $string['send_message'] = 'Pošalji';
 $string['type_message'] = 'Ukucajte poruku...';
