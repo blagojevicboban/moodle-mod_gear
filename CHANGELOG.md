@@ -13,10 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Self-Hosted Dependencies**: Eliminated CDN dependencies for Three.js - now bundled locally via Rollup for improved reliability and performance
 - **Build System**: Added Rollup bundler to convert ES modules to AMD format for Moodle compatibility
 - **Deprecated APIs**: Updated `THREE.sRGBEncoding` to `THREE.SRGBColorSpace` (r152+ standard)
+- **Hotspot Visibility**: Increased default hotspot scale from `1.0` to `1.5` and geometry from `0.08` to `0.12` radius for better visibility
 
 ### Added
+- **Hover Tooltips**: Interactive tooltips showing hotspot type icon, title, and description on hover (see `docs/TOOLTIP_SYSTEM.md`)
+- **Smart Positioning**: Tooltips follow mouse cursor with automatic edge detection to stay on-screen
+- **Type-Specific Icons**: Font Awesome icons for each hotspot type (info, quiz, audio, video, teleport)
 - Rollup configuration (`rollup.config.js`) for ES module bundling
 - New build dependencies: `three`, `@rollup/plugin-node-resolve`, `@rollup/plugin-commonjs`, `rollup`, `grunt-rollup`
+- Documentation: `docs/TOOLTIP_SYSTEM.md` with tooltip system details
 
 ### Removed
 - CDN script loading for Three.js core, OrbitControls, TransformControls, and GLTFLoader from `view.php`

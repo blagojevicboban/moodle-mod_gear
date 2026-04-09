@@ -15,6 +15,7 @@
 | 📱 **AR Mode** | View 3D content in augmented reality |
 | 🥽 **VR Mode** | Immersive WebXR experience with interactive hand controllers |
 | 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video, Teleport) |
+| 💬 **Tooltips** | Hover tooltips with icons, titles, and descriptions for quick context |
 | 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
 | 🧩 **Gamification** | Branching scenarios & escape-room style conditional unlocking |
 | ✨ **AI Assist** | Generate hotspot content and quizzes using AI |

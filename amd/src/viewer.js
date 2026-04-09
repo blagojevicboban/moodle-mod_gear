@@ -56,7 +56,7 @@ import Templates from 'core/templates';
                 this.hotspotsEnabled = true;
             }
             this.hotspotsEditable = (this.config.hotspots && !!this.config.hotspots.edit) || false;
-            this.hotspotScale = (this.config.camera && this.config.camera.hotspotScale) || 1.0;
+            this.hotspotScale = (this.config.camera && this.config.camera.hotspotScale) || 1.5;
             this.hotspotColor = (this.config.camera && this.config.camera.hotspotColor) || '#6366f1';
             this.arEnabled = options.ar_enabled || false;
             this.vrEnabled = options.vr_enabled || false;
@@ -83,6 +83,8 @@ import Templates from 'core/templates';
             this.audioListener = null;
             this.modelContainer = new THREE.Group();
             this.movingHotspotId = null; // Track hotspot being moved.
+            this.tooltipElement = null; // Tooltip element for hover display.
+            this.activeTooltipHotspot = null; // Track which hotspot tooltip is showing.
 
             this.init();
         }
@@ -925,7 +927,120 @@ import Templates from 'core/templates';
                 }
             });
 
+            // Hover handler for tooltips.
+            this.canvas.addEventListener('mousemove', (event) => {
+                var rect = this.canvas.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                var intersects = this.raycaster.intersectObjects(this.hotspotMeshes);
+
+                if (intersects.length > 0) {
+                    var hotspotMesh = intersects[0].object;
+                    if (hotspotMesh.visible && hotspotMesh.userData.type !== 'teleport') {
+                        this.showTooltip(hotspotMesh.userData, event);
+                    } else {
+                        this.hideTooltip();
+                    }
+                } else {
+                    this.hideTooltip();
+                }
+            });
+
             this.setupVRControllers();
+        }
+
+        /**
+         * Show tooltip for hotspot.
+         *
+         * @param {Object} hotspot Hotspot data
+         * @param {MouseEvent} event Mouse event for positioning
+         */
+        showTooltip(hotspot, event) {
+            // Don't show tooltip if already showing for this hotspot.
+            if (this.activeTooltipHotspot && this.activeTooltipHotspot.id === hotspot.id) {
+                this.updateTooltipPosition(event);
+                return;
+            }
+
+            this.activeTooltipHotspot = hotspot;
+
+            // Create tooltip element if it doesn't exist.
+            if (!this.tooltipElement) {
+                this.tooltipElement = document.createElement('div');
+                this.tooltipElement.className = 'gear-hotspot-tooltip';
+                this.tooltipElement.style.cssText = 'position:fixed;padding:12px;background:rgba(0,0,0,0.9);color:#fff;border-radius:8px;pointer-events:none;z-index:10000;max-width:250px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+                document.body.appendChild(this.tooltipElement);
+            }
+
+            // Get icon based on type.
+            var iconMap = {
+                'info': 'fa-info-circle',
+                'quiz': 'fa-question-circle',
+                'audio': 'fa-volume-up',
+                'video': 'fa-video',
+                'teleport': 'fa-street-view'
+            };
+            var icon = iconMap[hotspot.type] || 'fa-info-circle';
+
+            // Build tooltip content.
+            var content = '<div style="display:flex;align-items:center;margin-bottom:6px;">';
+            content += '<i class="fa ' + icon + '" style="margin-right:8px;font-size:16px;color:#6366f1;"></i>';
+            content += '<strong>' + (hotspot.title || 'Hotspot') + '</strong>';
+            content += '</div>';
+
+            if (hotspot.content) {
+                // Strip HTML tags for tooltip description.
+                var div = document.createElement('div');
+                div.innerHTML = hotspot.content;
+                var plainText = div.textContent || div.innerText || '';
+                // Truncate if too long.
+                if (plainText.length > 100) {
+                    plainText = plainText.substring(0, 100) + '...';
+                }
+                content += '<div style="opacity:0.8;font-size:12px;line-height:1.4;">' + plainText + '</div>';
+            }
+
+            this.tooltipElement.innerHTML = content;
+            this.tooltipElement.style.display = 'block';
+            this.updateTooltipPosition(event);
+        }
+
+        /**
+         * Update tooltip position to follow mouse.
+         *
+         * @param {MouseEvent} event Mouse event
+         */
+        updateTooltipPosition(event) {
+            if (!this.tooltipElement) return;
+
+            var offsetX = 15;
+            var offsetY = 15;
+            var x = event.clientX + offsetX;
+            var y = event.clientY + offsetY;
+
+            // Prevent tooltip from going off-screen.
+            var tooltipRect = this.tooltipElement.getBoundingClientRect();
+            if (x + tooltipRect.width > window.innerWidth) {
+                x = event.clientX - tooltipRect.width - offsetX;
+            }
+            if (y + tooltipRect.height > window.innerHeight) {
+                y = event.clientY - tooltipRect.height - offsetY;
+            }
+
+            this.tooltipElement.style.left = x + 'px';
+            this.tooltipElement.style.top = y + 'px';
+        }
+
+        /**
+         * Hide tooltip.
+         */
+        hideTooltip() {
+            if (this.tooltipElement) {
+                this.tooltipElement.style.display = 'none';
+            }
+            this.activeTooltipHotspot = null;
         }
 
         /**
@@ -1045,8 +1160,8 @@ import Templates from 'core/templates';
                 return;
             }
 
-            // Hotspot sphere geometry.
-            geometry = new THREE.SphereGeometry(0.08, 16, 16);
+            // Hotspot sphere geometry (increased size for better visibility).
+            geometry = new THREE.SphereGeometry(0.12, 24, 24);
             material = new THREE.MeshBasicMaterial({
                 color: new THREE.Color(this.hotspotColor),
                 transparent: true,
