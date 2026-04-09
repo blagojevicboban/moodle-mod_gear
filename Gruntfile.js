@@ -31,16 +31,50 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-eslint');
     grunt.loadNpmTasks('grunt-stylelint');
+    grunt.loadNpmTasks('grunt-rollup');
 
     // Configure tasks.
     grunt.initConfig({
-        uglify: {
+        rollup: {
             dist: {
                 files: {
                     'amd/build/viewer.min.js': ['amd/src/viewer.js']
                 },
                 options: {
-                    sourceMap: true
+                    format: 'amd',
+                    amd: {
+                        id: 'mod_gear/viewer'
+                    },
+                    sourcemap: true,
+                    plugins: function() {
+                        return [
+                            require('@rollup/plugin-node-resolve')({
+                                browser: true,
+                                preferBuiltins: false
+                            }),
+                            require('@rollup/plugin-commonjs')()
+                        ];
+                    }(),
+                    external: [
+                        'jquery',
+                        'core/ajax',
+                        'core/notification',
+                        'core/str',
+                        'core/templates'
+                    ]
+                }
+            }
+        },
+        uglify: {
+            dist: {
+                files: {
+                    'amd/build/viewer.min.js': ['amd/build/viewer.min.js']
+                },
+                options: {
+                    sourceMap: true,
+                    compress: {
+                        drop_console: false
+                    }
                 }
             }
         },
@@ -60,12 +94,12 @@ module.exports = function (grunt) {
         watch: {
             js: {
                 files: ['amd/src/*.js'],
-                tasks: ['uglify']
+                tasks: ['rollup', 'uglify']
             }
         }
     });
 
     // Register tasks.
-    grunt.registerTask('amd', ['uglify']);
+    grunt.registerTask('amd', ['rollup', 'uglify']);
     grunt.registerTask('default', ['amd']);
 };

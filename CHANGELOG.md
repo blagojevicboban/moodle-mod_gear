@@ -5,6 +5,27 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-04-09
+
+### Changed
+- **Three.js Upgrade**: Migrated from Three.js r128.0 (2021) to r160.0 (2024), gaining 3+ years of security patches, performance improvements, and WebXR enhancements
+- **ES Module Architecture**: Replaced legacy global `THREE` object with modern ES module imports (`import * as THREE from 'three'`)
+- **Self-Hosted Dependencies**: Eliminated CDN dependencies for Three.js - now bundled locally via Rollup for improved reliability and performance
+- **Build System**: Added Rollup bundler to convert ES modules to AMD format for Moodle compatibility
+- **Deprecated APIs**: Updated `THREE.sRGBEncoding` to `THREE.SRGBColorSpace` (r152+ standard)
+
+### Added
+- Rollup configuration (`rollup.config.js`) for ES module bundling
+- New build dependencies: `three`, `@rollup/plugin-node-resolve`, `@rollup/plugin-commonjs`, `rollup`, `grunt-rollup`
+
+### Removed
+- CDN script loading for Three.js core, OrbitControls, TransformControls, and GLTFLoader from `view.php`
+
+### Migration Notes
+- See `MIGRATION_COMPLETE.md` for detailed migration guide and testing checklist
+- No database changes required - fully backward compatible
+- Run `npm install && npx grunt amd` to rebuild after updating
+
 ## [1.5.0] - 2026-04-05
 
 ### Added

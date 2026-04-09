@@ -21,10 +21,20 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/* global THREE */
+// Three.js ES module imports (bundled via Rollup for Moodle AMD compatibility).
+import * as THREE from 'three';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+import {TransformControls} from 'three/examples/jsm/controls/TransformControls.js';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'], function($, Ajax, Notification, Str, Templates) {
-    'use strict';
+// Moodle AMD dependencies (external - loaded via RequireJS at runtime).
+import $ from 'jquery';
+import Ajax from 'core/ajax';
+import Notification from 'core/notification';
+import Str from 'core/str';
+import Templates from 'core/templates';
+
+/* global Peer */
 
     /**
      * GEAR Viewer class.
@@ -185,7 +195,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
             // Cap the pixel ratio to 2 to prevent extreme performance hits on 3x-4x mobile screens.
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            this.renderer.outputEncoding = THREE.sRGBEncoding;
+            this.renderer.outputColorSpace = THREE.SRGBColorSpace;
             this.renderer.xr.enabled = true;
             
             // Framebuffer scaling in WebXR to maintain high FPS in VR/AR.
@@ -263,7 +273,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
          * Setup orbit controls.
          */
         setupControls() {
-            this.controls = new THREE.OrbitControls(this.camera, this.canvas);
+            this.controls = new OrbitControls(this.camera, this.canvas);
             this.controls.enableDamping = true;
             this.controls.dampingFactor = 0.05;
             this.controls.screenSpacePanning = false;
@@ -271,8 +281,8 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
             this.controls.maxDistance = 50;
             this.controls.maxPolarAngle = Math.PI;
 
-            if (this.canManage && typeof THREE.TransformControls !== 'undefined') {
-                this.transformControl = new THREE.TransformControls(this.camera, this.renderer.domElement);
+            if (this.canManage && typeof TransformControls !== 'undefined') {
+                this.transformControl = new TransformControls(this.camera, this.renderer.domElement);
                 this.transformControl.setMode('translate');
                 this.transformControl.addEventListener('dragging-changed', (event) => {
                     this.controls.enabled = !event.value;
@@ -646,7 +656,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
 
             try {
                 if (this.modelsData && this.modelsData.length > 0) {
-                    loader = new THREE.GLTFLoader();
+                    loader = new GLTFLoader();
 
                     for (const modelData of this.modelsData) {
                         gltf = await new Promise((resolve, reject) => {
@@ -2155,64 +2165,66 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates'
         }
     }
 
-    return {
-        /**
-         * Initialize the GEAR viewer.
-         *
-         * @param {Object} options Configuration options
-         */
-        init: function(options) {
-            var viewer = new GearViewer(options);
-            
-            // Start sync if enabled.
-            var sync = new SyncManager(viewer);
+/**
+ * Initialize the GEAR viewer.
+ *
+ * @param {Object} options Configuration options
+ */
+function init(options) {
+    var viewerInstance = new GearViewer(options);
 
-            // UI listeners for collaboration (Voice & Chat).
-            document.addEventListener('gear:scene:loaded', (e) => {
-                if (e.detail.cmid == options.cmid) {
-                    sync.start();
+    // Start sync if enabled.
+    var sync = new SyncManager(viewerInstance);
 
-                    // Voice chat button listener.
-                    var voiceBtn = document.getElementById('gear-voice-btn-' + options.cmid);
-                    if (voiceBtn) {
-                        voiceBtn.addEventListener('click', () => {
-                            sync.joinVoiceChat();
-                        });
+    // UI listeners for collaboration (Voice & Chat).
+    document.addEventListener('gear:scene:loaded', (e) => {
+        if (e.detail.cmid == options.cmid) {
+            sync.start();
+
+            // Voice chat button listener.
+            var voiceBtn = document.getElementById('gear-voice-btn-' + options.cmid);
+            if (voiceBtn) {
+                voiceBtn.addEventListener('click', () => {
+                    sync.joinVoiceChat();
+                });
+            }
+
+            // Chat UI listeners.
+            var chatToggleBtn = document.getElementById('gear-chat-toggle-btn-' + options.cmid);
+            var chatPanel = document.getElementById('gear-chat-panel-' + options.cmid);
+            var chatCloseBtn = document.getElementById('gear-chat-close-' + options.cmid);
+            var chatInput = document.getElementById('gear-chat-input-' + options.cmid);
+            var chatSend = document.getElementById('gear-chat-send-' + options.cmid);
+
+            if (chatToggleBtn && chatPanel) {
+                chatToggleBtn.addEventListener('click', () => {
+                    chatPanel.classList.toggle('d-none');
+                    if (!chatPanel.classList.contains('d-none')) {
+                        chatInput.focus();
                     }
+                });
+                chatCloseBtn.addEventListener('click', () => {
+                    chatPanel.classList.add('d-none');
+                });
 
-                    // Chat UI listeners.
-                    var chatToggleBtn = document.getElementById('gear-chat-toggle-btn-' + options.cmid);
-                    var chatPanel = document.getElementById('gear-chat-panel-' + options.cmid);
-                    var chatCloseBtn = document.getElementById('gear-chat-close-' + options.cmid);
-                    var chatInput = document.getElementById('gear-chat-input-' + options.cmid);
-                    var chatSend = document.getElementById('gear-chat-send-' + options.cmid);
-
-                    if (chatToggleBtn && chatPanel) {
-                        chatToggleBtn.addEventListener('click', () => {
-                            chatPanel.classList.toggle('d-none');
-                            if (!chatPanel.classList.contains('d-none')) {
-                                chatInput.focus();
-                            }
-                        });
-                        chatCloseBtn.addEventListener('click', () => {
-                            chatPanel.classList.add('d-none');
-                        });
-
-                        chatSend.addEventListener('click', () => {
-                            if (chatInput.value.trim() !== '') {
-                                sync.sendChatMessage(chatInput.value.trim());
-                                chatInput.value = '';
-                            }
-                        });
-                        chatInput.addEventListener('keypress', (e) => {
-                            if (e.key === 'Enter' && chatInput.value.trim() !== '') {
-                                sync.sendChatMessage(chatInput.value.trim());
-                                chatInput.value = '';
-                            }
-                        });
+                chatSend.addEventListener('click', () => {
+                    if (chatInput.value.trim() !== '') {
+                        sync.sendChatMessage(chatInput.value.trim());
+                        chatInput.value = '';
                     }
-                }
-            });
+                });
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+                        sync.sendChatMessage(chatInput.value.trim());
+                        chatInput.value = '';
+                    }
+                });
+            }
         }
-    };
-});
+    });
+}
+
+// Export module for Moodle AMD (Rollup will convert to AMD format).
+export default {
+    init: init
+};

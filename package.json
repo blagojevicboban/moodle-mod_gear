@@ -8,11 +8,15 @@
   },
   "license": "GPL-3.0",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "grunt": "^1.6.1",
     "grunt-contrib-uglify": "^5.2.2",
     "grunt-contrib-watch": "^1.1.0",
     "grunt-eslint": "^24.3.0",
-    "grunt-stylelint": "^0.20.1"
-
+    "grunt-rollup": "^12.0.0",
+    "grunt-stylelint": "^0.20.1",
+    "rollup": "^4.9.6",
+    "three": "^0.160.0"
   }
 }
