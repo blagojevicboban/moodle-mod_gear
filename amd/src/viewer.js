@@ -100,6 +100,9 @@ import Templates from 'core/templates';
                 this.setupRaycaster();
                 this.setupEventListeners();
                 
+                // Check WebXR support and setup fallback if needed
+                await this.checkWebXRSupport();
+                
                 // Wait for overlay UI to be added to DOM before proceeding
                 await this.setupOverlay();
 
@@ -118,6 +121,32 @@ import Templates from 'core/templates';
             } catch (error) {
                 Notification.exception(error);
             }
+        }
+
+        /**
+         * Setup fallback UI for devices without WebXR support.
+         */
+        async setupFallbackUI() {
+            const fallbackMessage = await Str.get_string('webxrnotsupported', 'mod_gear');
+            const fallbackHtml = `
+                <div class="alert alert-warning gear-fallback-notice" style="position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;">
+                    <i class="fa fa-info-circle" aria-hidden="true"></i>
+                    ${fallbackMessage}
+                    <br><small>${await Str.get_string('fallbackmessage', 'mod_gear')}</small>
+                </div>
+            `;
+
+            // Insert the fallback notice into the viewer container
+            const viewerContainer = document.getElementById('gear-viewer-' + this.cmid);
+            if (viewerContainer) {
+                viewerContainer.insertAdjacentHTML('afterbegin', fallbackHtml);
+            }
+
+            // Hide AR/VR buttons if they exist
+            const arBtn = document.getElementById('gear-ar-' + this.cmid);
+            const vrBtn = document.getElementById('gear-vr-' + this.cmid);
+            if (arBtn) arBtn.style.display = 'none';
+            if (vrBtn) vrBtn.style.display = 'none';
         }
 
         /**
@@ -615,17 +644,11 @@ import Templates from 'core/templates';
          * @param {HTMLElement} button AR button element
          */
         async setupARButton(button) {
-            var supported;
-            if ('xr' in navigator) {
-                supported = await navigator.xr.isSessionSupported('immersive-ar');
-                if (!supported) {
-                    button.disabled = true;
-                    button.title = await Str.get_string('arnotsupported', 'mod_gear');
-                } else {
-                    button.addEventListener('click', () => this.startARSession());
-                }
-            } else {
+            if (!this.arSupported) {
                 button.disabled = true;
+                button.title = await Str.get_string('arnotsupported', 'mod_gear');
+            } else {
+                button.addEventListener('click', () => this.startARSession());
             }
         }
 
@@ -635,17 +658,11 @@ import Templates from 'core/templates';
          * @param {HTMLElement} button VR button element
          */
         async setupVRButton(button) {
-            var supported;
-            if ('xr' in navigator) {
-                supported = await navigator.xr.isSessionSupported('immersive-vr');
-                if (!supported) {
-                    button.disabled = true;
-                    button.title = await Str.get_string('webxrnotsupported', 'mod_gear');
-                } else {
-                    button.addEventListener('click', () => this.startVRSession());
-                }
-            } else {
+            if (!this.vrSupported) {
                 button.disabled = true;
+                button.title = await Str.get_string('webxrnotsupported', 'mod_gear');
+            } else {
+                button.addEventListener('click', () => this.startVRSession());
             }
         }
 
