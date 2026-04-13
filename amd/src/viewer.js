@@ -129,7 +129,7 @@ import Templates from 'core/templates';
         async setupFallbackUI() {
             const fallbackMessage = await Str.get_string('webxrnotsupported', 'mod_gear');
             const fallbackHtml = `
-                <div class="alert alert-warning gear-fallback-notice" style="position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;">
+                <div class="alert alert-warning gear-fallback-notice" style="position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000; background: rgba(255, 243, 205, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
                     <i class="fa fa-info-circle" aria-hidden="true"></i>
                     ${fallbackMessage}
                     <br><small>${await Str.get_string('fallbackmessage', 'mod_gear')}</small>
@@ -147,6 +147,57 @@ import Templates from 'core/templates';
             const vrBtn = document.getElementById('gear-vr-' + this.cmid);
             if (arBtn) arBtn.style.display = 'none';
             if (vrBtn) vrBtn.style.display = 'none';
+        }
+
+        /**
+         * Check WebXR support and setup fallback if needed.
+         * Only disables AR/VR buttons silently - doesn't block normal 3D viewing.
+         */
+        async checkWebXRSupport() {
+            // Check if AR/VR buttons should be hidden
+            var arBtn = document.getElementById('gear-ar-' + this.cmid);
+            var vrBtn = document.getElementById('gear-vr-' + this.cmid);
+
+            if ('xr' in navigator) {
+                try {
+                    // Check if any XR session types are supported
+                    var arSupported = false;
+                    var vrSupported = false;
+
+                    try {
+                        arSupported = await navigator.xr.isSessionSupported('immersive-ar');
+                    } catch (e) {
+                        // AR not supported - ignore
+                    }
+
+                    try {
+                        vrSupported = await navigator.xr.isSessionSupported('immersive-vr');
+                    } catch (e) {
+                        // VR not supported - ignore
+                    }
+
+                    // Hide buttons if not supported (no warning needed for desktop browsers)
+                    if (!arSupported && arBtn) {
+                        arBtn.style.display = 'none';
+                        arBtn.disabled = true;
+                    }
+
+                    if (!vrSupported && vrBtn) {
+                        vrBtn.style.display = 'none';
+                        vrBtn.disabled = true;
+                    }
+                } catch (error) {
+                    // WebXR API error - just hide buttons silently
+                    console.warn('GEAR: WebXR check failed:', error);
+                    if (arBtn) arBtn.style.display = 'none';
+                    if (vrBtn) vrBtn.style.display = 'none';
+                }
+            } else {
+                // WebXR not available at all (expected on most desktop browsers)
+                // Just hide AR/VR buttons - no warning needed
+                if (arBtn) arBtn.style.display = 'none';
+                if (vrBtn) vrBtn.style.display = 'none';
+            }
         }
 
         /**
@@ -683,6 +734,10 @@ import Templates from 'core/templates';
                         });
 
                         this.model = gltf.scene;
+
+                        // Fix model orientation - rotate 180° on X axis to make model upright
+                        // This corrects the common GLTF coordinate system mismatch
+                        this.model.rotation.x = Math.PI;
 
                         // Apply saved transform if available.
                         if (modelData.position) {

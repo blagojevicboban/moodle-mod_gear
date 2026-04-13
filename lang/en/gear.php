@@ -180,6 +180,5 @@ $string['vr_enabled'] = 'Enable VR mode';
 $string['vr_enabled_help'] = 'Allow users to view content in Virtual Reality with a headset.';
 $string['webxrnotavailable'] = 'WebXR is not available on this device.';
 $string['webxrnotsupported'] = 'WebXR is not supported in your browser.';
-$string['fallbackmessage'] = 'You can still explore the 3D model using mouse/touch controls.';
 $string['zoomhint'] = 'Zoom';
 $string['zoomhint_desc'] = 'Desktop: Mouse wheel. Mobile: Pinch to zoom.';
