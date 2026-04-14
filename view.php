@@ -68,8 +68,8 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
 // Load Three.js and addons via bundled AMD module (no longer via CDN).
-// PeerJS still loaded via CDN (consider self-hosting in future).
-$PAGE->requires->js(new moodle_url('https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'), true);
+// PeerJS is now self-hosted via local AMD module.
+$PAGE->requires->js(new moodle_url('/mod/gear/amd/src/peerjs.min.js'), true);
 
 // Get models for this activity (with file URLs).
 $models = gear_get_models($gear->id, $context->id);

@@ -3,7 +3,12 @@
     "allow": [
       "Bash(npm install *)",
       "Bash(npx *)",
-      "Bash(rm *)"
+      "Bash(rm *)",
+      "Bash(mkdir *)",
+      "Bash(curl *)",
+      "Bash(mv *)",
+      "Bash(rmdir *)",
+      "Bash(npm run *)"
     ]
   },
   "$version": 3
