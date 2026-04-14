@@ -16,6 +16,7 @@
 | 🥽 **VR Mode** | Immersive WebXR experience with interactive hand controllers |
 | 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video, Teleport) |
 | 💬 **Tooltips** | Hover tooltips with icons, titles, and descriptions for quick context |
+| ♿ **Accessibility** | Full keyboard navigation, screen reader support, and touch/long-press for mobile |
 | 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
 | 🧩 **Gamification** | Branching scenarios & escape-room style conditional unlocking |
 | ✨ **AI Assist** | Generate hotspot content and quizzes using AI |
@@ -85,7 +86,10 @@ php admin/cli/upgrade.php
 
 1.  **Exploration**: Rotate, zoom, and move around the 3D model.
 2.  **Interaction**: Click hotspots to view info, take quizzes, or listen to audio guides.
-3.  **Accessibility**: Use the Text-to-Speech button on info hotspots to have the content read aloud.
+3.  **Accessibility**: 
+    - Use **Tab** to focus the 3D viewer, then **Arrow keys** to navigate between hotspots and **Enter** to activate them.
+    - Use the Text-to-Speech button on info hotspots to have the content read aloud.
+    - On mobile, **long-press** (0.5s) on a hotspot to view its tooltip.
 4.  **Collaboration**: See other students in the same scene as 3D avatars. Connect via microphone for real-time WebRTC 3D voice chat.
 5.  **Spatial Audio**: Move closer to audio hotspots or other speaking students to hear them louder. Use headphones for the best experience.
 

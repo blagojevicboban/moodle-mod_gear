@@ -74,7 +74,10 @@ function gear_add_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): in
     $gear->scene_config = json_encode([
         'background' => $gear->background_color ?? '#1a1a2e',
         'lighting' => $gear->lighting ?? 'studio',
-        'camera' => ['position' => [0, 1.6, 3]],
+        'camera' => [
+            'position' => [0, 1.6, 3],
+            'hotspotScale' => isset($gear->hotspot_scale) ? (float)$gear->hotspot_scale : 1.5,
+        ],
         'hotspots' => [
             'enabled' => isset($gear->enablehotspots) ? (bool)$gear->enablehotspots : true,
             'edit' => isset($gear->edithotspots) ? (bool)$gear->edithotspots : false,
@@ -125,7 +128,10 @@ function gear_update_instance(stdClass $gear, ?mod_gear_mod_form $mform = null):
     $gear->scene_config = json_encode([
         'background' => $gear->background_color ?? '#1a1a2e',
         'lighting' => $gear->lighting ?? 'studio',
-        'camera' => ['position' => [0, 1.6, 3]],
+        'camera' => [
+            'position' => [0, 1.6, 3],
+            'hotspotScale' => isset($gear->hotspot_scale) ? (float)$gear->hotspot_scale : 1.5,
+        ],
         'hotspots' => [
             'enabled' => isset($gear->enablehotspots) ? (bool)$gear->enablehotspots : true,
             'edit' => isset($gear->edithotspots) ? (bool)$gear->edithotspots : false,

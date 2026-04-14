@@ -5,6 +5,20 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-04-14
+
+### Added
+- **Hotspot Scale Control**: Teachers can now configure default hotspot diameter via activity settings form (0.1 to 3.0 scale)
+- **Keyboard Navigation**: Full keyboard accessibility for 3D viewer - Tab to focus, Arrow keys to navigate hotspots, Enter/Space to activate, Escape to close tooltips
+- **Screen Reader Support**: Tooltips now include `role="tooltip"`, `aria-live="polite"`, and `aria-label` attributes for proper screen reader announcements
+- **Touch/Long-Press Support**: Mobile users can long-press (0.5s) on hotspots to view tooltips with haptic feedback on supported devices
+- **Tooltip Animations**: Smooth fade-in/fade-out transitions with scale animation (200ms duration) for improved user experience
+- **Visual Focus Indicator**: Canvas shows outline highlight when focused for keyboard users
+
+### Changed
+- Canvas is now focusable with `tabindex="0"` and `role="application"` for better accessibility
+- Tooltip icons marked as `aria-hidden="true"` to prevent screen reader redundancy
+
 ## [1.6.0] - 2026-04-09
 
 ### Changed
@@ -149,7 +163,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD
 - Moodle 4.4+ compatibility
 
-[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.6.0...v1.7.0
+[1.6.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.5.0...v1.6.0
 [1.4.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.1...v1.2.2

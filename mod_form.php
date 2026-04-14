@@ -113,6 +113,17 @@ class mod_gear_mod_form extends moodleform_mod {
         $mform->setDefault('edithotspots', 1);
         $mform->addHelpButton('edithotspots', 'edithotspots', 'gear');
 
+        // Hotspot scale slider.
+        $mform->addElement(
+            'text',
+            'hotspot_scale',
+            get_string('hotspotscale', 'gear'),
+            ['size' => '5', 'step' => '0.1', 'min' => '0.1', 'max' => '3']
+        );
+        $mform->setType('hotspot_scale', PARAM_FLOAT);
+        $mform->setDefault('hotspot_scale', 1.5);
+        $mform->addHelpButton('hotspot_scale', 'hotspotscale', 'gear');
+
         // Standard course module elements.
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
@@ -156,6 +167,9 @@ class mod_gear_mod_form extends moodleform_mod {
             if ($config) {
                 $defaultvalues['background_color'] = $config['background'] ?? '#1a1a2e';
                 $defaultvalues['lighting'] = $config['lighting'] ?? 'studio';
+                if (isset($config['camera']['hotspotScale'])) {
+                    $defaultvalues['hotspot_scale'] = $config['camera']['hotspotScale'];
+                }
             }
         }
 

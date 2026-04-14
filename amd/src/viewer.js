@@ -1020,6 +1020,133 @@ import Templates from 'core/templates';
                 }
             });
 
+            // Keyboard navigation for accessibility.
+            this.canvas.setAttribute('tabindex', '0');
+            this.canvas.setAttribute('role', 'application');
+            this.canvas.setAttribute('aria-label', '3D Viewer - Use arrow keys to navigate, Enter to select hotspots');
+            
+            this.canvas.addEventListener('focus', () => {
+                this.canvas.style.outline = '2px solid #6366f1';
+                this.canvas.style.outlineOffset = '2px';
+            });
+            
+            this.canvas.addEventListener('blur', () => {
+                this.canvas.style.outline = '';
+                this.canvas.style.outlineOffset = '';
+                this.hideTooltip();
+            });
+
+            this.canvas.addEventListener('keydown', (event) => {
+                var focusedHotspotIndex = this.focusedHotspotIndex || 0;
+                var visibleHotspots = this.hotspotMeshes.filter(function(mesh) {
+                    return mesh.visible && mesh.userData.type !== 'teleport';
+                });
+
+                switch (event.key) {
+                    case 'Tab':
+                        // Allow default tab behavior but track focus.
+                        break;
+                    
+                    case 'ArrowRight':
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        focusedHotspotIndex = (focusedHotspotIndex + 1) % visibleHotspots.length;
+                        this.focusedHotspotIndex = focusedHotspotIndex;
+                        this.highlightFocusedHotspot(visibleHotspots[focusedHotspotIndex]);
+                        break;
+                    
+                    case 'ArrowLeft':
+                    case 'ArrowUp':
+                        event.preventDefault();
+                        focusedHotspotIndex = (focusedHotspotIndex - 1 + visibleHotspots.length) % visibleHotspots.length;
+                        this.focusedHotspotIndex = focusedHotspotIndex;
+                        this.highlightFocusedHotspot(visibleHotspots[focusedHotspotIndex]);
+                        break;
+                    
+                    case 'Enter':
+                    case ' ':
+                        event.preventDefault();
+                        if (visibleHotspots[focusedHotspotIndex]) {
+                            var hotspot = visibleHotspots[focusedHotspotIndex];
+                            // Create a synthetic event for tooltip positioning.
+                            var syntheticEvent = {
+                                clientX: window.innerWidth / 2,
+                                clientY: window.innerHeight / 2
+                            };
+                            if (hotspot.userData.type === 'teleport') {
+                                this.focusHotspot(hotspot.userData.id);
+                            } else {
+                                this.showHotspotPopup(hotspot.userData);
+                            }
+                        }
+                        break;
+                    
+                    case 'Escape':
+                        this.hideTooltip();
+                        break;
+                }
+            });
+
+            // Touch support for mobile (long-press to show tooltip).
+            this.longPressTimer = null;
+            this.touchStartPos = { x: 0, y: 0 };
+            
+            this.canvas.addEventListener('touchstart', (event) => {
+                if (event.touches.length === 1) {
+                    var touch = event.touches[0];
+                    this.touchStartPos = { x: touch.clientX, y: touch.clientY };
+                    
+                    // Start long-press timer (500ms).
+                    this.longPressTimer = setTimeout(() => {
+                        var rect = this.canvas.getBoundingClientRect();
+                        this.mouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+                        this.mouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+                        
+                        this.raycaster.setFromCamera(this.mouse, this.camera);
+                        var intersects = this.raycaster.intersectObjects(this.hotspotMeshes);
+                        
+                        if (intersects.length > 0) {
+                            var hotspotMesh = intersects[0].object;
+                            if (hotspotMesh.visible && hotspotMesh.userData.type !== 'teleport') {
+                                // Create synthetic event for positioning.
+                                var syntheticEvent = {
+                                    clientX: touch.clientX,
+                                    clientY: touch.clientY
+                                };
+                                this.showTooltip(hotspotMesh.userData, syntheticEvent);
+                                
+                                // Provide haptic feedback if available.
+                                if (navigator.vibrate) {
+                                    navigator.vibrate(50);
+                                }
+                            }
+                        }
+                    }, 500);
+                }
+            }, { passive: true });
+
+            this.canvas.addEventListener('touchmove', (event) => {
+                // Cancel long-press if user is scrolling/pinching.
+                if (this.longPressTimer) {
+                    var touch = event.touches[0];
+                    var deltaX = Math.abs(touch.clientX - this.touchStartPos.x);
+                    var deltaY = Math.abs(touch.clientY - this.touchStartPos.y);
+                    
+                    // If moved more than 10px, cancel long-press.
+                    if (deltaX > 10 || deltaY > 10) {
+                        clearTimeout(this.longPressTimer);
+                        this.longPressTimer = null;
+                    }
+                }
+            }, { passive: true });
+
+            this.canvas.addEventListener('touchend', () => {
+                if (this.longPressTimer) {
+                    clearTimeout(this.longPressTimer);
+                    this.longPressTimer = null;
+                }
+            });
+
             this.setupVRControllers();
         }
 
@@ -1042,7 +1169,9 @@ import Templates from 'core/templates';
             if (!this.tooltipElement) {
                 this.tooltipElement = document.createElement('div');
                 this.tooltipElement.className = 'gear-hotspot-tooltip';
-                this.tooltipElement.style.cssText = 'position:fixed;padding:12px;background:rgba(0,0,0,0.9);color:#fff;border-radius:8px;pointer-events:none;z-index:10000;max-width:250px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+                this.tooltipElement.setAttribute('role', 'tooltip');
+                this.tooltipElement.setAttribute('aria-live', 'polite');
+                this.tooltipElement.style.cssText = 'position:fixed;padding:12px;background:rgba(0,0,0,0.9);color:#fff;border-radius:8px;pointer-events:none;z-index:10000;max-width:250px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);opacity:0;transform:scale(0.95);transition:opacity 0.2s ease-in-out, transform 0.2s ease-in-out;';
                 document.body.appendChild(this.tooltipElement);
             }
 
@@ -1056,9 +1185,9 @@ import Templates from 'core/templates';
             };
             var icon = iconMap[hotspot.type] || 'fa-info-circle';
 
-            // Build tooltip content.
+            // Build tooltip content with accessible labels.
             var content = '<div style="display:flex;align-items:center;margin-bottom:6px;">';
-            content += '<i class="fa ' + icon + '" style="margin-right:8px;font-size:16px;color:#6366f1;"></i>';
+            content += '<i class="fa ' + icon + '" style="margin-right:8px;font-size:16px;color:#6366f1;" aria-hidden="true"></i>';
             content += '<strong>' + (hotspot.title || 'Hotspot') + '</strong>';
             content += '</div>';
 
@@ -1074,8 +1203,21 @@ import Templates from 'core/templates';
                 content += '<div style="opacity:0.8;font-size:12px;line-height:1.4;">' + plainText + '</div>';
             }
 
+            // Set accessible text for screen readers.
+            this.tooltipElement.setAttribute('aria-label', (hotspot.title || 'Hotspot') + ': ' + (hotspot.content || ''));
             this.tooltipElement.innerHTML = content;
+            
+            // Show tooltip with animation.
             this.tooltipElement.style.display = 'block';
+            
+            // Trigger fade-in animation using requestAnimationFrame for smooth transition.
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    this.tooltipElement.style.opacity = '1';
+                    this.tooltipElement.style.transform = 'scale(1)';
+                });
+            });
+            
             this.updateTooltipPosition(event);
         }
 
@@ -1110,9 +1252,52 @@ import Templates from 'core/templates';
          */
         hideTooltip() {
             if (this.tooltipElement) {
-                this.tooltipElement.style.display = 'none';
+                // Trigger fade-out animation.
+                this.tooltipElement.style.opacity = '0';
+                this.tooltipElement.style.transform = 'scale(0.95)';
+
+                // Hide after animation completes.
+                setTimeout(() => {
+                    if (this.tooltipElement) {
+                        this.tooltipElement.style.display = 'none';
+                    }
+                }, 200);
             }
             this.activeTooltipHotspot = null;
+        }
+
+        /**
+         * Highlight the focused hotspot for keyboard navigation.
+         *
+         * @param {THREE.Mesh} mesh The hotspot mesh to highlight
+         */
+        highlightFocusedHotspot(mesh) {
+            if (!mesh) return;
+
+            // Reset previous highlight.
+            this.hotspotMeshes.forEach(function(m) {
+                if (m.userData._focused) {
+                    m.userData._focused = false;
+                    // Restore original emissive intensity.
+                    if (m.userData._originalEmissive !== undefined) {
+                        m.material.emissiveIntensity = m.userData._originalEmissive;
+                    }
+                }
+            });
+
+            // Highlight current focused hotspot.
+            mesh.userData._focused = true;
+            if (mesh.userData._originalEmissive === undefined) {
+                mesh.userData._originalEmissive = mesh.material.emissiveIntensity || 0;
+            }
+            mesh.material.emissiveIntensity = 0.5;
+
+            // Show tooltip at center of screen for keyboard users.
+            var syntheticEvent = {
+                clientX: window.innerWidth / 2,
+                clientY: window.innerHeight / 2
+            };
+            this.showTooltip(mesh.userData, syntheticEvent);
         }
 
         /**

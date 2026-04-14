@@ -91,6 +91,7 @@ $string['hotspotmoved'] = 'Hotspot moved successfully';
 $string['hotspots'] = 'Hotspots';
 $string['hotspotsaved'] = 'Hotspot saved successfully';
 $string['hotspotscale'] = 'Hotspot Diameter';
+$string['hotspotscale_help'] = 'Set the default size of hotspot indicators in the 3D scene. Values range from 0.1 (very small) to 3.0 (very large). Users can adjust this during viewing using the scale slider.';
 $string['hotspottitle'] = 'Hotspot title';
 $string['hotspottype'] = 'Hotspot type';
 $string['hotspottype_audio'] = 'Audio';
