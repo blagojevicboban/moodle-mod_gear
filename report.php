@@ -36,6 +36,13 @@ require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
 require_capability('mod/gear:manage', $context);
 
+$event = \mod_gear\event\report_viewed::create([
+    'objectid' => $gear->id,
+    'context' => $context,
+]);
+$event->add_record_snapshot('gear', $gear);
+$event->trigger();
+
 $url = new moodle_url('/mod/gear/report.php', ['id' => $cm->id]);
 $PAGE->set_url($url);
 $PAGE->set_title(format_string($gear->name) . ': ' . get_string('reports', 'mod_gear'));

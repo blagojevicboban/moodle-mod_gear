@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<libraries>
+  <library>
+    <location>amd/build/viewer.min.js</location>
+    <name>Three.js</name>
+    <description>JavaScript 3D library (bundled with OrbitControls, TransformControls, and GLTFLoader into the AMD viewer bundle via Rollup).</description>
+    <version>0.160.0</version>
+    <license>MIT</license>
+    <repository>https://github.com/mrdoob/three.js</repository>
+    <copyrights>
+      <copyright>2010-2024 Three.js authors</copyright>
+    </copyrights>
+  </library>
+  <library>
+    <location>vendorjs/peerjs.min.js</location>
+    <name>PeerJS</name>
+    <description>Simple peer-to-peer with WebRTC data and media connections.</description>
+    <version>1.5.4</version>
+    <license>MIT</license>
+    <repository>https://github.com/peers/peerjs</repository>
+    <copyrights>
+      <copyright>2013 Michelle Bu and Eric Zhang</copyright>
+    </copyrights>
+  </library>
+</libraries>
+

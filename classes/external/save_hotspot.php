@@ -128,6 +128,12 @@ class save_hotspot extends external_api {
             // Update existing.
             $hotspot->id = $params['id'];
             $DB->update_record('gear_hotspots', $hotspot);
+
+            $event = \mod_gear\event\hotspot_updated::create([
+                'objectid' => $hotspot->id,
+                'context' => $context,
+            ]);
+            $event->trigger();
         } else {
             // Create new.
             $maxorder = $DB->get_field_sql(
@@ -135,7 +141,14 @@ class save_hotspot extends external_api {
                 [$params['gearid']]
             );
             $hotspot->sortorder = ($maxorder !== false) ? $maxorder + 1 : 0;
+            $hotspot->timecreated = time();
             $hotspot->id = $DB->insert_record('gear_hotspots', $hotspot);
+
+            $event = \mod_gear\event\hotspot_created::create([
+                'objectid' => $hotspot->id,
+                'context' => $context,
+            ]);
+            $event->trigger();
         }
 
         return [

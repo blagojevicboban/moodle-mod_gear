@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.1] - 2026-10-16
 
+### Added
+- PHPUnit test suite (`lib_test`, `external_test`, `privacy/provider_test`, `backup_restore_test`), data generator (`mod_gear_generator`), and Behat feature tests.
+- Activity events (`quiz_submitted`, `hotspot_created`, `hotspot_updated`, `hotspot_deleted`, `model_updated`, `report_viewed`) and scheduled task `cleanup_sessions`.
+- Course reset callbacks (`gear_reset_userdata`) and user outline/complete reports.
+- `thirdpartylibs.xml` and `readme_moodle.txt` metadata for bundled Three.js and PeerJS.
+
 ### Security
 - `track_event` accepts only `ar_start`, `vr_start` and `hotspot_click` (size-limited JSON, no guests); quiz scores can no longer be forged, as they come from `submit_quiz` only.
 - `save_hotspot` verifies that the hotspot and model belong to the activity, validates the type and JSON fields and cleans the content.
@@ -20,12 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The viewer is no longer started for an activity without a model.
 - Grades are scaled so that the points of all quiz hotspots equal the full grade; the grade item and sessions are removed with the activity.
 - Restore remaps `requires_id` of hotspots and skips tracking rows of users that were not restored; backup annotates the users.
-- Missing `error:*` and Serbian `hotspotscale_help` strings.
+- Missing `error:*` and Serbian `hotspotscale_help` strings; declared PeerJS in privacy metadata and fixed session export subcontext.
 - The model file picker accepts only `.glb`, `.gltf`, `.bin` and images (20 files).
 
 ### Changed
 - Requires Moodle 4.5 or later (supported 4.5 to 5.3). Templates use Bootstrap 5 classes.
-- Removed the unimplemented custom completion rules flag.
+- Removed the unimplemented custom completion rules flag and unused `completion_type` column; added `timecreated` to `gear_hotspots` and `userid` foreign keys.
+- Moved `peerjs.min.js` out of `amd/src/` into `vendorjs/`; scoped CSS variables and rules to `.path-mod-gear` / `.gear-activity`.
 
 ## [1.7.0] - 2026-04-14
 
@@ -185,9 +192,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD
 - Moodle 4.4+ compatibility
 
-[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.7.1...HEAD
+[1.7.1]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.2.1...v1.2.2
@@ -195,6 +204,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.2.0...v1.0.0
-[0.2.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.1.1...v0.2.0
-[0.1.1]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.1.0...v0.1.1
+[0.2.0]: https://github.com/blagojevicboban/moodle-mod_gear/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/blagojevicboban/moodle-mod_gear/releases/tag/v0.1.0

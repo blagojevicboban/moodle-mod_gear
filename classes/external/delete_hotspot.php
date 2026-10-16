@@ -67,6 +67,13 @@ class delete_hotspot extends external_api {
         // Delete the hotspot.
         $DB->delete_records('gear_hotspots', ['id' => $params['id']]);
 
+        $event = \mod_gear\event\hotspot_deleted::create([
+            'objectid' => $hotspot->id,
+            'context' => $context,
+        ]);
+        $event->add_record_snapshot('gear_hotspots', $hotspot);
+        $event->trigger();
+
         return ['success' => true];
     }
 

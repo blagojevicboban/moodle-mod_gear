@@ -31,8 +31,8 @@ use core_privacy\local\request\writer;
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\userlist\provider {
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /**
      * Returns meta data about this system.
      *
@@ -41,6 +41,7 @@ class provider implements
      */
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table('gear_tracking', [
+            'gearid' => 'privacy:metadata:gear_tracking:gearid',
             'userid' => 'privacy:metadata:gear_tracking:userid',
             'action' => 'privacy:metadata:gear_tracking:action',
             'data' => 'privacy:metadata:gear_tracking:data',
@@ -59,6 +60,11 @@ class provider implements
         $collection->add_external_location_link('openai', [
             'data' => 'privacy:metadata:external_openai:data',
         ], 'privacy:metadata:external_openai');
+
+        $collection->add_external_location_link('peerjs', [
+            'peerid' => 'privacy:metadata:external_peerjs:peerid',
+            'message' => 'privacy:metadata:external_peerjs:message',
+        ], 'privacy:metadata:external_peerjs');
 
         return $collection;
     }
@@ -104,6 +110,7 @@ class provider implements
         }
 
         $user = $contextlist->get_user();
+        $subcontext = [get_string('pluginname', 'mod_gear')];
 
         foreach ($contextlist->get_contexts() as $context) {
             if ($context->contextlevel != CONTEXT_MODULE) {
@@ -123,13 +130,13 @@ class provider implements
                 $data[] = (object) [
                     'action' => $tracking->action,
                     'data' => $tracking->data,
-                    'duration' => transform::duration($tracking->duration),
+                    'duration' => transform::duration((int) $tracking->duration),
                     'timecreated' => transform::datetime($tracking->timecreated),
                 ];
             }
 
             if (!empty($data)) {
-                writer::with_context($context)->export_data([get_string('pluginname', 'mod_gear')], (object) ['tracking' => $data]);
+                writer::with_context($context)->export_data($subcontext, (object) ['tracking' => $data]);
             }
 
             // Export session data.
@@ -144,18 +151,19 @@ class provider implements
             }
 
             if (!empty($sessiondata)) {
-                writer::with_context($context)->export_related_data([
-                    get_string('hotspots', 'mod_gear'),
-                    get_string('leaderboard', 'mod_gear'),
-                ], 'sessions', (object) ['sessions' => $sessiondata]);
+                writer::with_context($context)->export_related_data(
+                    $subcontext,
+                    'sessions',
+                    (object) ['sessions' => $sessiondata]
+                );
             }
         }
     }
 
     /**
-     * Delete all use data which matches the specified context.
+     * Delete all user data which matches the specified context.
      *
-     * @param   \context $context A user context.
+     * @param   \context $context A module context.
      */
     public static function delete_data_for_all_users_in_context(\context $context) {
         global $DB;
@@ -259,6 +267,9 @@ class provider implements
         }
 
         $userids = $userlist->get_userids();
+        if (empty($userids)) {
+            return;
+        }
 
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $inparams['gearid'] = $cm->instance;

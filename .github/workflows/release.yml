@@ -23,12 +23,18 @@ jobs:
           rsync -av \
             --exclude='.git' \
             --exclude='.github' \
+            --exclude='.continue' \
+            --exclude='.qwen' \
             --exclude='.gitignore' \
+            --exclude='.gitattributes' \
             --exclude='.eslintignore' \
             --exclude='.stylelintignore' \
             --exclude='.phpcs.xml.dist' \
             --exclude='.moodle-plugin-ci.yml' \
             --exclude='tests' \
+            --exclude='docs' \
+            --exclude='description.html' \
+            --exclude='MIGRATION_*.md' \
             --exclude='node_modules' \
             --exclude='vendor' \
             --exclude='Gruntfile.js' \

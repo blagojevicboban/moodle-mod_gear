@@ -5,26 +5,26 @@
     GEAR: Immersive AR/VR Learning</h1>
   <p style="font-size: 1.2em; font-style: italic; color: #555;">Bring your
     lessons to life with interactive 3D content directly inside Moodle.</p>
-  <div style="margin-bottom: 20px;"><a
-      href="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml"
-      target="_blank" rel="noreferrer noopener"> <img class="img-fluid"
-        src="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml/badge.svg"
-        alt="Moodle Plugin CI"> </a> <a href="https://moodle.org"
-      target="_blank" rel="noreferrer noopener"> <img class="img-fluid"
-        src="https://img.shields.io/badge/Moodle-4.1%20to%205.1-orange.svg"
-        alt="Moodle"> </a> <a href="https://php.net" target="_blank"
-      rel="noreferrer noopener"> <img class="img-fluid"
-        src="https://img.shields.io/badge/PHP-8.1%2B-purple.svg" alt="PHP"> </a>
-    <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank"
-      rel="noreferrer noopener"> <img class="img-fluid"
-        src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"
-        alt="License"> </a></div>
+  <div style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px;">
+    <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; background: #ea580c; color: #fff; font-size: 0.85em; font-weight: 600;">Moodle 4.5 – 5.3</span>
+    <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; background: #7c3aed; color: #fff; font-size: 0.85em; font-weight: 600;">PHP 8.2+</span>
+    <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; background: #2563eb; color: #fff; font-size: 0.85em; font-weight: 600;">License: GPL v3+</span>
+  </div>
+  <div
+    style="margin-bottom: 20px; padding: 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0;">
+    <h3 style="color: #047857; margin-top: 0; margin-bottom: 10px;">🛡️ What's New in v1.7.1</h3>
+    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #065f46;">
+      <li><strong>🔒 Security &amp; Privacy Hardening:</strong> Server-side quiz grading, hotspot content sanitization, strict file-serving permissions, and full PeerJS/OpenAI privacy metadata declarations.</li>
+      <li><strong>⚙️ Moodle 4.5 – 5.3 Support:</strong> Updated templates for Bootstrap 5, normalized gradebook scaling, course reset support, and scheduled session cleanup.</li>
+      <li><strong>🧪 Automated Test Suite:</strong> Comprehensive PHPUnit and Behat test coverage for external services, grading, backup/restore, and privacy API.</li>
+    </ul>
+  </div>
   <div
     style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
     <h3 style="color: #0369a1; margin-top: 0; margin-bottom: 10px;">🚀 What's New in v1.7.0</h3>
     <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #0c4a6e;">
-      <li><strong>♿ Full Accessibility:</strong> Keyboard navigation (Tab, Arrow keys, Enter), screen reader support, and mobile long-press for tooltips.</li>
-      <li><strong>🎚️ Hotspot Scale Control:</strong> Teachers can now set default hotspot diameter (0.1 to 3.0) via activity settings.</li>
+      <li><strong>♿ Accessibility:</strong> Keyboard navigation (Tab, Arrow keys, Enter), screen reader support, and mobile long-press for tooltips.</li>
+      <li><strong>🎚️ Hotspot Scale Control:</strong> Teachers can set default hotspot diameter (0.1 to 3.0) via activity settings.</li>
       <li><strong>✨ Tooltip Animations:</strong> Smooth fade-in/fade-out transitions with scale animations for a polished user experience.</li>
     </ul>
   </div>
@@ -32,38 +32,18 @@
     style="margin-bottom: 20px; padding: 15px; background: #f5f3ff; border-radius: 8px; border: 1px solid #ddd6fe;">
     <h3 style="color: #5b21b6; margin-top: 0; margin-bottom: 10px;">🚀 What's New in v1.6.0</h3>
     <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #3b0764;">
-      <li><strong>⚡ Three.js Upgrade:</strong> Migrated from r128 to r160 with 3+ years of performance and WebXR improvements.</li>
+      <li><strong>⚡ Three.js Upgrade:</strong> Migrated from r128 to r160 with performance and WebXR improvements.</li>
       <li><strong>💬 Hover Tooltips:</strong> Quick context with icons, titles, and descriptions when hovering over hotspots.</li>
       <li><strong>📦 Self-Hosted Dependencies:</strong> Three.js bundled locally via Rollup for better reliability and performance.</li>
-    </ul>
-  </div>
-  <div
-    style="margin-bottom: 20px; padding: 15px; background: #d4edda; border-radius: 8px; border: 1px solid #c3e6cb;">
-    <h3 style="color: #155724; margin-top: 0; margin-bottom: 10px;">🚀 What's New in v1.5.0</h3>
-    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #155724;">
-      <li><strong>📊 Teacher Analytics:</strong> New dashboard tracking VR starts, AR starts, and detailed hotspot interactions.</li>
-      <li><strong>💬 P2P Text Chat:</strong> Real-time WebRTC text messaging in collaborative mode.</li>
-      <li><strong>🥽 VR Controllers:</strong> Full hand tracking and laser pointers for immersive WebXR interaction.</li>
-    </ul>
-  </div>
-  <div
-    style="margin-bottom: 25px; padding: 15px; background: #e8f4fd; border-radius: 8px; border: 1px solid #b8daff;">
-    <h3 style="color: #0056b3; margin-top: 0; margin-bottom: 10px;">🌟 What's New in v1.4.0</h3>
-    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #004085;">
-      <li><strong>🎙️ Spatial Voice Chat:</strong> Collaborative learning with real-time Peer-to-Peer 3D voice.</li>
-      <li><strong>🗣️ Auto Text-to-Speech:</strong> Native browser narration for better accessibility.</li>
-      <li><strong>🛠️ Visual Authoring Gizmos:</strong> Drag-and-drop X/Y/Z arrows for pixel-perfect hotspot placement.</li>
-      <li><strong>🧩 Escape Room Mode:</strong> Create unlockable learning paths based on student performance.</li>
-      <li><strong>🎯 Teleport Waypoints:</strong> Guided camera movement for smooth spatial storytelling.</li>
     </ul>
   </div>
   <h2
     style="color: #2c3e50; border-left: 4px solid #007bff; padding-left: 10px;">
     🚀 Overview</h2>
   <p><strong>GEAR</strong> (Geospatial Educational Augmented Reality) is a
-    powerful Moodle activity module that bridges the gap between traditional
-    e-learning and immersive 3D technology. It allows educators to effortlessly
-    upload, manage, and present 3D models in a fully interactive spatial
+    Moodle activity module that bridges the gap between traditional
+    e-learning and immersive 3D technology. It allows educators to
+    upload, manage, and present 3D models in an interactive spatial
     environment.</p>
   <h2
     style="color: #2c3e50; border-left: 4px solid #28a745; padding-left: 10px;">
@@ -72,14 +52,13 @@
     <div
       style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
       <strong style="color: #007bff;">🎮 3D Viewer &amp; Interaction</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Smooth orbital controls,
-        physics-based navigation, and high-performance glTF/GLB rendering.</p>
+      <p style="font-size: 0.95em; margin-top: 5px;">Smooth orbital controls and high-performance glTF/GLB rendering.</p>
     </div>
     <div
       style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
       <strong style="color: #28a745;">📍 Interactive Hotspots</strong>
       <p style="font-size: 0.95em; margin-top: 5px;">Multimedia annotations
-        (Text, Images, Audio, Links) placed precisely on 3D geometry.</p>
+        (Text, Audio, Video, Teleport) placed on 3D geometry.</p>
     </div>
     <div
       style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
@@ -90,72 +69,26 @@
     </div>
     <div
       style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #17a2b8;">✨ AI Assistant & 🗣️ Auto TTS</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Generate hotspot descriptions instantly using the AI. Then, let students use the built-in Text-to-Speech engine to have the content read aloud for perfect accessibility.</p>
+      <strong style="color: #17a2b8;">✨ AI Assistant &amp; 🗣️ Auto TTS</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Generate hotspot descriptions and quizzes using AI, and use built-in Text-to-Speech narration.</p>
     </div>
     <div
       style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #6610f2;">👥 Collaborative Mode & 🎙️ WebRTC Voice</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Real-time multi-user sessions with 3D avatars. Includes serverless P2P spatial voice chat where students sound closer as they approach your avatar!</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #e83e8c;">🔊 Spatial Audio</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Positional audio guides
-        that react to the student's distance and orientation in the scene.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #6c757d;">🛠️ Easy Authoring</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Simply click on the 3D model to drop hotspots, and use visual 3D gizmos (X/Y/Z arrows) to seamlessly perfect their placement in space.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #fd7e14;">⚡ High Performance</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Automatically optimized WebGL framebuffers and smart Anti-aliasing means a lag-free experience on low-end mobile devices and VR headsets.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #6f42c1;">🎥 Video Enriched Scenes</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Embed YouTube, Vimeo, or
-        direct video content directly into the 3D environment for rich
-        storytelling.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #fd7e14;">🧩 Escape Room Gamification</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Create branching scenarios and lock areas. Hotspots only appear when a student solves the required 3D quiz!</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #20c997;">🎯 Teleport Waypoints</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Smooth camera navigation points safely guide students through complex 3D environments without manual zooming.</p>
+      <strong style="color: #6610f2;">👥 Collaborative Mode &amp; 🎙️ WebRTC Voice</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Real-time multi-user sessions with 3D avatars and P2P spatial voice and text chat.</p>
     </div>
   </div>
-  <h2
-    style="color: #2c3e50; border-left: 4px solid #ffc107; padding-left: 10px;">
-    🥽 AR/VR &amp; Mobile</h2>
-  <ul style="list-style-type: none; padding-left: 0;">
-    <li
-      style="margin-bottom: 10px; padding: 10px; background: #fffbe6; border-radius: 6px;">
-      <strong>WebXR Ready:</strong> One-click support for VR headsets and AR
-      devices without any app installation.</li>
-    <li
-      style="margin-bottom: 10px; padding: 10px; background: #e6f7ff; border-radius: 6px;">
-      <strong>Moodle App support:</strong> Fully optimized for the Moodle Mobile
-      App for on-the-go learning.</li>
-  </ul>
   <h2
     style="color: #2c3e50; border-left: 4px solid #17a2b8; padding-left: 10px;">
     📋 Requirements</h2>
   <div
     style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.9em;">
     <ul style="margin: 0; padding-left: 20px;">
-      <li><strong>Moodle:</strong> 4.1 to 5.1+</li>
-      <li><strong>PHP:</strong> 8.1+</li>
+      <li><strong>Moodle:</strong> 4.5 LTS to 5.3+</li>
+      <li><strong>PHP:</strong> 8.2+</li>
       <li><strong>Browser:</strong> Modern browser with WebGL support (Chrome,
         Edge, Firefox, Safari)</li>
-      <li><strong>Privacy:</strong> Fully GDPR compliant via Moodle Privacy API
+      <li><strong>Privacy:</strong> Implements Moodle Privacy API
       </li>
     </ul>
   </div>
@@ -170,8 +103,7 @@
       integrated activities.</li>
   </ol>
   <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-  <p style="font-size: 0.85em; text-align: center; color: #777;">Developed with
-    passion by <strong>Boban Blagojević</strong> • 2026 Stable
+  <p style="font-size: 0.85em; text-align: center; color: #777;">Developed by <strong>Boban Blagojević</strong> • 2026 Stable
     Release<br><em>Geospatial Educational Augmented
-      Reality<br>https://youtu.be/idQx3iFJHNA<br></em></p>
+      Reality</em></p>
 </div>

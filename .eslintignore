@@ -1,6 +1,7 @@
 # Third-party vendor directories - never lint these.
 node_modules/
 vendor/
+vendorjs/
 
 # Built AMD bundles (generated files).
 amd/build/

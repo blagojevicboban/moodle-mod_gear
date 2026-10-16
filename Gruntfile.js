@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Grunt for mod_gear.
+ * Grunt configuration for mod_gear.
  *
  * @package    mod_gear
  * @copyright  2026 Boban Blagojevic
@@ -23,9 +23,7 @@
 
 "use strict";
 
-module.exports = function (grunt) {
-    var path = require('path');
-
+module.exports = function(grunt) {
     // Load standard plugins.
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
@@ -56,7 +54,6 @@ module.exports = function (grunt) {
                         ];
                     }(),
                     external: [
-                        'jquery',
                         'core/ajax',
                         'core/notification',
                         'core/str',
@@ -80,7 +77,7 @@ module.exports = function (grunt) {
         },
         stylelint: {
             css: {
-                src: []
+                src: ['styles.css']
             }
         },
         eslint: {

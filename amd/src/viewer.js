@@ -28,7 +28,6 @@ import {TransformControls} from 'three/examples/jsm/controls/TransformControls.j
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // Moodle AMD dependencies (external - loaded via RequireJS at runtime).
-import $ from 'jquery';
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import Str from 'core/str';
@@ -118,10 +117,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 this.setupControls();
                 this.setupRaycaster();
                 this.setupEventListeners();
-                
+
                 // Check WebXR support and setup fallback if needed
                 await this.checkWebXRSupport();
-                
+
                 // Wait for overlay UI to be added to DOM before proceeding
                 await this.setupOverlay();
 
@@ -147,8 +146,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          */
         async setupFallbackUI() {
             const fallbackMessage = await Str.get_string('webxrnotsupported', 'mod_gear');
+            const fallbackStyle = 'position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000; ' +
+                'background: rgba(255, 243, 205, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); ' +
+                'border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; ' +
+                'color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.3);';
             const fallbackHtml = `
-                <div class="alert alert-warning gear-fallback-notice" style="position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000; background: rgba(255, 243, 205, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                <div class="alert alert-warning gear-fallback-notice" style="${fallbackStyle}">
                     <i class="fa fa-info-circle" aria-hidden="true"></i>
                     ${fallbackMessage}
                     <br><small>${await Str.get_string('fallbackmessage', 'mod_gear')}</small>
@@ -164,8 +167,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             // Hide AR/VR buttons if they exist
             const arBtn = document.getElementById('gear-ar-' + this.cmid);
             const vrBtn = document.getElementById('gear-vr-' + this.cmid);
-            if (arBtn) arBtn.style.display = 'none';
-            if (vrBtn) vrBtn.style.display = 'none';
+            if (arBtn) {
+                arBtn.style.display = 'none';
+            }
+            if (vrBtn) {
+                vrBtn.style.display = 'none';
+            }
         }
 
         /**
@@ -207,15 +214,23 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     }
                 } catch (error) {
                     // WebXR API error - just hide buttons silently
-                    console.warn('GEAR: WebXR check failed:', error);
-                    if (arBtn) arBtn.style.display = 'none';
-                    if (vrBtn) vrBtn.style.display = 'none';
+                    window.console.warn('GEAR: WebXR check failed:', error);
+                    if (arBtn) {
+                        arBtn.style.display = 'none';
+                    }
+                    if (vrBtn) {
+                        vrBtn.style.display = 'none';
+                    }
                 }
             } else {
                 // WebXR not available at all (expected on most desktop browsers)
                 // Just hide AR/VR buttons - no warning needed
-                if (arBtn) arBtn.style.display = 'none';
-                if (vrBtn) vrBtn.style.display = 'none';
+                if (arBtn) {
+                    arBtn.style.display = 'none';
+                }
+                if (vrBtn) {
+                    vrBtn.style.display = 'none';
+                }
             }
         }
 
@@ -226,7 +241,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             try {
                 const response = await Ajax.call([{
                     methodname: 'mod_gear_get_scene_data',
-                    args: { gearid: this.gearid }
+                    args: {gearid: this.gearid}
                 }])[0];
 
                 this.modelsData = response.models || [];
@@ -235,10 +250,18 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 // Parse position and config for hotspots.
                 this.hotspotsData.forEach(h => {
                     if (typeof h.position === 'string') {
-                        try { h.position = JSON.parse(h.position); } catch (e) { h.position = {x: 0, y: 0, z: 0}; }
+                        try {
+ h.position = JSON.parse(h.position);
+} catch (e) {
+ h.position = {x: 0, y: 0, z: 0};
+}
                     }
                     if (typeof h.config === 'string') {
-                        try { h.config = JSON.parse(h.config); } catch (e) { h.config = {}; }
+                        try {
+ h.config = JSON.parse(h.config);
+} catch (e) {
+ h.config = {};
+}
                     }
                 });
             } catch (error) {
@@ -298,7 +321,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             this.renderer.outputColorSpace = THREE.SRGBColorSpace;
             this.renderer.xr.enabled = true;
-            
+
             // Framebuffer scaling in WebXR to maintain high FPS in VR/AR.
             if (this.renderer.xr.setFramebufferScaleFactor) {
                 this.renderer.xr.setFramebufferScaleFactor(0.8);
@@ -430,7 +453,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             if (vrBtn && this.vrEnabled) {
                 this.setupVRButton(vrBtn);
             }
-            
+
             // Leaderboard button.
             var leaderBtn = document.getElementById('gear-leaderboard-' + this.cmid);
             if (leaderBtn) {
@@ -497,7 +520,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          */
         setupOverlayEventListeners() {
             var overlay = document.getElementById('gear-scene-overlay-' + this.cmid);
-            if (!overlay) return;
+            if (!overlay) {
+ return;
+}
 
             // Help button.
             var helpBtn = document.getElementById('gear-help-btn-' + this.cmid);
@@ -532,12 +557,13 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         }
 
 
-
         /**
          * Update all existing hotspots with current scale.
          */
         updateHotspotsScale() {
-            if (!this.hotspotMeshes) return;
+            if (!this.hotspotMeshes) {
+ return;
+}
             this.hotspotMeshes.forEach(mesh => {
                 mesh.scale.set(this.hotspotScale, this.hotspotScale, this.hotspotScale);
             });
@@ -547,7 +573,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          * Update all existing hotspots with current color.
          */
         updateHotspotsColor() {
-            if (!this.hotspotMeshes) return;
+            if (!this.hotspotMeshes) {
+ return;
+}
             const color = new THREE.Color(this.hotspotColor);
             this.hotspotMeshes.forEach(mesh => {
                 // Audio hotspots have their own color logic but we can apply the general one
@@ -562,7 +590,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         async saveCurrentView() {
             const camPos = this.camera.position;
             const targetPos = this.controls.target;
-            
+
             // 1. Save Camera Config (Scene level).
             const scenePromise = Ajax.call([{
                 methodname: 'mod_gear_save_scene_config',
@@ -591,7 +619,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 }])[0];
             }
 
-            Promise.all([scenePromise, modelPromise]).then(async () => {
+            Promise.all([scenePromise, modelPromise]).then(async() => {
                 Notification.addNotification({
                     message: await Str.get_string('saveviewsuccess', 'mod_gear'),
                     type: 'success'
@@ -612,7 +640,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 }).then((html, js) => {
                     Templates.appendNodeContents(this.container, html, js);
                     modal = document.getElementById('gear-help-modal-' + this.cmid);
-                    
+
                     // Close logic.
                     modal.querySelector('.close').addEventListener('click', () => {
                         modal.classList.remove('active');
@@ -629,7 +657,6 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         }
 
 
-
         /**
          * Show Leaderboard modal.
          */
@@ -641,7 +668,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 }).then((html, js) => {
                     Templates.appendNodeContents(this.container, html, js);
                     modal = document.getElementById('gear-leaderboard-modal-' + this.cmid);
-                    
+
                     // Close logic.
                     modal.querySelector('.close').addEventListener('click', () => {
                         modal.classList.remove('active');
@@ -657,17 +684,18 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Fetch data and render leaderboard content.
-         * 
+         *
          * @param {HTMLElement} modal
          */
         async fetchAndRenderLeaderboard(modal) {
-             modal.classList.add('active');
-             modal.style.display = 'flex';
-             var content = modal.querySelector('.gear-leaderboard-content');
-             content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> ' + await Str.get_string('loading', 'mod_gear') + '</div>';
-             
-             // Fetch data.
-             Ajax.call([{
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+            var content = modal.querySelector('.gear-leaderboard-content');
+            var loadingText = await Str.get_string('loading', 'mod_gear');
+            content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> ' + loadingText + '</div>';
+
+            // Fetch data.
+            Ajax.call([{
                 methodname: 'mod_gear_get_leaderboard',
                 args: {
                     gearid: this.gearid,
@@ -681,19 +709,23 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Render leaderboard table using mustache.
-         * 
-         * @param {HTMLElement} container 
-         * @param {Array} scores 
+         *
+         * @param {HTMLElement} container
+         * @param {Array} scores
          */
         renderLeaderboardTable(container, scores) {
             var context = {
                 has_scores: scores.length > 0,
                 scores: scores.map((entry, index) => {
                     var badge = '';
-                    if (index === 0) badge = '🥇';
-                    else if (index === 1) badge = '🥈';
-                    else if (index === 2) badge = '🥉';
-                    
+                    if (index === 0) {
+                        badge = '🥇';
+                    } else if (index === 1) {
+                        badge = '🥈';
+                    } else if (index === 2) {
+                        badge = '🥉';
+                    }
+
                     return {
                         rank: index + 1,
                         badge: badge,
@@ -702,7 +734,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     };
                 })
             };
-            
+
             Templates.render('mod_gear/leaderboard_table', context).then((html, js) => {
                 Templates.replaceNodeContents(container, html, js);
             }).catch(Notification.exception);
@@ -761,15 +793,21 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         // Apply saved transform if available.
                         if (modelData.position) {
                             try {
-                                const p = (typeof modelData.position === 'string') ? JSON.parse(modelData.position) : modelData.position;
+                                const p = (typeof modelData.position === 'string')
+                                    ? JSON.parse(modelData.position) : modelData.position;
                                 this.model.position.set(p.x, p.y, p.z);
-                            } catch (e) { window.console.warn('GEAR: Failed to parse model position', e); }
+                            } catch (e) {
+                                window.console.warn('GEAR: Failed to parse model position', e);
+                            }
                         }
                         if (modelData.rotation) {
                             try {
-                                const r = (typeof modelData.rotation === 'string') ? JSON.parse(modelData.rotation) : modelData.rotation;
+                                const r = (typeof modelData.rotation === 'string')
+                                    ? JSON.parse(modelData.rotation) : modelData.rotation;
                                 this.model.rotation.set(r.x, r.y, r.z);
-                            } catch (e) { window.console.warn('GEAR: Failed to parse model rotation', e); }
+                            } catch (e) {
+                                window.console.warn('GEAR: Failed to parse model rotation', e);
+                            }
                         }
                         if (modelData.scale) {
                             this.model.scale.setScalar(parseFloat(modelData.scale));
@@ -1043,12 +1081,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.canvas.setAttribute('tabindex', '0');
             this.canvas.setAttribute('role', 'application');
             this.canvas.setAttribute('aria-label', '3D Viewer - Use arrow keys to navigate, Enter to select hotspots');
-            
+
             this.canvas.addEventListener('focus', () => {
                 this.canvas.style.outline = '2px solid #6366f1';
                 this.canvas.style.outlineOffset = '2px';
             });
-            
+
             this.canvas.addEventListener('blur', () => {
                 this.canvas.style.outline = '';
                 this.canvas.style.outlineOffset = '';
@@ -1065,7 +1103,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     case 'Tab':
                         // Allow default tab behavior but track focus.
                         break;
-                    
+
                     case 'ArrowRight':
                     case 'ArrowDown':
                         event.preventDefault();
@@ -1073,7 +1111,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         this.focusedHotspotIndex = focusedHotspotIndex;
                         this.highlightFocusedHotspot(visibleHotspots[focusedHotspotIndex]);
                         break;
-                    
+
                     case 'ArrowLeft':
                     case 'ArrowUp':
                         event.preventDefault();
@@ -1081,17 +1119,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         this.focusedHotspotIndex = focusedHotspotIndex;
                         this.highlightFocusedHotspot(visibleHotspots[focusedHotspotIndex]);
                         break;
-                    
+
                     case 'Enter':
                     case ' ':
                         event.preventDefault();
                         if (visibleHotspots[focusedHotspotIndex]) {
                             var hotspot = visibleHotspots[focusedHotspotIndex];
-                            // Create a synthetic event for tooltip positioning.
-                            var syntheticEvent = {
-                                clientX: window.innerWidth / 2,
-                                clientY: window.innerHeight / 2
-                            };
                             if (hotspot.userData.type === 'teleport') {
                                 this.focusHotspot(hotspot.userData.id);
                             } else {
@@ -1099,7 +1132,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                             }
                         }
                         break;
-                    
+
                     case 'Escape':
                         this.hideTooltip();
                         break;
@@ -1108,22 +1141,22 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
             // Touch support for mobile (long-press to show tooltip).
             this.longPressTimer = null;
-            this.touchStartPos = { x: 0, y: 0 };
-            
+            this.touchStartPos = {x: 0, y: 0};
+
             this.canvas.addEventListener('touchstart', (event) => {
                 if (event.touches.length === 1) {
                     var touch = event.touches[0];
-                    this.touchStartPos = { x: touch.clientX, y: touch.clientY };
-                    
+                    this.touchStartPos = {x: touch.clientX, y: touch.clientY};
+
                     // Start long-press timer (500ms).
                     this.longPressTimer = setTimeout(() => {
                         var rect = this.canvas.getBoundingClientRect();
                         this.mouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
                         this.mouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
-                        
+
                         this.raycaster.setFromCamera(this.mouse, this.camera);
                         var intersects = this.raycaster.intersectObjects(this.hotspotMeshes);
-                        
+
                         if (intersects.length > 0) {
                             var hotspotMesh = intersects[0].object;
                             if (hotspotMesh.visible && hotspotMesh.userData.type !== 'teleport') {
@@ -1133,7 +1166,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                                     clientY: touch.clientY
                                 };
                                 this.showTooltip(hotspotMesh.userData, syntheticEvent);
-                                
+
                                 // Provide haptic feedback if available.
                                 if (navigator.vibrate) {
                                     navigator.vibrate(50);
@@ -1142,7 +1175,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         }
                     }, 500);
                 }
-            }, { passive: true });
+            }, {passive: true});
 
             this.canvas.addEventListener('touchmove', (event) => {
                 // Cancel long-press if user is scrolling/pinching.
@@ -1150,14 +1183,14 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     var touch = event.touches[0];
                     var deltaX = Math.abs(touch.clientX - this.touchStartPos.x);
                     var deltaY = Math.abs(touch.clientY - this.touchStartPos.y);
-                    
+
                     // If moved more than 10px, cancel long-press.
                     if (deltaX > 10 || deltaY > 10) {
                         clearTimeout(this.longPressTimer);
                         this.longPressTimer = null;
                     }
                 }
-            }, { passive: true });
+            }, {passive: true});
 
             this.canvas.addEventListener('touchend', () => {
                 if (this.longPressTimer) {
@@ -1190,7 +1223,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 this.tooltipElement.className = 'gear-hotspot-tooltip';
                 this.tooltipElement.setAttribute('role', 'tooltip');
                 this.tooltipElement.setAttribute('aria-live', 'polite');
-                this.tooltipElement.style.cssText = 'position:fixed;padding:12px;background:rgba(0,0,0,0.9);color:#fff;border-radius:8px;pointer-events:none;z-index:10000;max-width:250px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);opacity:0;transform:scale(0.95);transition:opacity 0.2s ease-in-out, transform 0.2s ease-in-out;';
+                this.tooltipElement.style.cssText = 'position:fixed;padding:12px;background:rgba(0,0,0,0.9);color:#fff;' +
+                    'border-radius:8px;pointer-events:none;z-index:10000;max-width:250px;font-size:14px;' +
+                    'box-shadow:0 4px 12px rgba(0,0,0,0.3);opacity:0;transform:scale(0.95);' +
+                    'transition:opacity 0.2s ease-in-out, transform 0.2s ease-in-out;';
                 document.body.appendChild(this.tooltipElement);
             }
 
@@ -1223,10 +1259,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             // Set accessible text for screen readers.
             this.tooltipElement.setAttribute('aria-label', (hotspot.title || 'Hotspot') + ': ' + htmlToText(hotspot.content));
             this.tooltipElement.innerHTML = content;
-            
+
             // Show tooltip with animation.
             this.tooltipElement.style.display = 'block';
-            
+
             // Trigger fade-in animation using requestAnimationFrame for smooth transition.
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
@@ -1234,7 +1270,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     this.tooltipElement.style.transform = 'scale(1)';
                 });
             });
-            
+
             this.updateTooltipPosition(event);
         }
 
@@ -1244,7 +1280,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          * @param {MouseEvent} event Mouse event
          */
         updateTooltipPosition(event) {
-            if (!this.tooltipElement) return;
+            if (!this.tooltipElement) {
+                return;
+            }
 
             var offsetX = 15;
             var offsetY = 15;
@@ -1289,7 +1327,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          * @param {THREE.Mesh} mesh The hotspot mesh to highlight
          */
         highlightFocusedHotspot(mesh) {
-            if (!mesh) return;
+            if (!mesh) {
+                return;
+            }
 
             // Reset previous highlight.
             this.hotspotMeshes.forEach(function(m) {
@@ -1325,17 +1365,17 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 new THREE.Vector3(0, 0, 0),
                 new THREE.Vector3(0, 0, -5)
             ]);
-            var lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-            
+            var lineMaterial = new THREE.LineBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.5});
+
             var addController = (index) => {
                 var controller = this.renderer.xr.getController(index);
                 controller.addEventListener('select', (evt) => this.onVRSelect(evt));
-                
+
                 var line = new THREE.Line(geometry, lineMaterial);
                 line.name = 'line';
                 line.scale.z = 5;
                 controller.add(line);
-                
+
                 this.scene.add(controller);
                 return controller;
             };
@@ -1345,6 +1385,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Handle VR Controller Select event (Trigger button).
+         * @param {Event} event
          */
         onVRSelect(event) {
             var controller = event.target;
@@ -1361,15 +1402,15 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         this.focusHotspot(hotspotMesh.userData.id);
                     } else {
                         this.showHotspotPopup(hotspotMesh.userData);
-                        
+
                         // Toggle audio in VR directly since standard DOM popups are hard to click inside headset.
                         if (hotspotMesh.userData.type === 'audio' && hotspotMesh.children.length > 0) {
-                             var audio = hotspotMesh.children[0];
-                             if (audio.isPlaying) {
-                                 audio.pause();
-                             } else {
-                                 audio.play();
-                             }
+                            var audio = hotspotMesh.children[0];
+                            if (audio.isPlaying) {
+                                audio.pause();
+                            } else {
+                                audio.play();
+                            }
                         }
                     }
                 }
@@ -1378,15 +1419,17 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Update hotspot position in DB and scene.
-         * 
+         *
          * @param {number} id
          * @param {THREE.Vector3} newPoint
          */
         updateHotspotPosition(id, newPoint) {
             var hotspot = this.hotspotsData.find(h => h.id == id);
-            if (!hotspot) return;
+            if (!hotspot) {
+                return;
+            }
 
-            var position = { x: newPoint.x, y: newPoint.y, z: newPoint.z };
+            var position = {x: newPoint.x, y: newPoint.y, z: newPoint.z};
 
             Ajax.call([{
                 methodname: 'mod_gear_save_hotspot',
@@ -1401,7 +1444,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     icon: hotspot.icon || '',
                     config: (typeof hotspot.config === 'object') ? JSON.stringify(hotspot.config) : (hotspot.config || '')
                 }
-            }])[0].then(async () => {
+            }])[0].then(async() => {
                 // Update mesh.
                 var mesh = this.hotspotMeshes.find(m => m.userData.id == id);
                 if (mesh) {
@@ -1409,7 +1452,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 }
                 // Update data.
                 hotspot.position = position;
-                
+
                 this.movingHotspotId = null;
                 this.canvas.style.cursor = 'auto';
 
@@ -1426,7 +1469,6 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         loadHotspots() {
             var geometry;
             var material;
-            var sphere;
             var pos;
 
             if (!this.hotspotsData || this.hotspotsData.length === 0) {
@@ -1443,7 +1485,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             });
 
             for (const hotspot of this.hotspotsData) {
-                sphere = new THREE.Mesh(geometry, material.clone());
+                const sphere = new THREE.Mesh(geometry, material.clone());
                 sphere.scale.set(this.hotspotScale, this.hotspotScale, this.hotspotScale);
                 pos = hotspot.position || {x: 0, y: 0, z: 0};
                 sphere.position.set(pos.x, pos.y, pos.z);
@@ -1451,20 +1493,21 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
                 // Branching logic
                 if (hotspot.config) {
-                    var hConfig = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
-                    if (hConfig.requires_id && !this.completedQuizzes.includes(parseInt(hConfig.requires_id, 10)) && !this.canManage) {
+                    const hConfig = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                    const reqId = hConfig.requires_id ? parseInt(hConfig.requires_id, 10) : 0;
+                    if (reqId && !this.completedQuizzes.includes(reqId) && !this.canManage) {
                         sphere.visible = false;
-                        sphere.userData.requires_id = parseInt(hConfig.requires_id, 10);
+                        sphere.userData.requires_id = reqId;
                     }
                 }
-                
+
                 // Audio Support.
                 if (hotspot.type === 'audio' && hotspot.config) {
-                    var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                    const config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
                     if (config.audioUrl) {
                         try {
-                            var sound = new THREE.PositionalAudio(this.audioListener);
-                            var audioLoader = new THREE.AudioLoader();
+                            const sound = new THREE.PositionalAudio(this.audioListener);
+                            const audioLoader = new THREE.AudioLoader();
                             audioLoader.load(config.audioUrl, (buffer) => {
                                 sound.setBuffer(buffer);
                                 sound.setRefDistance(1);
@@ -1476,7 +1519,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                             // Differentiate audio hotspots visually.
                             sphere.material.color.setHex(0x10b981); // Green for audio
                         } catch (e) {
-                           window.console.warn('GEAR: Failed to load audio', e);
+                            window.console.warn('GEAR: Failed to load audio', e);
                         }
                     }
                 }
@@ -1490,24 +1533,28 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Delete a hotspot.
-         * 
+         *
          * @param {number} id
          */
         deleteHotspot(id) {
             Ajax.call([{
                 methodname: 'mod_gear_delete_hotspot',
-                args: { id: id }
-            }])[0].then(async () => {
+                args: {id: id}
+            }])[0].then(async() => {
                 // Remove from data array.
                 this.hotspotsData = this.hotspotsData.filter(h => h.id != id);
-                
+
                 // Remove from scene.
                 var meshIdx = this.hotspotMeshes.findIndex(m => m.userData.id == id);
                 if (meshIdx !== -1) {
                     var mesh = this.hotspotMeshes[meshIdx];
                     this.modelContainer.remove(mesh);
-                    if (mesh.geometry) mesh.geometry.dispose();
-                    if (mesh.material) mesh.material.dispose();
+                    if (mesh.geometry) {
+                        mesh.geometry.dispose();
+                    }
+                    if (mesh.material) {
+                        mesh.material.dispose();
+                    }
                     this.hotspotMeshes.splice(meshIdx, 1);
                 }
 
@@ -1526,29 +1573,41 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          */
         async renderHotspotsNav() {
             var menu = this.container.querySelector('.gear-hotspots-menu');
-            if (!menu) return;
+            if (!menu) {
+                return;
+            }
 
             menu.innerHTML = '';
-            
+
             if (this.hotspotsData.length === 0) {
-                menu.innerHTML = '<span class="dropdown-item-text text-muted">' + await Str.get_string('nohotspots', 'mod_gear') + '</span>';
+                const noHotspotsStr = await Str.get_string('nohotspots', 'mod_gear');
+                menu.innerHTML = '<span class="dropdown-item-text text-muted">' + noHotspotsStr + '</span>';
                 return;
             }
 
             for (const hotspot of this.hotspotsData) {
                 // Check branching
                 if (hotspot.config) {
-                     var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
-                     if (config.requires_id && !this.completedQuizzes.includes(parseInt(config.requires_id, 10)) && !this.canManage) {
-                         continue; // Hide from students if locked
-                     }
+                    const config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                    const reqId = config.requires_id ? parseInt(config.requires_id, 10) : 0;
+                    if (reqId && !this.completedQuizzes.includes(reqId) && !this.canManage) {
+                        continue; // Hide from students if locked
+                    }
                 }
 
                 var icon = 'fa-dot-circle';
-                if (hotspot.type === 'quiz') icon = 'fa-question-circle';
-                if (hotspot.type === 'audio') icon = 'fa-volume-up';
-                if (hotspot.type === 'video') icon = 'fa-video';
-                if (hotspot.type === 'teleport') icon = 'fa-street-view';
+                if (hotspot.type === 'quiz') {
+                    icon = 'fa-question-circle';
+                }
+                if (hotspot.type === 'audio') {
+                    icon = 'fa-volume-up';
+                }
+                if (hotspot.type === 'video') {
+                    icon = 'fa-video';
+                }
+                if (hotspot.type === 'teleport') {
+                    icon = 'fa-street-view';
+                }
 
                 try {
                     const html = await Templates.render('mod_gear/hotspot_nav_item', {
@@ -1557,9 +1616,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         title: hotspot.title || await Str.get_string('point', 'mod_gear'),
                         canManage: this.canManage
                     });
-                    
+
                     Templates.appendNodeContents(menu, html, "");
-                    var item = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
+                    const item = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
                     if (item) {
                         item.addEventListener('click', (e) => {
                             e.stopPropagation();
@@ -1573,7 +1632,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         });
 
                         if (this.canManage) {
-                            var editBtn = document.getElementById('gear-hotspot-nav-edit-' + hotspot.id);
+                            const editBtn = document.getElementById('gear-hotspot-nav-edit-' + hotspot.id);
                             if (editBtn) {
                                 editBtn.addEventListener('click', (e) => {
                                     e.stopPropagation();
@@ -1590,7 +1649,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
                             var deleteBtn = document.getElementById('gear-hotspot-nav-delete-' + hotspot.id);
                             if (deleteBtn) {
-                                deleteBtn.addEventListener('click', async (e) => {
+                                deleteBtn.addEventListener('click', async(e) => {
                                     e.stopPropagation();
                                     if (window.confirm(await Str.get_string('deletehotspotconfirm', 'mod_gear'))) {
                                         this.deleteHotspot(hotspot.id);
@@ -1607,30 +1666,32 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Focus camera on a specific hotspot.
-         * 
+         *
          * @param {number} hotspotId
          */
         focusHotspot(hotspotId) {
             var hotspotData = this.hotspotsData.find(h => h.id == hotspotId);
             var mesh = this.hotspotMeshes.find(m => m.userData.id == hotspotId);
-            
-            if (!hotspotData || !mesh) return;
+
+            if (!hotspotData || !mesh) {
+ return;
+}
 
             // Highlight in Nav.
             document.querySelectorAll('.gear-hotspot-nav-item').forEach(el => el.classList.remove('active'));
             var navItem = document.getElementById('gear-hotspot-nav-item-' + hotspotId);
             if (navItem) {
                 navItem.classList.add('active');
-                navItem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                navItem.scrollIntoView({behavior: 'smooth', inline: 'center'});
             }
 
             // Move Camera.
             var targetPos = new THREE.Vector3();
             mesh.getWorldPosition(targetPos);
-            
+
             // Calculate a nice camera position relative to hotspot.
             // We want to look AT the hotspot from a short distance.
-            var offset = new THREE.Vector3(0, 0.5, 1); 
+            var offset = new THREE.Vector3(0, 0.5, 1);
             var newCamPos = targetPos.clone().add(offset);
 
             // Simple transition (could use TWEEN if available, but OrbitControls target update is enough).
@@ -1644,7 +1705,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.blinkInterval = setInterval(() => {
                 mesh.visible = !mesh.visible;
             }, 300);
-            
+
             // Stop blinking after 3 seconds.
             setTimeout(() => this.stopBlinking(), 3000);
 
@@ -1678,7 +1739,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 audioContext = {
                     isAudio: true,
                     audioIcon: hotspot.sound.isPlaying ? 'fa-pause' : 'fa-play',
-                    audioText: hotspot.sound.isPlaying ? Str.get_string('audio_pause', 'mod_gear') : Str.get_string('audio_play', 'mod_gear')
+                    audioText: hotspot.sound.isPlaying
+                        ? Str.get_string('audio_pause', 'mod_gear')
+                        : Str.get_string('audio_play', 'mod_gear')
                 };
             }
 
@@ -1738,10 +1801,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 } else {
                     Templates.appendNodeContents(this.container, html, js);
                 }
-                
+
                 var popup = document.getElementById('gear-hotspot-popup-' + this.cmid);
                 popup.classList.add('active');
-                
+
                 const closePopup = () => {
                     popup.classList.remove('active');
                     popup.querySelectorAll('iframe').forEach(f => {
@@ -1767,12 +1830,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         closePopup();
                     });
 
-                    popup.querySelector('.gear-move-hotspot')?.addEventListener('click', async (e) => {
+                    popup.querySelector('.gear-move-hotspot')?.addEventListener('click', async(e) => {
                         e.stopPropagation();
                         this.movingHotspotId = hotspot.id;
                         this.canvas.style.cursor = 'move';
                         closePopup();
-                        
+
                         if (this.transformControl) {
                             var meshToMove = this.hotspotMeshes.find(m => m.userData.id == hotspot.id);
                             if (meshToMove) {
@@ -1785,7 +1848,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         });
                     });
 
-                    popup.querySelector('.gear-delete-hotspot')?.addEventListener('click', async () => {
+                    popup.querySelector('.gear-delete-hotspot')?.addEventListener('click', async() => {
                         if (window.confirm(await Str.get_string('deletehotspotconfirm', 'mod_gear'))) {
                             this.deleteHotspot(hotspot.id);
                             closePopup();
@@ -1797,17 +1860,17 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     this.renderQuizInPopup(popup, hotspot);
                 } else if (hotspot.type === 'audio' && hotspot.sound) {
                     var toggleBtn = popup.querySelector('.gear-audio-toggle');
-                    toggleBtn.addEventListener('click', async () => {
-                       if (hotspot.sound.isPlaying) {
-                           hotspot.sound.pause();
-                           toggleBtn.innerHTML = '<i class="fa fa-play"></i> ' + await Str.get_string('audio_play', 'mod_gear');
-                       } else {
-                           hotspot.sound.play();
-                           toggleBtn.innerHTML = '<i class="fa fa-pause"></i> ' + await Str.get_string('audio_pause', 'mod_gear');
-                       }
+                    toggleBtn.addEventListener('click', async() => {
+                        if (hotspot.sound.isPlaying) {
+                            hotspot.sound.pause();
+                            toggleBtn.innerHTML = '<i class="fa fa-play"></i> ' + await Str.get_string('audio_play', 'mod_gear');
+                        } else {
+                            hotspot.sound.play();
+                            toggleBtn.innerHTML = '<i class="fa fa-pause"></i> ' + await Str.get_string('audio_pause', 'mod_gear');
+                        }
                     });
                 }
-                
+
                 // Text to Speech
                 var ttsBtn = popup.querySelector('.gear-tts-btn');
                 if (ttsBtn && 'speechSynthesis' in window) {
@@ -1821,15 +1884,15 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                             var plainText = (hotspot.title || '') + ". " + htmlToText(hotspot.content);
                             var utterance = new SpeechSynthesisUtterance(plainText);
                             utterance.lang = document.documentElement.lang || 'en-US';
-                            
+
                             utterance.onend = function() {
                                 ttsBtn.classList.remove('playing');
                                 ttsBtn.innerHTML = '<i class="fa fa-volume-up text-secondary"></i>';
                             };
-                            
+
                             window.speechSynthesis.cancel();
                             window.speechSynthesis.speak(utterance);
-                            
+
                             ttsBtn.classList.add('playing');
                             ttsBtn.innerHTML = '<i class="fa fa-stop-circle text-danger"></i>';
                         }
@@ -1841,7 +1904,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 var navItem = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
                 if (navItem) {
                     navItem.classList.add('active');
-                    navItem.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                    navItem.scrollIntoView({behavior: 'smooth', inline: 'center'});
                 }
 
                 // Track interaction.
@@ -1865,12 +1928,15 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 isInfo: true
             };
 
+            const editCfg = hotspotToEdit && hotspotToEdit.config
+                ? (typeof hotspotToEdit.config === 'string' ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config)
+                : null;
             var quizOptions = this.hotspotsData
                 .filter(h => h.type === 'quiz' && (!hotspotToEdit || h.id != hotspotToEdit.id))
                 .map(h => ({
                     id: h.id,
                     title: h.title,
-                    selected: hotspotToEdit && hotspotToEdit.config && (typeof hotspotToEdit.config === 'string' ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config).requires_id == h.id
+                    selected: Boolean(editCfg && editCfg.requires_id == h.id)
                 }));
             context.quizOptions = quizOptions;
 
@@ -1888,17 +1954,14 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 context.isVideo = hotspotToEdit.type === 'video';
                 context.isTeleport = hotspotToEdit.type === 'teleport';
 
-                if (hotspotToEdit.type === 'quiz' && hotspotToEdit.config) {
-                    var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
-                    context.options = config.options ? config.options.join(', ') : '';
-                    context.correctAnswer = config.correctAnswer || 0;
-                    context.points = config.points || 10;
-                } else if (hotspotToEdit.type === 'audio' && hotspotToEdit.config) {
-                    var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
-                    context.audioUrl = config.audioUrl || '';
-                } else if (hotspotToEdit.type === 'video' && hotspotToEdit.config) {
-                    var config = (typeof hotspotToEdit.config === 'string') ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
-                    context.videoUrl = config.videoUrl || '';
+                if (hotspotToEdit.type === 'quiz' && editCfg) {
+                    context.options = editCfg.options ? editCfg.options.join(', ') : '';
+                    context.correctAnswer = editCfg.correctAnswer || 0;
+                    context.points = editCfg.points || 10;
+                } else if (hotspotToEdit.type === 'audio' && editCfg) {
+                    context.audioUrl = editCfg.audioUrl || '';
+                } else if (hotspotToEdit.type === 'video' && editCfg) {
+                    context.videoUrl = editCfg.videoUrl || '';
                 }
             }
 
@@ -1920,7 +1983,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Setup event listeners for the hotspot form.
-         * 
+         *
          * @param {HTMLElement} form
          */
         setupHotspotFormEventListeners(form) {
@@ -1928,7 +1991,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             var quizFields = form.querySelector('#gear-hotspot-quiz-fields-' + this.cmid);
             var audioFields = form.querySelector('#gear-hotspot-audio-fields-' + this.cmid);
             var videoFields = form.querySelector('#gear-hotspot-video-fields-' + this.cmid);
-            
+
             typeSelect.addEventListener('change', () => {
                 quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
                 audioFields.style.display = (typeSelect.value === 'audio') ? 'block' : 'none';
@@ -1937,21 +2000,22 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
             // AI Assist button.
             var aiBtn = form.querySelector('.gear-ai-btn');
-            aiBtn.addEventListener('click', async () => {
+            aiBtn.addEventListener('click', async() => {
                 var type = typeSelect.value;
                 var prompt = window.prompt(await Str.get_string('ai_prompt', 'mod_gear'), "");
                 if (prompt) {
                     aiBtn.disabled = true;
                     aiBtn.textContent = await Str.get_string('generating', 'mod_gear');
-                    this.generateContent(prompt, type).then(async (data) => {
+                    this.generateContent(prompt, type).then(async(data) => {
                         aiBtn.disabled = false;
                         aiBtn.textContent = await Str.get_string('aiassist', 'mod_gear');
-                        
+
                         if (type === 'quiz') {
                             try {
                                 var json = JSON.parse(data);
                                 form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = json.question || '';
-                                form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = json.options ? json.options.join(', ') : '';
+                                const optStr = json.options ? json.options.join(', ') : '';
+                                form.querySelector('#gear-hotspot-input-options-' + this.cmid).value = optStr;
                                 form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value = json.correct || 0;
                             } catch (e) {
                                 Notification.alert(
@@ -1963,7 +2027,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                             form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = prompt;
                             form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = data;
                         }
-                    }).catch(async (err) => {
+                    }).catch(async(err) => {
                         aiBtn.disabled = false;
                         aiBtn.textContent = await Str.get_string('aiassist', 'mod_gear');
                         Notification.alert(
@@ -2000,31 +2064,31 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 y: parseFloat(form.dataset.posY),
                 z: parseFloat(form.dataset.posZ)
             };
-            
+
             var typeInput = form.querySelector('#gear-hotspot-input-type-' + this.cmid);
             var type = typeInput.value;
             var config = {};
-            
+
             var requiresInput = form.querySelector('#gear-hotspot-input-requires-' + this.cmid);
             if (requiresInput && requiresInput.value) {
                 config.requires_id = requiresInput.value;
             }
-            
+
             if (type === 'quiz') {
                 var optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
                 var correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
                 var points = form.querySelector('#gear-hotspot-input-points-' + this.cmid).value;
-                
+
                 config.options = optionsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
                 config.correctAnswer = parseInt(correct, 10);
                 config.points = parseInt(points, 10);
-                
+
                 if (config.options.length < 2) {
-                     Notification.alert(
+                    Notification.alert(
                         await Str.get_string('error', 'core'),
                         await Str.get_string('quiz_minoptions', 'mod_gear')
-                     );
-                     return;
+                    );
+                    return;
                 }
             } else if (type === 'audio') {
                 var audioUrl = form.querySelector('#gear-hotspot-input-audiourl-' + this.cmid).value.trim();
@@ -2059,7 +2123,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     icon: (type === 'quiz') ? 'question' : 'info',
                     config: JSON.stringify(config)
                 }
-            }])[0].then(async (response) => {
+            }])[0].then(async(response) => {
                 // Add hotspot mesh.
                 var geometry = new THREE.SphereGeometry(0.08, 16, 16);
                 var material = new THREE.MeshBasicMaterial({
@@ -2096,38 +2160,38 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                             config: JSON.stringify(config)
                         });
                     }
-                    
+
                     if (!updated) {
-                            let sphere = new THREE.Mesh(geometry, material);
-                            sphere.position.set(position.x, position.y, position.z);
-                            sphere.userData = {
-                                id: response.id,
-                                title: title,
-                                content: content,
-                                type: type,
-                                icon: (type === 'quiz') ? 'question' : 'info',
-                                config: JSON.stringify(config)
-                            };
-                            this.modelContainer.add(sphere);
-                            this.hotspotMeshes.push(sphere);
-                        }
-                } else {
-                        let sphereData = {
+                        let sphere = new THREE.Mesh(geometry, material);
+                        sphere.position.set(position.x, position.y, position.z);
+                        sphere.userData = {
                             id: response.id,
                             title: title,
                             content: content,
                             type: type,
-                            position: position,
                             icon: (type === 'quiz') ? 'question' : 'info',
                             config: JSON.stringify(config)
                         };
-                        this.hotspotsData.push(sphereData);
-
-                        let sphere = new THREE.Mesh(geometry, material);
-                        sphere.position.set(position.x, position.y, position.z);
-                        sphere.userData = sphereData;
                         this.modelContainer.add(sphere);
                         this.hotspotMeshes.push(sphere);
+                    }
+                } else {
+                    let sphereData = {
+                        id: response.id,
+                        title: title,
+                        content: content,
+                        type: type,
+                        position: position,
+                        icon: (type === 'quiz') ? 'question' : 'info',
+                        config: JSON.stringify(config)
+                    };
+                    this.hotspotsData.push(sphereData);
+
+                    let sphere = new THREE.Mesh(geometry, material);
+                    sphere.position.set(position.x, position.y, position.z);
+                    sphere.userData = sphereData;
+                    this.modelContainer.add(sphere);
+                    this.hotspotMeshes.push(sphere);
                 }
 
                 this.renderHotspotsNav();
@@ -2145,21 +2209,15 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
 
         /**
-         * Render quiz interface in popup.
-         * 
-         * @param {HTMLElement} popup
-         * @param {Object} hotspot
-         */
-        /**
          * Render quiz content using mustache.
-         * 
+         *
          * @param {HTMLElement} popup
          * @param {Object} hotspot
          */
         renderQuizInPopup(popup, hotspot) {
             var contentDiv = popup.querySelector('.gear-hotspot-content');
             var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
-            
+
             if (!config || !config.options) {
                 Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
                     contentDiv.innerHTML += '<p class="text-danger">' + msg + '</p>';
@@ -2177,9 +2235,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
             Templates.render('mod_gear/quiz', context).then((html, js) => {
                 Templates.appendNodeContents(contentDiv, html, js);
-                
+
                 var submitBtn = popup.querySelector('.gear-quiz-submit');
-                submitBtn.addEventListener('click', async () => {
+                submitBtn.addEventListener('click', async() => {
                     var selected = popup.querySelector('input[name="gear-quiz-option"]:checked');
                     if (!selected) {
                         Notification.alert(
@@ -2195,24 +2253,25 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         /**
          * Submit quiz answer.
-         */
-        /**
-         * Submit quiz answer.
+         *
+         * @param {Object} hotspot
+         * @param {string} answer
+         * @param {HTMLElement} popup
          */
         submitQuizAnswer(hotspot, answer, popup) {
-             Ajax.call([{
+            Ajax.call([{
                 methodname: 'mod_gear_submit_quiz',
                 args: {
                     gearid: this.gearid,
                     hotspotid: hotspot.id,
                     answer: answer
                 }
-            }])[0].then(async (response) => {
+            }])[0].then(async(response) => {
                 var feedbackDiv = popup.querySelector('.gear-quiz-feedback');
                 var submitBtn = popup.querySelector('.gear-quiz-submit');
-                
+
                 if (response.correct) {
-                    var msg = await Str.get_string('quiz_correct', 'mod_gear');
+                    const msg = await Str.get_string('quiz_correct', 'mod_gear');
                     feedbackDiv.textContent = '';
                     var okBadge = document.createElement('span');
                     okBadge.className = 'badge badge-success bg-success';
@@ -2221,14 +2280,14 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     this.completedQuizzes.push(hotspot.id);
                     this.checkHotspotUnlocks();
                 } else {
-                    var msg = await Str.get_string('quiz_incorrect', 'mod_gear');
+                    const msg = await Str.get_string('quiz_incorrect', 'mod_gear');
                     feedbackDiv.textContent = '';
                     var badBadge = document.createElement('span');
                     badBadge.className = 'badge badge-danger bg-danger';
                     badBadge.textContent = msg;
                     feedbackDiv.append(badBadge);
                 }
-                
+
                 submitBtn.disabled = true;
             }).catch(Notification.exception);
         }
@@ -2278,7 +2337,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     prompt: prompt,
                     type: type
                 }
-            }])[0].then(async (response) => {
+            }])[0].then(async(response) => {
                 if (response.success) {
                     return response.content;
                 } else {
@@ -2287,7 +2346,6 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             });
         }
     }
-
 
 
     /**
@@ -2300,25 +2358,27 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.avatars = {}; // Map of userid -> { mesh }
             this.lastPosition = null;
             this.lastRotation = null;
-            
+
             // WebRTC
             this.peer = null;
             this.localStream = null;
-            this.calls = {}; // peerId -> call
-            this.dataConns = {}; // peerId -> dataConn
+            this.calls = {}; // PeerId -> call
+            this.dataConns = {}; // PeerId -> dataConn
             this.voiceEnabled = false;
         }
 
         async initPeer() {
-            if (this.peer) return;
+            if (this.peer) {
+ return;
+}
             var myPeerId = 'mod_gear_' + this.viewer.gearid + '_' + this.viewer.userid;
             this.peer = new Peer(myPeerId);
-            
+
             this.peer.on('call', (call) => {
                 if (this.localStream) {
                     call.answer(this.localStream);
                 } else {
-                    call.answer(); // empty stream
+                    call.answer(); // Empty stream
                 }
                 this.handleCall(call);
             });
@@ -2329,22 +2389,24 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         }
 
         async joinVoiceChat() {
-            if (this.voiceEnabled) return;
+            if (this.voiceEnabled) {
+ return;
+}
             try {
-                this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                this.localStream = await navigator.mediaDevices.getUserMedia({audio: true, video: false});
                 this.voiceEnabled = true;
-                
+
                 if (!this.peer) {
                     await this.initPeer();
                 }
-                
+
                 var btn = document.getElementById('gear-voice-btn-' + this.viewer.cmid);
                 if (btn) {
                     btn.querySelector('i').className = 'fa fa-microphone text-success';
                 }
-                
+
                 Str.get_string('voicejoined', 'mod_gear').then(msg => {
-                    Notification.addNotification({ message: msg, type: 'success' });
+                    Notification.addNotification({message: msg, type: 'success'});
                 });
             } catch (e) {
                 Str.get_string('voicenotsupported', 'mod_gear').then(msg => {
@@ -2357,12 +2419,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             call.on('stream', (remoteStream) => {
                 var parts = call.peer.split('_');
                 var peerUserId = parseInt(parts[parts.length - 1], 10);
-                
+
                 var avatar = this.avatars[peerUserId];
                 // Only attach if avatar exists and doesn't already have audio
                 if (avatar && !avatar.hasAudio) {
                     var sound = new THREE.PositionalAudio(this.viewer.audioListener);
-                    // r128 PositionalAudio supports setMediaStreamSource
+                    // R128 PositionalAudio supports setMediaStreamSource
                     if (typeof sound.setMediaStreamSource === 'function') {
                         sound.setMediaStreamSource(remoteStream);
                     } else {
@@ -2393,13 +2455,15 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         }
 
         connectData(peerId) {
-            if (this.dataConns[peerId]) return;
+            if (this.dataConns[peerId]) {
+ return;
+}
             var conn = this.peer.connect(peerId);
             this.handleDataConnection(conn);
         }
 
         sendChatMessage(text) {
-            var msg = { sender: 'User ' + this.viewer.userid, text: text };
+            var msg = {sender: 'User ' + this.viewer.userid, text: text};
             Object.values(this.dataConns).forEach(conn => {
                 if (conn.open) {
                     conn.send(msg);
@@ -2410,7 +2474,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         displayChatMessage(sender, text, type) {
             var messagesDiv = document.getElementById('gear-chat-messages-' + this.viewer.cmid);
-            if (!messagesDiv) return;
+            if (!messagesDiv) {
+ return;
+}
             var msgDiv = document.createElement('div');
             msgDiv.className = 'gear-chat-msg ' + type;
             var senderSpan = document.createElement('span');
@@ -2436,17 +2502,19 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         }
 
         sync() {
-            if (!this.viewer.camera) return;
+            if (!this.viewer.camera) {
+ return;
+}
 
             // Use Three.js properties.
             var pos = this.viewer.camera.position;
             var rot = this.viewer.camera.rotation;
 
-            // Only update if changed significantly? 
+            // Only update if changed significantly?
             // For now, send anyway to keep session alive (heartbeat).
-            
-            var posObj = { x: pos.x, y: pos.y, z: pos.z };
-            var rotObj = { x: rot.x, y: rot.y, z: rot.z }; // Euler
+
+            var posObj = {x: pos.x, y: pos.y, z: pos.z};
+            var rotObj = {x: rot.x, y: rot.y, z: rot.z}; // Euler
 
             Ajax.call([{
                 methodname: 'mod_gear_sync_session',
@@ -2458,23 +2526,23 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             }])[0].then((users) => {
                 this.updateAvatars(users);
             }).catch((e) => {
-                window.console.warn('Sync error', e); 
+                window.console.warn('Sync error', e);
             });
         }
 
         updateAvatars(users) {
             var activeIds = new Set();
-            
+
             users.forEach((user) => {
                 activeIds.add(user.userid);
-                
+
                 if (!this.avatars[user.userid]) {
                     this.createAvatar(user);
                 }
-                
+
                 this.updateAvatarState(user);
             });
-            
+
             // Remove disconnected users.
             Object.keys(this.avatars).forEach((id) => {
                 if (!activeIds.has(parseInt(id))) {
@@ -2507,17 +2575,17 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         createAvatar(user) {
             // Create a group for the avatar.
             var group = new THREE.Group();
-            
+
             // Simple avatar: Sphere representing head.
             var geometry = new THREE.SphereGeometry(0.3, 16, 16);
-            var color = '#' + Math.floor(Math.random()*16777215).toString(16);
-            var material = new THREE.MeshBasicMaterial({ color: color });
+            var color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+            var material = new THREE.MeshBasicMaterial({color: color});
             var sphere = new THREE.Mesh(geometry, material);
             group.add(sphere);
-            
+
             // Add to scene.
             this.viewer.scene.add(group);
-            
+
             this.avatars[user.userid] = {
                 mesh: group
             };
@@ -2525,22 +2593,24 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         updateAvatarState(user) {
             var avatar = this.avatars[user.userid];
-            if (!avatar) return;
-            
+            if (!avatar) {
+ return;
+}
+
             if (user.position) {
                 try {
                     var pos = (typeof user.position === 'string') ? JSON.parse(user.position) : user.position;
                     avatar.mesh.position.set(pos.x, pos.y, pos.z);
-                } catch(e) {
+                } catch (e) {
                     // Ignore parse error
                 }
             }
-            
+
             if (user.rotation) {
                  try {
                     var rot = (typeof user.rotation === 'string') ? JSON.parse(user.rotation) : user.rotation;
                     avatar.mesh.rotation.set(rot.x, rot.y, rot.z);
-                } catch(e) {
+                } catch (e) {
                     // Ignore parse error
                 }
             }
@@ -2553,15 +2623,19 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 // Optional: dispose geometry/material.
             }
             delete this.avatars[userid];
-            
+
             // Clean up WebRTC calls if disconnected
             var peerId = 'mod_gear_' + this.viewer.gearid + '_' + userid;
             if (this.calls[peerId]) {
-                if (this.calls[peerId].close) this.calls[peerId].close();
+                if (this.calls[peerId].close) {
+ this.calls[peerId].close();
+}
                 delete this.calls[peerId];
             }
             if (this.dataConns[peerId]) {
-                if (this.dataConns[peerId].close) this.dataConns[peerId].close();
+                if (this.dataConns[peerId].close) {
+ this.dataConns[peerId].close();
+}
                 delete this.dataConns[peerId];
             }
         }

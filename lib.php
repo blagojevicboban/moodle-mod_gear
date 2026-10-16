@@ -505,3 +505,118 @@ function gear_filter_hotspot_config(?string $config, bool $canmanage): string {
     unset($decoded['correctAnswer']);
     return json_encode($decoded);
 }
+
+/**
+ * Return a list of page types.
+ *
+ * @param string $pagetype Current page type
+ * @param stdClass|null $parentcontext Block's parent context
+ * @param stdClass|null $currentcontext Current context of block
+ * @return array Array of page types
+ */
+function gear_page_type_list($pagetype, $parentcontext, $currentcontext): array {
+    return ['mod-gear-*' => get_string('page-mod-gear-x', 'mod_gear')];
+}
+
+/**
+ * Return a small object with summary information about what a user has done in a GEAR instance.
+ *
+ * @param stdClass $course The course record
+ * @param stdClass $user The user record
+ * @param cm_info|stdClass $mod The course module info
+ * @param stdClass $gear The gear instance
+ * @return stdClass|null Summary with info and time
+ */
+function gear_user_outline($course, $user, $mod, $gear): ?stdClass {
+    global $DB;
+
+    $grades = gear_get_user_grades($gear, $user->id);
+    $lasttime = $DB->get_field_sql(
+        'SELECT MAX(timecreated) FROM {gear_tracking} WHERE gearid = :gearid AND userid = :userid',
+        ['gearid' => $gear->id, 'userid' => $user->id]
+    );
+
+    if (empty($grades[$user->id]) && empty($lasttime)) {
+        return null;
+    }
+
+    $result = new stdClass();
+    if (!empty($grades[$user->id])) {
+        $result->info = get_string('score', 'mod_gear') . ': ' . round((float) $grades[$user->id]['rawgrade'], 2);
+    } else {
+        $count = $DB->count_records('gear_tracking', ['gearid' => $gear->id, 'userid' => $user->id]);
+        $result->info = get_string('clicks', 'mod_gear') . ': ' . $count;
+    }
+    $result->time = (int) $lasttime;
+    return $result;
+}
+
+/**
+ * Print a detailed representation of what a user has done in a GEAR instance.
+ *
+ * @param stdClass $course The course record
+ * @param stdClass $user The user record
+ * @param cm_info|stdClass $mod The course module info
+ * @param stdClass $gear The gear instance
+ * @return void
+ */
+function gear_user_complete($course, $user, $mod, $gear): void {
+    $outline = gear_user_outline($course, $user, $mod, $gear);
+    if ($outline) {
+        echo html_writer::div(s($outline->info));
+    } else {
+        echo html_writer::div(get_string('nodata', 'mod_gear'));
+    }
+}
+
+/**
+ * Add elements to the course reset form.
+ *
+ * @param MoodleQuickForm $mform The reset course form
+ * @return void
+ */
+function gear_reset_course_form_definition(&$mform): void {
+    $mform->addElement('header', 'gearheader', get_string('modulenameplural', 'mod_gear'));
+    $mform->addElement('advcheckbox', 'reset_gear_tracking', get_string('resettracking', 'mod_gear'));
+}
+
+/**
+ * Course reset form defaults.
+ *
+ * @param stdClass $course The course record
+ * @return array Default values
+ */
+function gear_reset_course_form_defaults($course): array {
+    return ['reset_gear_tracking' => 1];
+}
+
+/**
+ * Removes all user tracking, sessions, and grades when a course is reset.
+ *
+ * @param stdClass $data The data submitted from the reset course form
+ * @return array Status array
+ */
+function gear_reset_userdata($data): array {
+    global $DB;
+
+    $status = [];
+    if (!empty($data->reset_gear_tracking)) {
+        $gearsql = 'SELECT g.id FROM {gear} g WHERE g.course = :courseid';
+        $params = ['courseid' => $data->courseid];
+
+        $DB->delete_records_select('gear_tracking', "gearid IN ($gearsql)", $params);
+        $DB->delete_records_select('gear_sessions', "gearid IN ($gearsql)", $params);
+
+        foreach ($DB->get_records('gear', ['course' => $data->courseid]) as $gear) {
+            gear_grade_item_update($gear, 'reset');
+        }
+
+        $status[] = [
+            'component' => get_string('modulenameplural', 'mod_gear'),
+            'item' => get_string('resettracking', 'mod_gear'),
+            'error' => false,
+        ];
+    }
+
+    return $status;
+}

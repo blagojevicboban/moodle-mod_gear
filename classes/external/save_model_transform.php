@@ -87,6 +87,12 @@ class save_model_transform extends external_api {
 
         $DB->update_record('gear_models', $update);
 
+        $event = \mod_gear\event\model_updated::create([
+            'objectid' => $model->id,
+            'context' => $context,
+        ]);
+        $event->trigger();
+
         return [
             'success' => true,
         ];

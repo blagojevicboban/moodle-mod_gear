@@ -58,8 +58,8 @@ function xmldb_gear_upgrade(int $oldversion): bool {
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('gearid', XMLDB_KEY_FOREIGN, ['gearid'], 'gear', ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
 
-        $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
         $table->add_index('gearid_timemodified', XMLDB_INDEX_NOTUNIQUE, ['gearid', 'timemodified']);
 
         if (!$dbman->table_exists($table)) {
@@ -69,9 +69,42 @@ function xmldb_gear_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026020504, 'gear');
     }
 
+    if ($oldversion < 2026041400) {
+        upgrade_mod_savepoint(true, 2026041400, 'gear');
+    }
+
     if ($oldversion < 2026101600) {
         // Nothing to change in the database: version bump for the 1.7.1 fixes.
         upgrade_mod_savepoint(true, 2026101600, 'gear');
+    }
+
+    if ($oldversion < 2026101601) {
+        // Drop unused completion_type column from gear.
+        $table = new xmldb_table('gear');
+        $field = new xmldb_field('completion_type');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Add timecreated to gear_hotspots.
+        $hstable = new xmldb_table('gear_hotspots');
+        $tcfield = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'sortorder');
+        if (!$dbman->field_exists($hstable, $tcfield)) {
+            $dbman->add_field($hstable, $tcfield);
+        }
+
+        // Replace standalone userid indexes with foreign keys on gear_tracking and gear_sessions.
+        foreach (['gear_tracking', 'gear_sessions'] as $tablename) {
+            $t = new xmldb_table($tablename);
+            $idx = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            if ($dbman->index_exists($t, $idx)) {
+                $dbman->drop_index($t, $idx);
+            }
+            $key = new xmldb_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $dbman->add_key($t, $key);
+        }
+
+        upgrade_mod_savepoint(true, 2026101601, 'gear');
     }
 
     return true;

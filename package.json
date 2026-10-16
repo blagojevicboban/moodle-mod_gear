@@ -1,12 +1,12 @@
 {
   "name": "moodle-mod_gear",
-  "version": "0.2.0",
+  "version": "1.7.1",
   "description": "GEAR - Immersive AR/VR Learning for Moodle",
   "repository": {
     "type": "git",
     "url": "https://github.com/blagojevicboban/moodle-mod_gear"
   },
-  "license": "GPL-3.0",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",

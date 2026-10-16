@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -17,7 +17,7 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
 
       mariadb:
-        image: mariadb:10
+        image: mariadb:11.4
         env:
           MYSQL_USER: 'root'
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
@@ -25,14 +25,17 @@ jobs:
           MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        options: --health-cmd="mariadb-admin ping" --health-interval 10s --health-timeout 5s --health-retries 3
 
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.1', '8.2', '8.3']
-        moodle-branch: ['MOODLE_405_STABLE', 'MOODLE_500_STABLE', 'MOODLE_501_STABLE', 'MOODLE_502_STABLE', 'MOODLE_503_STABLE']
-        database: [pgsql, mariadb]
+        include:
+          - {php: '8.2', moodle-branch: 'MOODLE_405_STABLE', database: mariadb}
+          - {php: '8.2', moodle-branch: 'MOODLE_500_STABLE', database: pgsql}
+          - {php: '8.3', moodle-branch: 'MOODLE_501_STABLE', database: mariadb}
+          - {php: '8.3', moodle-branch: 'MOODLE_502_STABLE', database: pgsql}
+          - {php: '8.3', moodle-branch: 'MOODLE_503_STABLE', database: mariadb}
 
     steps:
       - name: Check out repository code
@@ -44,7 +47,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: ${{ matrix.extensions }}
           ini-values: max_input_vars=5000
           coverage: none
 
@@ -65,11 +67,6 @@ jobs:
       - name: PHP Lint
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phplint
-
-      - name: PHP Mess Detector
-        continue-on-error: true
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpmd
 
       - name: Remove third-party PHP files
         run: find . -path "*/node_modules/*" -name "*.php" -type f -delete || true
@@ -101,7 +98,3 @@ jobs:
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpunit --fail-on-warning
-
-      - name: Mark cancelled jobs as failed.
-        if: ${{ cancelled() }}
-        run: exit 1

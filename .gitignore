@@ -2,11 +2,12 @@
 /node_modules/
 /vendor/
 
-# Source maps (optional, can be regenerated)
-
-# IDE/Editor
+# IDE and local AI assistants
 .idea/
 .vscode/
+.continue/
+.qwen/
+*.code-workspace
 *.swp
 *.swo
 *~
@@ -23,19 +24,9 @@ Thumbs.db
 /tests/coverage/
 .phpunit.result.cache
 
-# Temporary files
+# Temporary files and archives
 *.tmp
 *.bak
 *.log
-
-# GEAR specific
-GEAR.code-workspace
-gear_dump.sql
-gear.zip
-moodle-mod_gear.zip
-linkedin_posts.md
-moodle-mod_gear_old_backup.zip
-moodle-mod_gear1.3.0.zip
-model_router.py
-styles.css
-mod_gear.zip
+*.sql
+*.zip
