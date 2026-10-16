@@ -93,9 +93,9 @@ class submit_quiz extends external_api {
             if ((string)$config['correctAnswer'] === (string)$params['answer']) {
                 $correct = true;
                 $score = isset($config['points']) ? (int)$config['points'] : 10;
-                $feedback = get_string('correct', 'core');
+                $feedback = get_string('quiz_correct', 'mod_gear');
             } else {
-                $feedback = get_string('incorrect', 'core');
+                $feedback = get_string('quiz_incorrect', 'mod_gear');
             }
         }
 
