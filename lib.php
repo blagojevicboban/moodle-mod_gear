@@ -39,8 +39,6 @@ function gear_supports(string $feature): bool|string|null {
             return true;
         case FEATURE_COMPLETION_TRACKS_VIEWS:
             return true;
-        case FEATURE_COMPLETION_HAS_RULES:
-            return true;
         case FEATURE_GRADE_HAS_GRADE:
             return true;
         case FEATURE_GRADE_OUTCOMES:
@@ -70,19 +68,7 @@ function gear_add_instance(stdClass $gear, ?mod_gear_mod_form $mform = null): in
     $gear->timecreated = time();
     $gear->timemodified = time();
 
-    // Build scene config from form fields.
-    $gear->scene_config = json_encode([
-        'background' => $gear->background_color ?? '#1a1a2e',
-        'lighting' => $gear->lighting ?? 'studio',
-        'camera' => [
-            'position' => [0, 1.6, 3],
-            'hotspotScale' => isset($gear->hotspot_scale) ? (float)$gear->hotspot_scale : 1.5,
-        ],
-        'hotspots' => [
-            'enabled' => isset($gear->enablehotspots) ? (bool)$gear->enablehotspots : true,
-            'edit' => isset($gear->edithotspots) ? (bool)$gear->edithotspots : false,
-        ],
-    ]);
+    $gear->scene_config = gear_build_scene_config($gear, null);
 
     $gear->id = $DB->insert_record('gear', $gear);
 
@@ -124,19 +110,10 @@ function gear_update_instance(stdClass $gear, ?mod_gear_mod_form $mform = null):
     $gear->timemodified = time();
     $gear->id = $gear->instance;
 
-    // Build scene config from form fields.
-    $gear->scene_config = json_encode([
-        'background' => $gear->background_color ?? '#1a1a2e',
-        'lighting' => $gear->lighting ?? 'studio',
-        'camera' => [
-            'position' => [0, 1.6, 3],
-            'hotspotScale' => isset($gear->hotspot_scale) ? (float)$gear->hotspot_scale : 1.5,
-        ],
-        'hotspots' => [
-            'enabled' => isset($gear->enablehotspots) ? (bool)$gear->enablehotspots : true,
-            'edit' => isset($gear->edithotspots) ? (bool)$gear->edithotspots : false,
-        ],
-    ]);
+    // Keep what the viewer saved in the scene config (camera position/target, hotspot colour).
+    $oldconfig = $DB->get_field('gear', 'scene_config', ['id' => $gear->id]);
+
+    $gear->scene_config = gear_build_scene_config($gear, $oldconfig ?: null);
 
     $result = $DB->update_record('gear', $gear);
 
@@ -268,7 +245,41 @@ function gear_get_user_grades($gear, $userid = 0) {
         }
     }
 
+    // Scale the collected points to the grade of the activity (points of all quiz hotspots = full grade).
+    $maxpoints = 0;
+    foreach ($DB->get_records('gear_hotspots', ['gearid' => $gear->id, 'type' => 'quiz'], '', 'id, config') as $hs) {
+        $cfg = json_decode($hs->config ?? '', true);
+        $maxpoints += isset($cfg['points']) ? (int) $cfg['points'] : 10;
+    }
+    foreach ($grades as $uid => $grade) {
+        unset($grades[$uid]['hotspots']);
+        if ($gear->grade > 0 && $maxpoints > 0) {
+            $grades[$uid]['rawgrade'] = min((float) $gear->grade, $grade['rawgrade'] / $maxpoints * $gear->grade);
+        }
+    }
+
     return $grades;
+}
+
+/**
+ * Build the scene config JSON from form data, keeping viewer-saved values of an existing config.
+ *
+ * @param stdClass $gear Form data
+ * @param string|null $existing Existing scene_config JSON (update) or null (create)
+ * @return string JSON
+ */
+function gear_build_scene_config(stdClass $gear, ?string $existing): string {
+    $config = $existing ? (json_decode($existing, true) ?: []) : [];
+    $config['background'] = $gear->background_color ?? $config['background'] ?? '#1a1a2e';
+    $config['lighting'] = $gear->lighting ?? $config['lighting'] ?? 'studio';
+    $config['camera']['position'] = $config['camera']['position'] ?? [0, 1.6, 3];
+    $config['camera']['hotspotScale'] = isset($gear->hotspot_scale)
+        ? (float) $gear->hotspot_scale : ($config['camera']['hotspotScale'] ?? 1.5);
+    $config['hotspots']['enabled'] = isset($gear->enablehotspots)
+        ? (bool) $gear->enablehotspots : ($config['hotspots']['enabled'] ?? true);
+    $config['hotspots']['edit'] = isset($gear->edithotspots)
+        ? (bool) $gear->edithotspots : ($config['hotspots']['edit'] ?? false);
+    return json_encode($config);
 }
 
 /**
@@ -353,6 +364,19 @@ function gear_grade_item_update($gear, $grades = null) {
 }
 
 /**
+ * Delete the grade item of a GEAR instance.
+ *
+ * @param stdClass $gear The module instance
+ * @return int GRADE_UPDATE_OK or an error code
+ */
+function gear_grade_item_delete($gear) {
+    global $CFG;
+    require_once($CFG->libdir . '/gradelib.php');
+
+    return grade_update('mod/gear', $gear->course, 'mod', 'gear', $gear->id, 0, null, ['deleted' => 1]);
+}
+
+/**
  * Deletes a GEAR instance.
  *
  * @param int $id Id of the module instance
@@ -365,7 +389,9 @@ function gear_delete_instance(int $id): bool {
         return false;
     }
 
-    // Delete related records.
+    // Remove the grade item, then the related records.
+    gear_grade_item_delete($gear);
+    $DB->delete_records('gear_sessions', ['gearid' => $id]);
     $DB->delete_records('gear_models', ['gearid' => $id]);
     $DB->delete_records('gear_hotspots', ['gearid' => $id]);
     $DB->delete_records('gear_tracking', ['gearid' => $id]);

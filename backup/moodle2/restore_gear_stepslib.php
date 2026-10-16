@@ -114,6 +114,9 @@ class restore_gear_activity_structure_step extends restore_activity_structure_st
         $data = (object)$data;
         $data->gearid = $this->get_new_parentid('gear');
         $data->userid = $this->get_mappingid('user', $data->userid);
+        if (!$data->userid) {
+            return;
+        }
         $data->timecreated = $this->apply_date_offset($data->timecreated);
 
         $DB->insert_record('gear_tracking', $data);
@@ -123,6 +126,19 @@ class restore_gear_activity_structure_step extends restore_activity_structure_st
      * After execution actions.
      */
     protected function after_execute() {
+        global $DB;
+
+        // Hotspots can be unlocked by other hotspots (requires_id in the config): point them at the restored ids.
+        $gearid = $this->get_new_parentid('gear');
+        foreach ($DB->get_records('gear_hotspots', ['gearid' => $gearid], '', 'id, config') as $hotspot) {
+            $config = json_decode($hotspot->config ?? '', true);
+            if (is_array($config) && !empty($config['requires_id'])) {
+                $newid = $this->get_mappingid('gear_hotspot', $config['requires_id']);
+                $config['requires_id'] = $newid ?: '';
+                $DB->set_field('gear_hotspots', 'config', json_encode($config), ['id' => $hotspot->id]);
+            }
+        }
+
         // Add related files.
         $this->add_related_files('mod_gear', 'intro', null);
         $this->add_related_files('mod_gear', 'model', null);

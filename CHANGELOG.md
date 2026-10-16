@@ -5,6 +5,28 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-10-16
+
+### Security
+- `track_event` accepts only `ar_start`, `vr_start` and `hotspot_click` (size-limited JSON, no guests); quiz scores can no longer be forged, as they come from `submit_quiz` only.
+- `save_hotspot` verifies that the hotspot and model belong to the activity, validates the type and JSON fields and cleans the content.
+- The correct quiz answer is no longer sent to users who cannot manage the activity; hotspot content is cleaned on output.
+- `report.php` takes hotspot titles from the hotspot table and escapes all output (stored XSS).
+- `gear_pluginfile` requires `mod/gear:view`, serves only the `model` area as a download and no longer sends a CORS wildcard.
+- Viewer: chat messages, quiz feedback and tooltips no longer insert untrusted text as HTML.
+
+### Fixed
+- Editing the activity settings no longer resets the saved camera and the hotspot checkboxes.
+- The viewer is no longer started for an activity without a model.
+- Grades are scaled so that the points of all quiz hotspots equal the full grade; the grade item and sessions are removed with the activity.
+- Restore remaps `requires_id` of hotspots and skips tracking rows of users that were not restored; backup annotates the users.
+- Missing `error:*` and Serbian `hotspotscale_help` strings.
+- The model file picker accepts only `.glb`, `.gltf`, `.bin` and images (20 files).
+
+### Changed
+- Requires Moodle 4.5 or later (supported 4.5 to 5.3). Templates use Bootstrap 5 classes.
+- Removed the unimplemented custom completion rules flag.
+
 ## [1.7.0] - 2026-04-14
 
 ### Added

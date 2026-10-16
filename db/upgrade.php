@@ -69,5 +69,10 @@ function xmldb_gear_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026020504, 'gear');
     }
 
+    if ($oldversion < 2026101600) {
+        // Nothing to change in the database: version bump for the 1.7.1 fixes.
+        upgrade_mod_savepoint(true, 2026101600, 'gear');
+    }
+
     return true;
 }

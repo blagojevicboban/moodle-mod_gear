@@ -70,8 +70,8 @@ class mod_gear_mod_form extends moodleform_mod {
             [
                 'subdirs' => 1,
                 'maxbytes' => $maxbytes,
-                'maxfiles' => 10,
-                'accepted_types' => '*',
+                'maxfiles' => 20,
+                'accepted_types' => ['.glb', '.gltf', '.bin', 'image'],
             ]
         );
         $mform->addHelpButton('modelfiles', 'modelfiles', 'gear');
@@ -169,6 +169,12 @@ class mod_gear_mod_form extends moodleform_mod {
                 $defaultvalues['lighting'] = $config['lighting'] ?? 'studio';
                 if (isset($config['camera']['hotspotScale'])) {
                     $defaultvalues['hotspot_scale'] = $config['camera']['hotspotScale'];
+                }
+                if (isset($config['hotspots']['enabled'])) {
+                    $defaultvalues['enablehotspots'] = (int) $config['hotspots']['enabled'];
+                }
+                if (isset($config['hotspots']['edit'])) {
+                    $defaultvalues['edithotspots'] = (int) $config['hotspots']['edit'];
                 }
             }
         }

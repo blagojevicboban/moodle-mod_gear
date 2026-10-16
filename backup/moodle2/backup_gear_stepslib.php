@@ -79,6 +79,7 @@ class backup_gear_activity_structure_step extends backup_activity_structure_step
         }
 
         // Annotations.
+        $tracking->annotate_ids('user', 'userid');
         // Identify file areas.
         $gear->annotate_files('mod_gear', 'intro', null); // Intro files.
         $gear->annotate_files('mod_gear', 'model', null); // Model files (attached to module context, itemid 0).
