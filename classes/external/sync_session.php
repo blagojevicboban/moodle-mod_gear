@@ -96,7 +96,8 @@ class sync_session extends external_api {
         // Clean up old sessions (optional, maybe run via cron or probability).
 
         // Fetch other active users.
-        $sql = "SELECT s.*, u.firstname, u.lastname
+        $namefields = \core_user\fields::for_name()->get_sql('u', false, '', '', false)->selects;
+        $sql = "SELECT s.*, {$namefields}
                   FROM {gear_sessions} s
                   JOIN {user} u ON u.id = s.userid
                  WHERE s.gearid = :gearid
