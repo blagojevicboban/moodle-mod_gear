@@ -132,4 +132,3 @@ class mod_gear_generator extends testing_module_generator {
         return $record;
     }
 }
-

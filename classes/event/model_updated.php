@@ -72,4 +72,3 @@ class model_updated extends \core\event\base {
         return ['db' => 'gear_models', 'restore' => 'gear_model'];
     }
 }
-

@@ -181,6 +181,7 @@ $string['saveview'] = 'Save Current View (Set as default)';
 $string['saveviewsuccess'] = 'Scene view saved successfully';
 $string['scenesettings'] = 'Scene Settings';
 $string['score'] = 'Score';
+$string['send'] = 'Send';
 $string['send_message'] = 'Send';
 $string['spatialaudio'] = 'Spatial Audio';
 $string['supportedformats'] = 'Supported formats: glTF, GLB';

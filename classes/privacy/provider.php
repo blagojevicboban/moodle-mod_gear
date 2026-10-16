@@ -130,7 +130,7 @@ class provider implements
                 $data[] = (object) [
                     'action' => $tracking->action,
                     'data' => $tracking->data,
-                    'duration' => transform::duration((int) $tracking->duration),
+                    'duration' => (int) $tracking->duration,
                     'timecreated' => transform::datetime($tracking->timecreated),
                 ];
             }

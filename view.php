@@ -68,8 +68,7 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
 // Load Three.js and addons via bundled AMD module (no longer via CDN).
-// PeerJS is self-hosted in vendorjs/.
-$PAGE->requires->js(new moodle_url('/mod/gear/vendorjs/peerjs.min.js'), true);
+// PeerJS (self-hosted in vendorjs/) is loaded by the viewer only when a second participant joins.
 
 // Get models for this activity (with file URLs).
 $models = gear_get_models($gear->id, $context->id);
@@ -86,6 +85,7 @@ $jsconfig = [
     'vr_enabled' => (bool) $gear->vr_enabled,
     'canmanage' => $canmanage,
     'userid' => $USER->id,
+    'peerjsurl' => (new moodle_url('/mod/gear/vendorjs/peerjs.min.js'))->out(false),
 ];
 if (!empty($models)) {
     $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);

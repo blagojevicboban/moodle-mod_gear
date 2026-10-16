@@ -166,4 +166,3 @@ final class lib_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('gear_tracking', ['gearid' => $gear->id]));
     }
 }
-

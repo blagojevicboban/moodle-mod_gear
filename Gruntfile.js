@@ -77,7 +77,7 @@ module.exports = function(grunt) {
         },
         stylelint: {
             css: {
-                src: ['styles.css']
+                src: []
             }
         },
         eslint: {

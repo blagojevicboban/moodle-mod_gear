@@ -186,4 +186,3 @@ final class external_test extends \advanced_testcase {
         $this->assertSame((int) $student1->id, $others[0]['userid']);
     }
 }
-

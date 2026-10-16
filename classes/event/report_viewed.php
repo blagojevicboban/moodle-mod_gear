@@ -72,4 +72,3 @@ class report_viewed extends \core\event\base {
         return ['db' => 'gear', 'restore' => 'gear'];
     }
 }
-

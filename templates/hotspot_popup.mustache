@@ -31,9 +31,9 @@
         "audioText": "Play Audio"
     }
 }}
-<div id="gear-hotspot-popup-{{cmid}}" class="gear-hotspot-popup">
+<div id="gear-hotspot-popup-{{cmid}}" class="gear-hotspot-popup" role="dialog" aria-modal="false" aria-label="{{title}}">
     <div class="gear-hotspot-popup-inner">
-        <button class="gear-hotspot-close" aria-label="{{#str}}close, core{{/str}}">&times;</button>
+        <button type="button" class="gear-hotspot-close" aria-label="{{#str}}close, core{{/str}}">&times;</button>
         <h4 class="gear-hotspot-title">
             <span class="gear-hotspot-title-text">{{title}}</span>
             {{#isInfo}}

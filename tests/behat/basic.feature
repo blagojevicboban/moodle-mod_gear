@@ -36,4 +36,3 @@ Feature: Basic GEAR activity view and permissions
     Then "a[href*='/mod/gear/report.php']" "css_element" should exist
     When I am on the "Demo GEAR" "gear activity" page logged in as student1
     Then "a[href*='/mod/gear/report.php']" "css_element" should not exist
-

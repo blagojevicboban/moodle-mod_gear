@@ -45,4 +45,3 @@ class cleanup_sessions extends \core\task\scheduled_task {
         $DB->delete_records_select('gear_sessions', 'timemodified < :cutoff', ['cutoff' => $cutoff]);
     }
 }
-

@@ -46,6 +46,66 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
 }[c]));
 
 /**
+ * Whether the user asked the system for reduced motion.
+ *
+ * @returns {boolean} True when animations should be avoided
+ */
+const prefersReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/**
+ * Open a modal dialog: focus the first control, trap Tab, close with Escape and give focus back to the opener.
+ *
+ * @param {HTMLElement} modal Modal element (role=dialog)
+ */
+const openDialog = (modal) => {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+    modal.gearOpener = document.activeElement;
+    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusable = () => Array.from(modal.querySelectorAll(selector)).filter((el) => !el.disabled && el.offsetParent !== null);
+    if (!modal.gearKeyHandler) {
+        modal.gearKeyHandler = (e) => {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                closeDialog(modal);
+            } else if (e.key === 'Tab') {
+                const items = focusable();
+                if (!items.length) {
+                    return;
+                }
+                const first = items[0];
+                const last = items[items.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        };
+        modal.addEventListener('keydown', modal.gearKeyHandler);
+    }
+    const items = focusable();
+    if (items.length) {
+        items[0].focus();
+    }
+};
+
+/**
+ * Close a modal opened with openDialog and return focus to the element that opened it.
+ *
+ * @param {HTMLElement} modal Modal element
+ */
+const closeDialog = (modal) => {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+    if (modal.gearOpener && modal.gearOpener.focus) {
+        modal.gearOpener.focus();
+    }
+};
+
+/**
  * Convert an HTML fragment to plain text without executing anything (inert document).
  *
  * @param {string} html HTML fragment
@@ -84,6 +144,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.completedQuizzes = []; // Track gamification progress
             this.canManage = options.canmanage || false;
             this.userid = options.userid || 0; // The current user ID for WebRTC
+            this.peerjsUrl = options.peerjsurl || '';
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -337,8 +398,24 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             // Add lighting.
             this.setupLighting();
 
-            // Add resize handler.
-            window.addEventListener('resize', () => this.onResize());
+            // Add resize handler (kept so that destroy() can remove it).
+            this.resizeHandler = () => this.onResize();
+            window.addEventListener('resize', this.resizeHandler);
+
+            // Do not render while the tab is hidden or the canvas is scrolled out of view.
+            this.pageVisible = !document.hidden;
+            this.inViewport = true;
+            this.visibilityHandler = () => {
+                this.pageVisible = !document.hidden;
+            };
+            document.addEventListener('visibilitychange', this.visibilityHandler);
+            if (window.IntersectionObserver) {
+                this.viewObserver = new IntersectionObserver((entries) => {
+                    this.inViewport = entries.some((entry) => entry.isIntersecting);
+                });
+                this.viewObserver.observe(this.container);
+            }
+            window.addEventListener('pagehide', () => this.destroy(), {once: true});
         }
 
         /**
@@ -642,17 +719,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     modal = document.getElementById('gear-help-modal-' + this.cmid);
 
                     // Close logic.
-                    modal.querySelector('.close').addEventListener('click', () => {
-                        modal.classList.remove('active');
-                        modal.style.display = 'none';
-                    });
+                    modal.querySelector('.close').addEventListener('click', () => closeDialog(modal));
 
-                    modal.classList.add('active');
-                    modal.style.display = 'flex';
+                    openDialog(modal);
                 }).catch(Notification.exception);
             } else {
-                modal.classList.add('active');
-                modal.style.display = 'flex';
+                openDialog(modal);
             }
         }
 
@@ -670,10 +742,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     modal = document.getElementById('gear-leaderboard-modal-' + this.cmid);
 
                     // Close logic.
-                    modal.querySelector('.close').addEventListener('click', () => {
-                        modal.classList.remove('active');
-                        modal.style.display = 'none';
-                    });
+                    modal.querySelector('.close').addEventListener('click', () => closeDialog(modal));
 
                     this.fetchAndRenderLeaderboard(modal);
                 }).catch(Notification.exception);
@@ -688,8 +757,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          * @param {HTMLElement} modal
          */
         async fetchAndRenderLeaderboard(modal) {
-            modal.classList.add('active');
-            modal.style.display = 'flex';
+            openDialog(modal);
             var content = modal.querySelector('.gear-leaderboard-content');
             var loadingText = await Str.get_string('loading', 'mod_gear');
             content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> ' + loadingText + '</div>';
@@ -883,6 +951,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          */
         animate() {
             this.renderer.setAnimationLoop(() => {
+                if (!this.renderer.xr.isPresenting && (!this.pageVisible || !this.inViewport)) {
+                    return;
+                }
                 if (this.isAutoRotating) {
                     this.modelContainer.rotation.y += 0.005;
                 }
@@ -890,6 +961,50 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 this.controls.update();
                 this.renderer.render(this.scene, this.camera);
             });
+        }
+
+        /**
+         * Stop rendering and release listeners and GPU resources (called when the page is left).
+         */
+        destroy() {
+            if (!this.renderer) {
+                return;
+            }
+            this.renderer.setAnimationLoop(null);
+            window.removeEventListener('resize', this.resizeHandler);
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
+            if (this.viewObserver) {
+                this.viewObserver.disconnect();
+            }
+            this.scene.traverse((obj) => {
+                if (obj.geometry) {
+                    obj.geometry.dispose();
+                }
+                if (obj.material) {
+                    (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => m.dispose());
+                }
+            });
+            this.renderer.dispose();
+            if (this.tooltipElement) {
+                this.tooltipElement.remove();
+                this.tooltipElement = null;
+            }
+        }
+
+        /**
+         * Announce a message to screen readers (polite live region, only used for keyboard navigation).
+         *
+         * @param {string} text Text to announce
+         */
+        announce(text) {
+            if (!this.statusRegion) {
+                this.statusRegion = document.createElement('div');
+                this.statusRegion.className = 'visually-hidden';
+                this.statusRegion.setAttribute('role', 'status');
+                this.statusRegion.setAttribute('aria-live', 'polite');
+                this.container.appendChild(this.statusRegion);
+            }
+            this.statusRegion.textContent = text;
         }
 
         /**
@@ -1222,11 +1337,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 this.tooltipElement = document.createElement('div');
                 this.tooltipElement.className = 'gear-hotspot-tooltip';
                 this.tooltipElement.setAttribute('role', 'tooltip');
-                this.tooltipElement.setAttribute('aria-live', 'polite');
                 this.tooltipElement.style.cssText = 'position:fixed;padding:12px;background:rgba(0,0,0,0.9);color:#fff;' +
                     'border-radius:8px;pointer-events:none;z-index:10000;max-width:250px;font-size:14px;' +
                     'box-shadow:0 4px 12px rgba(0,0,0,0.3);opacity:0;transform:scale(0.95);' +
-                    'transition:opacity 0.2s ease-in-out, transform 0.2s ease-in-out;';
+                    (prefersReducedMotion() ? '' : 'transition:opacity 0.2s ease-in-out, transform 0.2s ease-in-out;');
                 document.body.appendChild(this.tooltipElement);
             }
 
@@ -1355,6 +1469,8 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 clientY: window.innerHeight / 2
             };
             this.showTooltip(mesh.userData, syntheticEvent);
+            this.announce((mesh.userData.title || 'Hotspot') +
+                (mesh.userData.content ? ': ' + htmlToText(mesh.userData.content).substring(0, 200) : ''));
         }
 
         /**
@@ -1702,9 +1818,11 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             // Blink effect on mesh.
             this.stopBlinking();
             this.activeBlinkMesh = mesh;
-            this.blinkInterval = setInterval(() => {
-                mesh.visible = !mesh.visible;
-            }, 300);
+            if (!prefersReducedMotion()) {
+                this.blinkInterval = setInterval(() => {
+                    mesh.visible = !mesh.visible;
+                }, 300);
+            }
 
             // Stop blinking after 3 seconds.
             setTimeout(() => this.stopBlinking(), 3000);
@@ -2367,10 +2485,23 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.voiceEnabled = false;
         }
 
-        async initPeer() {
+        initPeer() {
+            if (!this.peerPromise) {
+                this.peerPromise = this.createPeer();
+            }
+            return this.peerPromise;
+        }
+
+        async createPeer() {
             if (this.peer) {
- return;
-}
+                return;
+            }
+            try {
+                await this.loadPeerJs();
+            } catch (e) {
+                this.peerPromise = null;
+                return;
+            }
             var myPeerId = 'mod_gear_' + this.viewer.gearid + '_' + this.viewer.userid;
             this.peer = new Peer(myPeerId);
 
@@ -2385,6 +2516,24 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
             this.peer.on('connection', (conn) => {
                 this.handleDataConnection(conn);
+            });
+        }
+
+        /**
+         * Load the self-hosted PeerJS script on first use (it is only needed when several people share a session).
+         *
+         * @returns {Promise<void>}
+         */
+        loadPeerJs() {
+            if (typeof Peer !== 'undefined') {
+                return Promise.resolve();
+            }
+            return new Promise((resolve, reject) => {
+                var script = document.createElement('script');
+                script.src = this.viewer.peerjsUrl;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error('PeerJS failed to load'));
+                document.head.appendChild(script);
             });
         }
 
@@ -2489,8 +2638,11 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         }
 
         start() {
-            this.initPeer();
-            this.interval = setInterval(() => this.sync(), 2000);
+            this.interval = setInterval(() => {
+                if (!document.hidden) {
+                    this.sync();
+                }
+            }, 2000);
             this.sync(); // Initial call
         }
 
@@ -2549,6 +2701,11 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     this.removeAvatar(id);
                 }
             });
+
+            // PeerJS is only needed when somebody else is in the session.
+            if (!this.peer && users.some((user) => user.userid != this.viewer.userid)) {
+                this.initPeer();
+            }
 
             // Connect uncalled voice peers
             if (this.peer) {

@@ -204,6 +204,15 @@
     transform: scale(1.2);
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .gear-hotspot,
+    .gear-hotspot-popup,
+    .gear-control-btn {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
 @keyframes hotspot-pulse {
     0%,
     100% {

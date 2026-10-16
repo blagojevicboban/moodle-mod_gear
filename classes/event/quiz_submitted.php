@@ -73,4 +73,3 @@ class quiz_submitted extends \core\event\base {
         return ['db' => 'gear_hotspots', 'restore' => 'gear_hotspot'];
     }
 }
-

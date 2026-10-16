@@ -112,7 +112,7 @@ class sync_session extends external_api {
         $result = [];
         foreach ($others as $other) {
             $result[] = [
-                'userid' => $other->userid,
+                'userid' => (int) $other->userid,
                 'firstname' => $other->firstname,
                 'lastname' => $other->lastname,
                 'position' => $other->position,

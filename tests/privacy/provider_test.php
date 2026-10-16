@@ -113,4 +113,3 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->assertFalse($DB->record_exists('gear_tracking', ['gearid' => $gear->id]));
     }
 }
-

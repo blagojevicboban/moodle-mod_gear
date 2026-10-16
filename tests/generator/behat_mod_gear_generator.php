@@ -56,4 +56,3 @@ class behat_mod_gear_generator extends behat_generator_base {
         return $cm->instance;
     }
 }
-

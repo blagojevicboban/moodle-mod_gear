@@ -72,4 +72,3 @@ final class backup_restore_test extends \advanced_testcase {
         $this->assertEquals($newhotspots[0]->id, $unlockedcfg['requires_id']);
     }
 }
-

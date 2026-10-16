@@ -181,6 +181,7 @@ $string['saveview'] = 'Sačuvaj trenutni pogled (Postavi kao podrazumevani)';
 $string['saveviewsuccess'] = 'Pogled na scenu je uspešno sačuvan';
 $string['scenesettings'] = 'Podešavanja scene';
 $string['score'] = 'Rezultat';
+$string['send'] = 'Pošalji';
 $string['send_message'] = 'Pošalji';
 $string['spatialaudio'] = 'Prostorni audio';
 $string['supportedformats'] = 'Podržani formati: glTF, GLB';

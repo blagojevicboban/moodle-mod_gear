@@ -72,4 +72,3 @@ class hotspot_deleted extends \core\event\base {
         return ['db' => 'gear_hotspots', 'restore' => 'gear_hotspot'];
     }
 }
-
