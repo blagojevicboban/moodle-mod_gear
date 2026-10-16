@@ -36,6 +36,25 @@ import Templates from 'core/templates';
 
 /* global Peer */
 
+/**
+ * Escape text for safe insertion into HTML.
+ *
+ * @param {*} value Any value
+ * @returns {string} Escaped string
+ */
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+}[c]));
+
+/**
+ * Convert an HTML fragment to plain text without executing anything (inert document).
+ *
+ * @param {string} html HTML fragment
+ * @returns {string} Plain text
+ */
+const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''), 'text/html').body.textContent || '';
+
+
     /**
      * GEAR Viewer class.
      */
@@ -1188,23 +1207,21 @@ import Templates from 'core/templates';
             // Build tooltip content with accessible labels.
             var content = '<div style="display:flex;align-items:center;margin-bottom:6px;">';
             content += '<i class="fa ' + icon + '" style="margin-right:8px;font-size:16px;color:#6366f1;" aria-hidden="true"></i>';
-            content += '<strong>' + (hotspot.title || 'Hotspot') + '</strong>';
+            content += '<strong>' + escapeHtml(hotspot.title || 'Hotspot') + '</strong>';
             content += '</div>';
 
             if (hotspot.content) {
                 // Strip HTML tags for tooltip description.
-                var div = document.createElement('div');
-                div.innerHTML = hotspot.content;
-                var plainText = div.textContent || div.innerText || '';
+                var plainText = htmlToText(hotspot.content);
                 // Truncate if too long.
                 if (plainText.length > 100) {
                     plainText = plainText.substring(0, 100) + '...';
                 }
-                content += '<div style="opacity:0.8;font-size:12px;line-height:1.4;">' + plainText + '</div>';
+                content += '<div style="opacity:0.8;font-size:12px;line-height:1.4;">' + escapeHtml(plainText) + '</div>';
             }
 
             // Set accessible text for screen readers.
-            this.tooltipElement.setAttribute('aria-label', (hotspot.title || 'Hotspot') + ': ' + (hotspot.content || ''));
+            this.tooltipElement.setAttribute('aria-label', (hotspot.title || 'Hotspot') + ': ' + htmlToText(hotspot.content));
             this.tooltipElement.innerHTML = content;
             
             // Show tooltip with animation.
@@ -1801,9 +1818,7 @@ import Templates from 'core/templates';
                             ttsBtn.classList.remove('playing');
                             ttsBtn.innerHTML = '<i class="fa fa-volume-up text-secondary"></i>';
                         } else {
-                            var div = document.createElement('div');
-                            div.innerHTML = hotspot.content;
-                            var plainText = (hotspot.title || '') + ". " + (div.textContent || div.innerText || '');
+                            var plainText = (hotspot.title || '') + ". " + htmlToText(hotspot.content);
                             var utterance = new SpeechSynthesisUtterance(plainText);
                             utterance.lang = document.documentElement.lang || 'en-US';
                             
@@ -2198,12 +2213,20 @@ import Templates from 'core/templates';
                 
                 if (response.correct) {
                     var msg = await Str.get_string('quiz_correct', 'mod_gear');
-                    feedbackDiv.innerHTML = '<span class="badge badge-success">' + msg + '</span> +' + response.score + ' pts';
+                    feedbackDiv.textContent = '';
+                    var okBadge = document.createElement('span');
+                    okBadge.className = 'badge badge-success bg-success';
+                    okBadge.textContent = msg;
+                    feedbackDiv.append(okBadge, ' +' + response.score + ' pts');
                     this.completedQuizzes.push(hotspot.id);
                     this.checkHotspotUnlocks();
                 } else {
                     var msg = await Str.get_string('quiz_incorrect', 'mod_gear');
-                    feedbackDiv.innerHTML = '<span class="badge badge-danger">' + msg + '</span>';
+                    feedbackDiv.textContent = '';
+                    var badBadge = document.createElement('span');
+                    badBadge.className = 'badge badge-danger bg-danger';
+                    badBadge.textContent = msg;
+                    feedbackDiv.append(badBadge);
                 }
                 
                 submitBtn.disabled = true;
@@ -2359,7 +2382,10 @@ import Templates from 'core/templates';
                 this.dataConns[conn.peer] = conn;
             });
             conn.on('data', (data) => {
-                this.displayChatMessage(data.sender, data.text, 'other');
+                if (!data || typeof data.text !== 'string') {
+                    return;
+                }
+                this.displayChatMessage(String(data.sender || '').substring(0, 50), data.text.substring(0, 500), 'other');
             });
             conn.on('close', () => {
                 delete this.dataConns[conn.peer];
@@ -2387,7 +2413,11 @@ import Templates from 'core/templates';
             if (!messagesDiv) return;
             var msgDiv = document.createElement('div');
             msgDiv.className = 'gear-chat-msg ' + type;
-            msgDiv.innerHTML = '<span class="gear-chat-sender">' + sender + '</span>' + text;
+            var senderSpan = document.createElement('span');
+            senderSpan.className = 'gear-chat-sender';
+            senderSpan.textContent = String(sender);
+            msgDiv.appendChild(senderSpan);
+            msgDiv.appendChild(document.createTextNode(String(text)));
             messagesDiv.appendChild(msgDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }

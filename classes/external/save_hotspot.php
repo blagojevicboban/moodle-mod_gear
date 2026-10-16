@@ -97,6 +97,23 @@ class save_hotspot extends external_api {
         self::validate_context($context);
         require_capability('mod/gear:manage', $context);
 
+        // Validate references so a teacher cannot touch hotspots/models of other activities.
+        if ($params['id'] > 0) {
+            $DB->get_record('gear_hotspots', ['id' => $params['id'], 'gearid' => $gear->id], 'id', MUST_EXIST);
+        }
+        if ($params['modelid'] > 0) {
+            $DB->get_record('gear_models', ['id' => $params['modelid'], 'gearid' => $gear->id], 'id', MUST_EXIST);
+        }
+        if (!in_array($params['type'], ['info', 'quiz', 'audio', 'video', 'teleport'], true)) {
+            throw new \invalid_parameter_exception('Invalid hotspot type');
+        }
+        foreach (['position', 'config'] as $field) {
+            if ($params[$field] !== '' && !is_array(json_decode($params[$field], true))) {
+                throw new \invalid_parameter_exception('Invalid JSON in ' . $field);
+            }
+        }
+        $params['content'] = clean_text($params['content'], FORMAT_HTML);
+
         $hotspot = new \stdClass();
         $hotspot->gearid = $params['gearid'];
         $hotspot->modelid = $params['modelid'] ?: null;

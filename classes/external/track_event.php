@@ -66,11 +66,27 @@ class track_event extends external_api {
         self::validate_context($context);
         require_capability('mod/gear:view', $context);
 
+        // Guests must not write tracking data.
+        if (isguestuser()) {
+            throw new \required_capability_exception($context, 'mod/gear:view', 'nopermissions', '');
+        }
+
+        // Only client-side interaction events are accepted. Quiz results are written by submit_quiz only,
+        // otherwise users could forge scores that feed the gradebook and the leaderboard.
+        $allowed = ['ar_start', 'vr_start', 'hotspot_click'];
+        if (!in_array($params['action'], $allowed, true)) {
+            throw new \invalid_parameter_exception('Unsupported action');
+        }
+        $decoded = json_decode($params['data'], true);
+        if (strlen($params['data']) > 1000 || !is_array($decoded)) {
+            throw new \invalid_parameter_exception('Invalid data');
+        }
+
         $record = new \stdClass();
         $record->gearid = $params['gearid'];
         $record->userid = $USER->id;
         $record->action = $params['action'];
-        $record->data = $params['data'];
+        $record->data = json_encode($decoded);
         $record->timecreated = time();
 
         $DB->insert_record('gear_tracking', $record);

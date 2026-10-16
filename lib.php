@@ -402,12 +402,13 @@ function gear_pluginfile(
     }
 
     require_login($course, true, $cm);
+    require_capability('mod/gear:view', $context);
 
-    if ($filearea !== 'model' && $filearea !== 'content') {
+    if ($filearea !== 'model') {
         return false;
     }
 
-    $itemid = array_shift($args);
+    $itemid = (int) array_shift($args);
     $filename = array_pop($args);
     $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
 
@@ -418,13 +419,8 @@ function gear_pluginfile(
         return false;
     }
 
-    // Set CORS headers for 3D model files.
-    $mimetype = $file->get_mimetype();
-    if (strpos($mimetype, 'model') !== false || in_array(pathinfo($filename, PATHINFO_EXTENSION), ['gltf', 'glb'])) {
-        header('Access-Control-Allow-Origin: *');
-    }
-
-    send_stored_file($file, 86400, 0, $forcedownload, $options);
+    // Models are loaded by the same-origin viewer, no CORS header is needed. Never render uploads inline.
+    send_stored_file($file, 86400, 0, true, $options);
     return true;
 }
 
@@ -463,4 +459,23 @@ function gear_get_models(int $gearid, int $contextid): array {
     }
 
     return $result;
+}
+
+/**
+ * Remove data that must not reach students (quiz answers) from a hotspot config JSON string.
+ *
+ * @param string|null $config JSON config of a hotspot
+ * @param bool $canmanage Whether the viewer may manage the activity
+ * @return string Config JSON, without the correct answer for non-managers
+ */
+function gear_filter_hotspot_config(?string $config, bool $canmanage): string {
+    if ($config === null || $config === '' || $canmanage) {
+        return $config ?? '';
+    }
+    $decoded = json_decode($config, true);
+    if (!is_array($decoded)) {
+        return '';
+    }
+    unset($decoded['correctAnswer']);
+    return json_encode($decoded);
 }

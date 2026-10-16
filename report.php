@@ -63,7 +63,7 @@ if (empty($summary)) {
     $table->head = [get_string('action', 'mod_gear'), get_string('count', 'mod_gear')];
     $table->data = [];
     foreach ($summary as $record) {
-        $table->data[] = [$record->action, $record->count];
+        $table->data[] = [s($record->action), $record->count];
     }
     echo html_writer::tag('h3', get_string('generaltracking', 'mod_gear'));
     echo html_writer::table($table);
@@ -77,11 +77,16 @@ if (empty($summary)) {
     $hotspotclicks = $DB->get_records_sql($sqlhotspots, ['gearid' => $gear->id]);
 
     if (!empty($hotspotclicks)) {
-        // Aggregate by hotspot title.
+        // Aggregate by hotspot id; titles come from the hotspot table, never from client supplied tracking data.
+        $hotspottitles = $DB->get_records_menu('gear_hotspots', ['gearid' => $gear->id], '', 'id, title');
         $hotspotcounts = [];
         foreach ($hotspotclicks as $hc) {
             $data = json_decode($hc->data);
-            $title = isset($data->title) ? $data->title : 'Unknown Hotspot';
+            $hid = isset($data->hotspotId) ? (int) $data->hotspotId : 0;
+            if (!isset($hotspottitles[$hid])) {
+                continue;
+            }
+            $title = format_string($hotspottitles[$hid]);
             if (!isset($hotspotcounts[$title])) {
                 $hotspotcounts[$title] = 0;
             }
@@ -95,7 +100,7 @@ if (empty($summary)) {
         $htable->data = [];
 
         foreach ($hotspotcounts as $title => $count) {
-            $htable->data[] = [$title, $count];
+            $htable->data[] = [s($title), $count];
         }
 
         echo html_writer::tag('h3', get_string('hotspotanalytics', 'mod_gear'));

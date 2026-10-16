@@ -23,6 +23,10 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../../lib.php');
+
 /**
  * Get hotspots for a GEAR activity.
  *
@@ -63,6 +67,8 @@ class get_hotspots extends external_api {
         self::validate_context($context);
         require_capability('mod/gear:view', $context);
 
+        $canmanage = has_capability('mod/gear:manage', $context);
+
         // Get hotspots.
         $hotspots = $DB->get_records('gear_hotspots', ['gearid' => $gearid], 'sortorder ASC');
 
@@ -73,10 +79,10 @@ class get_hotspots extends external_api {
                 'modelid' => $hotspot->modelid ?? 0,
                 'type' => $hotspot->type ?? 'info',
                 'title' => $hotspot->title ?? '',
-                'content' => $hotspot->content ?? '',
+                'content' => clean_text($hotspot->content ?? '', FORMAT_HTML),
                 'position' => $hotspot->position ?? '{"x":0,"y":0,"z":0}',
                 'icon' => $hotspot->icon ?? 'info',
-                'config' => $hotspot->config ?? '',
+                'config' => gear_filter_hotspot_config($hotspot->config, $canmanage),
                 'sortorder' => $hotspot->sortorder,
             ];
         }

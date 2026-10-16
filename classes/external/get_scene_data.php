@@ -68,6 +68,8 @@ class get_scene_data extends external_api {
         self::validate_context($context);
         require_capability('mod/gear:view', $context);
 
+        $canmanage = has_capability('mod/gear:manage', $context);
+
         // Get models.
         $models = gear_get_models($gearid, $context->id);
         $jsmodels = [];
@@ -91,10 +93,10 @@ class get_scene_data extends external_api {
                 'id' => (int)$hotspot->id,
                 'type' => $hotspot->type ?? 'info',
                 'title' => $hotspot->title ?? '',
-                'content' => $hotspot->content ?? '',
+                'content' => clean_text($hotspot->content ?? '', FORMAT_HTML),
                 'position' => $hotspot->position ?? '{"x":0,"y":0,"z":0}',
                 'icon' => $hotspot->icon ?? 'info',
-                'config' => $hotspot->config ?? '',
+                'config' => gear_filter_hotspot_config($hotspot->config, $canmanage),
             ];
         }
 

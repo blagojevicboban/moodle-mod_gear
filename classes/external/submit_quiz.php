@@ -76,6 +76,9 @@ class submit_quiz extends external_api {
         // Check capability.
         self::validate_context($context);
         require_capability('mod/gear:view', $context);
+        if (isguestuser()) {
+            throw new \required_capability_exception($context, 'mod/gear:view', 'nopermissions', '');
+        }
 
         // Get hotspot to verify answer.
         $hotspot = $DB->get_record('gear_hotspots', ['id' => $params['hotspotid'], 'gearid' => $gear->id], '*', MUST_EXIST);

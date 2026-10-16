@@ -73,31 +73,6 @@ $PAGE->requires->js(new moodle_url('/mod/gear/amd/src/peerjs.min.js'), true);
 
 // Get models for this activity (with file URLs).
 $models = gear_get_models($gear->id, $context->id);
-$hotspots = $DB->get_records('gear_hotspots', ['gearid' => $gear->id], 'sortorder ASC');
-
-// Prepare model data for JS (just URL and name).
-$jsmodels = [];
-foreach ($models as $model) {
-    $jsmodels[] = [
-        'url' => $model->url,
-        'name' => $model->name,
-        'format' => $model->format,
-    ];
-}
-
-// Prepare hotspots data for JS.
-$jshotspots = [];
-foreach ($hotspots as $hotspot) {
-    $jshotspots[] = [
-        'id' => $hotspot->id,
-        'type' => $hotspot->type ?? 'info',
-        'title' => $hotspot->title ?? '',
-        'content' => $hotspot->content ?? '',
-        'position' => json_decode($hotspot->position ?? '{"x":0,"y":0,"z":0}'),
-        'icon' => $hotspot->icon ?? 'info',
-        'config' => $hotspot->config ?? '',
-    ];
-}
 
 // Check if user can manage hotspots.
 $canmanage = has_capability('mod/gear:manage', $context);
@@ -112,7 +87,9 @@ $jsconfig = [
     'canmanage' => $canmanage,
     'userid' => $USER->id,
 ];
-$PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
+if (!empty($models)) {
+    $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);
+}
 
 // Prepare data for template.
 $templatedata = [
@@ -121,11 +98,8 @@ $templatedata = [
     'has_models' => !empty($models),
     'ar_enabled' => (bool) $gear->ar_enabled,
     'vr_enabled' => (bool) $gear->vr_enabled,
-    'models' => array_values($models),
-    'hotspots' => array_values($hotspots),
     'cmid' => $cm->id,
     'can_manage' => $canmanage,
-    'sesskey' => sesskey(),
     'reporturl' => (new moodle_url('/mod/gear/report.php', ['id' => $cm->id]))->out(),
 ];
 
