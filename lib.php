@@ -207,7 +207,7 @@ function gear_get_user_grades($gear, $userid = 0) {
     global $DB;
 
     $params = ['gearid' => $gear->id];
-    $sql = "SELECT u.id as userid, t.data
+    $sql = "SELECT t.id, u.id AS userid, t.data
               FROM {user} u
               JOIN {gear_tracking} t ON t.userid = u.id
              WHERE t.gearid = :gearid AND t.action = 'quiz_submit'";
