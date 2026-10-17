@@ -124,11 +124,26 @@ function xmldb_gear_upgrade(int $oldversion): bool {
     }
 
     if ($oldversion < 2026101800) {
-        // The AI assistant now uses the AI providers of Moodle (Site administration > General > AI): drop the own key and model.
+        // The AI assistant now uses the AI providers of Moodle (Site administration, General, AI): drop own key and model.
         unset_config('ai_apikey', 'mod_gear');
         unset_config('ai_model', 'mod_gear');
 
         upgrade_mod_savepoint(true, 2026101800, 'gear');
+    }
+
+    if ($oldversion < 2026101900) {
+        $table = new xmldb_table('gear');
+        $field = new xmldb_field('completionhotspots', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'vr_enabled');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $type = XMLDB_TYPE_INTEGER;
+        $field = new xmldb_field('completionpoints', $type, '10', null, XMLDB_NOTNULL, null, '0', 'completionhotspots');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026101900, 'gear');
     }
 
     return true;

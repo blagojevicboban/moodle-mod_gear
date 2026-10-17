@@ -90,6 +90,9 @@ class track_event extends external_api {
         $record->timecreated = time();
 
         $DB->insert_record('gear_tracking', $record);
+        if ($params['action'] === 'hotspot_click') {
+            gear_update_completion($cm, (int) $USER->id);
+        }
 
         return [
             'success' => true,

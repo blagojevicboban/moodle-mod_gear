@@ -79,7 +79,14 @@ class get_leaderboard extends external_api {
                  WHERE t.gearid = :gearid
                    AND t.action = 'quiz_submit'";
 
-        $records = $DB->get_records_sql($sql, ['gearid' => $gearid]);
+        $params = ['gearid' => $gearid];
+        $visible = gear_get_visible_userids($cm, $context);
+        if ($visible !== null) {
+            [$insql, $inparams] = $DB->get_in_or_equal($visible, SQL_PARAMS_NAMED, 'vis');
+            $sql .= " AND t.userid $insql";
+            $params += $inparams;
+        }
+        $records = $DB->get_records_sql($sql, $params);
 
         $userscores = [];
 

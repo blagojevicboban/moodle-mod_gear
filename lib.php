@@ -39,6 +39,12 @@ function gear_supports(string $feature): bool|string|null {
             return true;
         case FEATURE_COMPLETION_TRACKS_VIEWS:
             return true;
+        case FEATURE_COMPLETION_HAS_RULES:
+            return true;
+        case FEATURE_GROUPS:
+            return true;
+        case FEATURE_GROUPINGS:
+            return true;
         case FEATURE_GRADE_HAS_GRADE:
             return true;
         case FEATURE_GRADE_OUTCOMES:
@@ -704,4 +710,116 @@ function gear_ai_available(): bool {
     } catch (\Throwable $e) {
         return false;
     }
+}
+
+/**
+ * Completion rules of a GEAR activity for the course page (Moodle reads them from the cm_info custom data).
+ *
+ * @param stdClass $coursemodule Course module record
+ * @return cached_cm_info|false
+ */
+function gear_get_coursemodule_info($coursemodule) {
+    global $DB;
+
+    $gear = $DB->get_record('gear', ['id' => $coursemodule->instance], 'id, name, completionhotspots, completionpoints');
+    if (!$gear) {
+        return false;
+    }
+    $info = new cached_cm_info();
+    $info->name = $gear->name;
+    if ($coursemodule->completion == COMPLETION_TRACKING_AUTOMATIC) {
+        $info->customdata['customcompletionrules']['completionhotspots'] = $gear->completionhotspots;
+        $info->customdata['customcompletionrules']['completionpoints'] = $gear->completionpoints;
+    }
+    return $info;
+}
+
+/**
+ * Best quiz points of a user: the highest score per quiz hotspot, summed.
+ *
+ * @param int $gearid The GEAR instance id
+ * @param int $userid The user id
+ * @return int Points
+ */
+function gear_get_user_points(int $gearid, int $userid): int {
+    global $DB;
+
+    $best = [];
+    $conditions = ['gearid' => $gearid, 'userid' => $userid, 'action' => 'quiz_submit'];
+    foreach ($DB->get_records('gear_tracking', $conditions, '', 'id, data') as $record) {
+        $data = json_decode($record->data, true);
+        if (isset($data['score'], $data['hotspotid'])) {
+            $best[$data['hotspotid']] = max($best[$data['hotspotid']] ?? 0, (int) $data['score']);
+        }
+    }
+    return array_sum($best);
+}
+
+/**
+ * Whether a user has opened every hotspot that is visible to them (teleport points only move the camera).
+ *
+ * @param int $gearid The GEAR instance id
+ * @param int $userid The user id
+ * @return bool
+ */
+function gear_user_opened_all_hotspots(int $gearid, int $userid): bool {
+    global $DB;
+
+    $solved = gear_get_solved_quiz_ids($gearid, $userid);
+    $needed = [];
+    foreach ($DB->get_records('gear_hotspots', ['gearid' => $gearid], '', 'id, type, config') as $hotspot) {
+        if ($hotspot->type !== 'teleport' && gear_hotspot_is_unlocked($hotspot, $solved, false)) {
+            $needed[(int) $hotspot->id] = true;
+        }
+    }
+    if (!$needed) {
+        return false;
+    }
+    $conditions = ['gearid' => $gearid, 'userid' => $userid, 'action' => 'hotspot_click'];
+    foreach ($DB->get_records('gear_tracking', $conditions, '', 'id, data') as $click) {
+        $data = json_decode($click->data, true);
+        unset($needed[(int) ($data['hotspotId'] ?? 0)]);
+    }
+    return !$needed;
+}
+
+/**
+ * Re-evaluate the automatic completion of a GEAR activity for a user (after a hotspot was opened or a quiz answered).
+ *
+ * @param stdClass $cm Course module record
+ * @param int $userid The user id
+ */
+function gear_update_completion(stdClass $cm, int $userid): void {
+    global $DB;
+
+    if ($cm->completion != COMPLETION_TRACKING_AUTOMATIC) {
+        return;
+    }
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $completion = new completion_info($course);
+    if ($completion->is_enabled($cm)) {
+        $completion->update_state($cm, COMPLETION_UNKNOWN, $userid);
+    }
+}
+
+/**
+ * Users whose avatars, chat and scores the current user may see, or null for everybody (no group restriction).
+ *
+ * @param stdClass $cm Course module record
+ * @param context_module $context Activity context
+ * @return int[]|null User ids (always contains the current user) or null
+ */
+function gear_get_visible_userids(stdClass $cm, context_module $context): ?array {
+    global $DB, $USER;
+
+    if (groups_get_activity_groupmode($cm) != SEPARATEGROUPS || has_capability('moodle/site:accessallgroups', $context)) {
+        return null;
+    }
+    $groups = groups_get_activity_allowed_groups($cm, $USER->id);
+    $userids = [(int) $USER->id];
+    if ($groups) {
+        [$insql, $params] = $DB->get_in_or_equal(array_keys($groups));
+        $userids = array_merge($userids, $DB->get_fieldset_select('groups_members', 'DISTINCT userid', "groupid $insql", $params));
+    }
+    return array_values(array_unique(array_map('intval', $userids)));
 }

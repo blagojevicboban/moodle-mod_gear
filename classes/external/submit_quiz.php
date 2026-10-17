@@ -121,6 +121,7 @@ class submit_quiz extends external_api {
 
         // Trigger grade update.
         gear_update_grades($gear, $USER->id);
+        gear_update_completion($cm, (int) $USER->id);
 
         $event = \mod_gear\event\quiz_submitted::create([
             'objectid' => $hotspot->id,

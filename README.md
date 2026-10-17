@@ -24,7 +24,8 @@
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
 | 💬 **P2P Chat** | Real-time Peer-to-Peer WebRTC spatial voice and text chat |
-| 🏆 **Leaderboards** | Gamification with top score display |
+| 🏆 **Leaderboards** | Gamification with top score display, group-aware |
+| ✅ **Completion** | Complete by opening every hotspot and/or earning a minimum of quiz points |
 | 🔊 **Spatial Audio** | Positional audio guides that react to distance |
 | 📊 **Analytics** | Teacher dashboard displaying hotspot click charts and event tracking |
 | 🌐 **WebXR** | No app installation required |

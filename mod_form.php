@@ -133,6 +133,63 @@ class mod_gear_mod_form extends moodleform_mod {
     }
 
     /**
+     * Add the custom completion rules to the form.
+     *
+     * @return string[] Names of the added elements
+     */
+    public function add_completion_rules(): array {
+        $mform = $this->_form;
+
+        $mform->addElement('advcheckbox', 'completionhotspots', '', get_string('completionhotspots', 'gear'));
+        $mform->setDefault('completionhotspots', 0);
+
+        $group = [];
+        $group[] = $mform->createElement('checkbox', 'completionpointsenabled', '', get_string('completionpoints', 'gear'));
+        $group[] = $mform->createElement('text', 'completionpoints', '', ['size' => 4]);
+        $mform->addGroup($group, 'completionpointsgroup', get_string('completionpoints', 'gear'), [' '], false);
+        $mform->setType('completionpoints', PARAM_INT);
+        $mform->setDefault('completionpoints', 10);
+        $mform->disabledIf('completionpoints', 'completionpointsenabled', 'notchecked');
+        $mform->hideIf('completionpointsgroup', 'completion', 'neq', COMPLETION_TRACKING_AUTOMATIC);
+
+        return ['completionhotspots', 'completionpointsgroup'];
+    }
+
+    /**
+     * Whether a custom completion rule is enabled in the submitted data.
+     *
+     * @param array $data Form data
+     * @return bool
+     */
+    public function completion_rule_enabled($data): bool {
+        $points = !empty($data['completionpointsenabled']) && !empty($data['completionpoints']);
+        return !empty($data['completionhotspots']) || $points;
+    }
+
+    /**
+     * Form data after submit: an unchecked points rule means 0.
+     *
+     * @return stdClass|false
+     */
+    public function get_data() {
+        $data = parent::get_data();
+        if (!$data) {
+            return false;
+        }
+        if (!empty($data->completionunlocked)) {
+            // Turn the rules off when their checkboxes are not ticked or completion is not automatic.
+            $automatic = !empty($data->completion) && $data->completion == COMPLETION_TRACKING_AUTOMATIC;
+            if (empty($data->completionpointsenabled) || !$automatic) {
+                $data->completionpoints = 0;
+            }
+            if (!$automatic) {
+                $data->completionhotspots = 0;
+            }
+        }
+        return $data;
+    }
+
+    /**
      * Perform data validation.
      *
      * @param array $data The form data
@@ -160,6 +217,9 @@ class mod_gear_mod_form extends moodleform_mod {
      */
     public function data_preprocessing(&$defaultvalues): void {
         parent::data_preprocessing($defaultvalues);
+
+        // The points rule is a checkbox plus a number.
+        $defaultvalues['completionpointsenabled'] = !empty($defaultvalues['completionpoints']) ? 1 : 0;
 
         // Decode scene config if present.
         if (!empty($defaultvalues['scene_config'])) {

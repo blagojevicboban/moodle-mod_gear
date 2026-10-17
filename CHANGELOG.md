@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accessibility: help, leaderboard and hotspot popups are real dialogs (`role="dialog"`, labelled, Escape closes, Tab stays inside, focus returns to the opener); icon buttons have accessible names; the chat is a live log; keyboard navigation announces the focused hotspot through a status region.
 - `prefers-reduced-motion` is respected (no tooltip transition, hotspot blinking or pulsing).
 - Teacher and student guides in `docs/`.
+- **Completion rules** (Moodle custom completion API): *open every hotspot* (teleport points and still locked hotspots do not count) and *earn at least N quiz points*; they are evaluated when a hotspot is opened or a quiz answered and are shown on the course page.
+- **Group mode** (`FEATURE_GROUPS`, `FEATURE_GROUPINGS`): with separate groups the leaderboard and the shared session show only members of the user's groups.
 - Compressed models: **Draco** and **Meshopt** compressed glTF/GLB files load (the Draco decoder is self-hosted in `vendorjs/draco/`).
 - Loading progress in percent and a visible error message when a model cannot be loaded (before, a blue placeholder cube replaced it silently).
 - **Several models in one scene**: the transform of every model is saved with *Save Current View* (before, only the first one), and hotspots can be placed on any of them.

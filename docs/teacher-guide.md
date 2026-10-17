@@ -47,10 +47,14 @@ If the administrator has enabled it (**Site administration → Plugins → Activ
 Type a short topic and the plugin fills in the text or, for quizzes, the options and the correct answer. Review what it generates before saving.
 Only the topic text you type is sent to the AI provider configured by your administrator.
 
+### Completion
+
+Under **Completion conditions** choose automatic completion and tick **The student has opened every hotspot** and/or **The student earns at least this many quiz points**. Teleport points and hotspots that are still locked do not count for the first rule.
+
 ## 3. Results
 
 - **Gradebook:** each quiz hotspot counts once, with the best score of the student; the total is scaled to the activity grade.
-- **Leaderboard:** the trophy button shows the top scores.
+- **Leaderboard:** the trophy button shows the top scores. With **separate groups** a student sees only members of their own groups; teachers with *access all groups* see everyone.
 - **Analytics:** the *Analytics Reports* button (teachers only) shows how many times each hotspot was opened.
 
 ## 4. Collaborative mode

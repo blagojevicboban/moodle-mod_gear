@@ -37,7 +37,7 @@ class backup_gear_activity_structure_step extends backup_activity_structure_step
         // Define the structure of the plugin tables.
         $gear = new backup_nested_element('gear', ['id'], [
             'course', 'name', 'intro', 'introformat', 'grade', 'scene_config',
-            'ar_enabled', 'vr_enabled', 'timecreated', 'timemodified',
+            'ar_enabled', 'vr_enabled', 'completionhotspots', 'completionpoints', 'timecreated', 'timemodified',
         ]);
 
         $models = new backup_nested_element('gear_models');

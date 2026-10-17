@@ -115,11 +115,14 @@ class sync_session extends external_api {
                    AND s.userid != :userid
                    AND s.timemodified > :timeout";
 
-        $others = $DB->get_records_sql($sql, [
-            'gearid' => $gearid,
-            'userid' => $userid,
-            'timeout' => $timeout,
-        ]);
+        $params = ['gearid' => $gearid, 'userid' => $userid, 'timeout' => $timeout];
+        $visible = gear_get_visible_userids($cm, $context);
+        if ($visible !== null) {
+            [$insql, $inparams] = $DB->get_in_or_equal($visible, SQL_PARAMS_NAMED, 'vis');
+            $sql .= " AND s.userid $insql";
+            $params += $inparams;
+        }
+        $others = $DB->get_records_sql($sql, $params);
 
         $result = [];
         foreach ($others as $other) {
