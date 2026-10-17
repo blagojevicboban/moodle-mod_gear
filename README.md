@@ -160,7 +160,7 @@ vendor/bin/phpunit mod/gear/tests/
 
 ```
 mod/gear/
-├── amd/              # AMD JavaScript modules
+├── amd/              # JavaScript source (viewer, sync, dom) and the bundled AMD build
 ├── backup/           # Backup/restore handlers
 ├── classes/          # PHP classes (events, external, privacy, task)
 ├── db/               # Database schema, capabilities, services, tasks

@@ -37,87 +37,8 @@ import Templates from 'core/templates';
 import Policy from 'core_ai/policy';
 import PolicyModal from 'core_ai/policymodal';
 import CustomEvents from 'core/custom_interaction_events';
-
-/* global Peer */
-
-/**
- * Escape text for safe insertion into HTML.
- *
- * @param {*} value Any value
- * @returns {string} Escaped string
- */
-const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-}[c]));
-
-/**
- * Whether the user asked the system for reduced motion.
- *
- * @returns {boolean} True when animations should be avoided
- */
-const prefersReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-
-/**
- * Open a modal dialog: focus the first control, trap Tab, close with Escape and give focus back to the opener.
- *
- * @param {HTMLElement} modal Modal element (role=dialog)
- */
-const openDialog = (modal) => {
-    modal.classList.add('active');
-    modal.style.display = 'flex';
-    modal.gearOpener = document.activeElement;
-    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const focusable = () => Array.from(modal.querySelectorAll(selector)).filter((el) => !el.disabled && el.offsetParent !== null);
-    if (!modal.gearKeyHandler) {
-        modal.gearKeyHandler = (e) => {
-            if (e.key === 'Escape') {
-                e.stopPropagation();
-                closeDialog(modal);
-            } else if (e.key === 'Tab') {
-                const items = focusable();
-                if (!items.length) {
-                    return;
-                }
-                const first = items[0];
-                const last = items[items.length - 1];
-                if (e.shiftKey && document.activeElement === first) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && document.activeElement === last) {
-                    e.preventDefault();
-                    first.focus();
-                }
-            }
-        };
-        modal.addEventListener('keydown', modal.gearKeyHandler);
-    }
-    const items = focusable();
-    if (items.length) {
-        items[0].focus();
-    }
-};
-
-/**
- * Close a modal opened with openDialog and return focus to the element that opened it.
- *
- * @param {HTMLElement} modal Modal element
- */
-const closeDialog = (modal) => {
-    modal.classList.remove('active');
-    modal.style.display = 'none';
-    if (modal.gearOpener && modal.gearOpener.focus) {
-        modal.gearOpener.focus();
-    }
-};
-
-/**
- * Convert an HTML fragment to plain text without executing anything (inert document).
- *
- * @param {string} html HTML fragment
- * @returns {string} Plain text
- */
-const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''), 'text/html').body.textContent || '';
-
+import SyncManager from './sync';
+import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
 
     /**
      * GEAR Viewer class.
@@ -792,7 +713,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          */
         renderLeaderboardTable(container, scores) {
             var context = {
-                has_scores: scores.length > 0,
+                has_scores: scores.length > 0, // eslint-disable-line camelcase
                 scores: scores.map((entry, index) => {
                     var badge = '';
                     if (index === 0) {
@@ -824,7 +745,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          */
         async setupARButton(button) {
             if (!this.arSupported && this.canOpenQuickLook()) {
-                // iPhone and iPad: no WebXR AR, but Safari opens a USDZ file in AR Quick Look.
+                // IPhone and iPad: no WebXR AR, but Safari opens a USDZ file in AR Quick Look.
                 button.style.display = '';
                 button.disabled = false;
                 button.addEventListener('click', () => this.openQuickLook());
@@ -1217,9 +1138,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
                     var moveIntersects = this.raycaster.intersectObjects(this.models, true);
                     if (moveIntersects.length > 0) {
-                        var worldPoint = moveIntersects[0].point;
-                        var localPoint = this.modelContainer.worldToLocal(worldPoint.clone());
-                        this.updateHotspotPosition(this.movingHotspotId, localPoint);
+                        var moveWorld = moveIntersects[0].point;
+                        var moveLocal = this.modelContainer.worldToLocal(moveWorld.clone());
+                        this.updateHotspotPosition(this.movingHotspotId, moveLocal);
                         return;
                     }
                 }
@@ -1228,9 +1149,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 if (event.shiftKey && this.canManage && this.model && this.hotspotsEnabled) {
                     var modelIntersects = this.raycaster.intersectObjects(this.models, true);
                     if (modelIntersects.length > 0) {
-                        var worldPoint = modelIntersects[0].point;
-                        var localPoint = this.modelContainer.worldToLocal(worldPoint.clone());
-                        this.showAddHotspotForm(localPoint);
+                        var addWorld = modelIntersects[0].point;
+                        var addLocal = this.modelContainer.worldToLocal(addWorld.clone());
+                        this.showAddHotspotForm(addLocal);
                         return;
                     }
                 }
@@ -2107,9 +2028,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 isInfo: true
             };
 
-            const editCfg = hotspotToEdit && hotspotToEdit.config
-                ? (typeof hotspotToEdit.config === 'string' ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config)
-                : null;
+            let editCfg = null;
+            if (hotspotToEdit && hotspotToEdit.config) {
+                editCfg = typeof hotspotToEdit.config === 'string' ? JSON.parse(hotspotToEdit.config) : hotspotToEdit.config;
+            }
             var quizOptions = this.hotspotsData
                 .filter(h => h.type === 'quiz' && (!hotspotToEdit || h.id != hotspotToEdit.id))
                 .map(h => ({
@@ -2258,7 +2180,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
             var requiresInput = form.querySelector('#gear-hotspot-input-requires-' + this.cmid);
             if (requiresInput && requiresInput.value) {
-                config.requires_id = requiresInput.value;
+                config.requires_id = requiresInput.value; // eslint-disable-line camelcase
             }
 
             if (type === 'quiz') {
@@ -2528,376 +2450,14 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     type: type
                 }
             }])[0].then(async(response) => {
-                if (response.success) {
-                    return response.content;
-                } else {
-                    return Promise.reject(await Str.get_string('generationfailed', 'mod_gear'));
+                if (!response.success) {
+                    throw new Error(await Str.get_string('generationfailed', 'mod_gear'));
                 }
+                return response.content;
             });
         }
     }
 
-
-    /**
-     * SyncManager class for collaborative mode & WebRTC.
-     */
-    class SyncManager {
-        constructor(viewer) {
-            this.viewer = viewer;
-            this.interval = null;
-            this.avatars = {}; // Map of userid -> { mesh }
-            this.lastPosition = null;
-            this.lastRotation = null;
-
-            // WebRTC
-            this.peer = null;
-            this.localStream = null;
-            this.calls = {}; // PeerId -> call
-            this.dataConns = {}; // PeerId -> dataConn
-            this.voiceEnabled = false;
-
-            // Random id of this browser session. The server lists the participants and only those peers are accepted.
-            var bytes = new Uint8Array(12);
-            window.crypto.getRandomValues(bytes);
-            this.peerId = 'gear' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-            this.known = {}; // PeerId -> userid of the current participants.
-        }
-
-        /**
-         * Whether a peer is a participant of this session. Unknown peers get one fresh look at the session list.
-         *
-         * @param {string} peerId Peer id
-         * @returns {Promise<boolean>}
-         */
-        async acceptPeer(peerId) {
-            if (this.known[peerId]) {
-                return true;
-            }
-            await this.sync();
-            return !!this.known[peerId];
-        }
-
-        initPeer() {
-            if (!this.peerPromise) {
-                this.peerPromise = this.createPeer();
-            }
-            return this.peerPromise;
-        }
-
-        async createPeer() {
-            if (this.peer) {
-                return;
-            }
-            try {
-                await this.loadPeerJs();
-            } catch (e) {
-                this.peerPromise = null;
-                return;
-            }
-            this.peer = new Peer(this.peerId, this.viewer.peerServer || {});
-
-            this.peer.on('call', async(call) => {
-                if (!await this.acceptPeer(call.peer)) {
-                    call.close();
-                    return;
-                }
-                if (this.localStream) {
-                    call.answer(this.localStream);
-                } else {
-                    call.answer(); // Empty stream
-                }
-                this.handleCall(call);
-            });
-
-            this.peer.on('connection', async(conn) => {
-                if (!await this.acceptPeer(conn.peer)) {
-                    conn.close();
-                    return;
-                }
-                this.handleDataConnection(conn);
-            });
-        }
-
-        /**
-         * Load the self-hosted PeerJS script on first use (it is only needed when several people share a session).
-         *
-         * @returns {Promise<void>}
-         */
-        loadPeerJs() {
-            if (typeof Peer !== 'undefined') {
-                return Promise.resolve();
-            }
-            return new Promise((resolve, reject) => {
-                var script = document.createElement('script');
-                script.src = this.viewer.peerjsUrl;
-                script.onload = () => resolve();
-                script.onerror = () => reject(new Error('PeerJS failed to load'));
-                document.head.appendChild(script);
-            });
-        }
-
-        async joinVoiceChat() {
-            if (this.voiceEnabled) {
- return;
-}
-            try {
-                this.localStream = await navigator.mediaDevices.getUserMedia({audio: true, video: false});
-                this.voiceEnabled = true;
-
-                if (!this.peer) {
-                    await this.initPeer();
-                }
-
-                var btn = document.getElementById('gear-voice-btn-' + this.viewer.cmid);
-                if (btn) {
-                    btn.querySelector('i').className = 'fa fa-microphone text-success';
-                }
-
-                Str.get_string('voicejoined', 'mod_gear').then(msg => {
-                    Notification.addNotification({message: msg, type: 'success'});
-                });
-            } catch (e) {
-                Str.get_string('voicenotsupported', 'mod_gear').then(msg => {
-                    Notification.alert('Error', msg);
-                });
-            }
-        }
-
-        handleCall(call) {
-            call.on('stream', (remoteStream) => {
-                var peerUserId = this.known[call.peer];
-
-                var avatar = this.avatars[peerUserId];
-                // Only attach if avatar exists and doesn't already have audio
-                if (avatar && !avatar.hasAudio) {
-                    var sound = new THREE.PositionalAudio(this.viewer.audioListener);
-                    // R128 PositionalAudio supports setMediaStreamSource
-                    if (typeof sound.setMediaStreamSource === 'function') {
-                        sound.setMediaStreamSource(remoteStream);
-                    } else {
-                        // Fallback
-                        sound.setNodeSource(sound.context.createMediaStreamSource(remoteStream));
-                    }
-                    sound.setRefDistance(2);
-                    avatar.mesh.add(sound);
-                    avatar.hasAudio = true;
-                }
-            });
-            this.calls[call.peer] = call;
-        }
-
-        handleDataConnection(conn) {
-            conn.on('open', () => {
-                this.dataConns[conn.peer] = conn;
-            });
-            conn.on('data', (data) => {
-                if (!data || typeof data.text !== 'string') {
-                    return;
-                }
-                this.displayChatMessage(String(data.sender || '').substring(0, 50), data.text.substring(0, 500), 'other');
-            });
-            conn.on('close', () => {
-                delete this.dataConns[conn.peer];
-            });
-        }
-
-        connectData(peerId) {
-            if (this.dataConns[peerId]) {
- return;
-}
-            var conn = this.peer.connect(peerId);
-            this.handleDataConnection(conn);
-        }
-
-        sendChatMessage(text) {
-            var msg = {sender: 'User ' + this.viewer.userid, text: text};
-            Object.values(this.dataConns).forEach(conn => {
-                if (conn.open) {
-                    conn.send(msg);
-                }
-            });
-            this.displayChatMessage('Me', text, 'self');
-        }
-
-        displayChatMessage(sender, text, type) {
-            var messagesDiv = document.getElementById('gear-chat-messages-' + this.viewer.cmid);
-            if (!messagesDiv) {
- return;
-}
-            var msgDiv = document.createElement('div');
-            msgDiv.className = 'gear-chat-msg ' + type;
-            var senderSpan = document.createElement('span');
-            senderSpan.className = 'gear-chat-sender';
-            senderSpan.textContent = String(sender);
-            msgDiv.appendChild(senderSpan);
-            msgDiv.appendChild(document.createTextNode(String(text)));
-            messagesDiv.appendChild(msgDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        start() {
-            this.interval = setInterval(() => {
-                if (!document.hidden) {
-                    this.sync();
-                }
-            }, 2000);
-            this.sync(); // Initial call
-        }
-
-        stop() {
-            if (this.interval) {
-                clearInterval(this.interval);
-                this.interval = null;
-            }
-        }
-
-        sync() {
-            if (!this.viewer.camera) {
-                return Promise.resolve();
-            }
-
-            // Use Three.js properties.
-            var pos = this.viewer.camera.position;
-            var rot = this.viewer.camera.rotation;
-
-            // Only update if changed significantly?
-            // For now, send anyway to keep session alive (heartbeat).
-
-            var posObj = {x: pos.x, y: pos.y, z: pos.z};
-            var rotObj = {x: rot.x, y: rot.y, z: rot.z}; // Euler
-
-            return Ajax.call([{
-                methodname: 'mod_gear_sync_session',
-                args: {
-                    gearid: this.viewer.gearid,
-                    position: JSON.stringify(posObj),
-                    rotation: JSON.stringify(rotObj),
-                    peerid: this.peerId
-                }
-            }])[0].then((users) => {
-                this.updateAvatars(users);
-                return users;
-            }).catch((e) => {
-                window.console.warn('Sync error', e);
-            });
-        }
-
-        updateAvatars(users) {
-            var activeIds = new Set();
-
-            this.known = {};
-            users.forEach((user) => {
-                activeIds.add(user.userid);
-                if (user.peerid) {
-                    this.known[user.peerid] = user.userid;
-                }
-
-                if (!this.avatars[user.userid]) {
-                    this.createAvatar(user);
-                }
-
-                this.updateAvatarState(user);
-            });
-
-            // Remove disconnected users.
-            Object.keys(this.avatars).forEach((id) => {
-                if (!activeIds.has(parseInt(id))) {
-                    this.removeAvatar(id);
-                }
-            });
-
-            // Close calls and chat connections of peers that left the session.
-            [this.calls, this.dataConns].forEach((map) => {
-                Object.keys(map).forEach((peerId) => {
-                    if (!this.known[peerId]) {
-                        if (map[peerId] && map[peerId].close) {
-                            map[peerId].close();
-                        }
-                        delete map[peerId];
-                    }
-                });
-            });
-
-            // PeerJS is only needed when somebody else is in the session.
-            if (!this.peer && users.some((user) => user.userid != this.viewer.userid)) {
-                this.initPeer();
-            }
-
-            // Connect uncalled voice peers
-            if (this.peer) {
-                users.forEach((user) => {
-                    if (user.userid != this.viewer.userid && user.peerid) {
-                        var pId = user.peerid;
-                        if (this.voiceEnabled && !this.calls[pId]) {
-                            var call = this.peer.call(pId, this.localStream);
-                            if (call) {
-                                this.handleCall(call);
-                            } else {
-                                this.calls[pId] = null;
-                            }
-                        }
-                        // Connect text chat
-                        if (!this.dataConns[pId]) {
-                            this.connectData(pId);
-                        }
-                    }
-                });
-            }
-        }
-
-        createAvatar(user) {
-            // Create a group for the avatar.
-            var group = new THREE.Group();
-
-            // Simple avatar: Sphere representing head.
-            var geometry = new THREE.SphereGeometry(0.3, 16, 16);
-            var color = '#' + Math.floor(Math.random() * 16777215).toString(16);
-            var material = new THREE.MeshBasicMaterial({color: color});
-            var sphere = new THREE.Mesh(geometry, material);
-            group.add(sphere);
-
-            // Add to scene.
-            this.viewer.scene.add(group);
-
-            this.avatars[user.userid] = {
-                mesh: group
-            };
-        }
-
-        updateAvatarState(user) {
-            var avatar = this.avatars[user.userid];
-            if (!avatar) {
- return;
-}
-
-            if (user.position) {
-                try {
-                    var pos = (typeof user.position === 'string') ? JSON.parse(user.position) : user.position;
-                    avatar.mesh.position.set(pos.x, pos.y, pos.z);
-                } catch (e) {
-                    // Ignore parse error
-                }
-            }
-
-            if (user.rotation) {
-                 try {
-                    var rot = (typeof user.rotation === 'string') ? JSON.parse(user.rotation) : user.rotation;
-                    avatar.mesh.rotation.set(rot.x, rot.y, rot.z);
-                } catch (e) {
-                    // Ignore parse error
-                }
-            }
-        }
-
-        removeAvatar(userid) {
-            var avatar = this.avatars[userid];
-            if (avatar && avatar.mesh) {
-                this.viewer.scene.remove(avatar.mesh);
-                // Optional: dispose geometry/material.
-            }
-            delete this.avatars[userid];
-        }
-    }
 
 /**
  * Initialize the GEAR viewer.

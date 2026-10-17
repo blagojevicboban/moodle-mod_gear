@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the unimplemented custom completion rules flag and unused `completion_type` column; added `timecreated` to `gear_hotspots` and `userid` foreign keys.
 - Performance: the 3D scene is not rendered while the tab is hidden or the canvas is scrolled out of view, session polling pauses in a hidden tab, GPU resources and listeners are released when the page is left, and PeerJS is loaded only when a second participant joins the session.
 - CI now runs PostgreSQL 16 (required by Moodle 5.2+) and tests Moodle 4.5 and 5.0 to 5.3.
+- The viewer source is split into modules: `amd/src/viewer.js` (scene), `sync.js` (collaborative mode and WebRTC) and `dom.js` (safe text, dialogs); all are bundled into `amd/build/viewer.min.js`. ESLint warnings went from 43 to 21 (the rest are `window.confirm/prompt` and promise style).
 - Moved `peerjs.min.js` out of `amd/src/` into `vendorjs/`; scoped CSS variables and rules to `.path-mod-gear` / `.gear-activity`.
 
 ## [1.7.0] - 2026-04-14
