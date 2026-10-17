@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2026-10-17
 
 ### Added
+- **Quiz types:** besides one correct answer, a quiz hotspot can have several correct answers (check boxes, the student has to select exactly the right ones) or a typed answer (list of accepted answers, `*` wildcard, optional case sensitivity). Checked on the server (`gear_quiz_answer_is_correct()`); students never receive the answers. The question bank import also takes multiple answer and short answer questions.
 - **Student progress in the analytics report:** every student (by group, without the teachers) with opened hotspots (of the hotspots available to that student), solved quizzes, points, grade and last activity; a details page per student (views per hotspot, quiz attempts, best score, locked hotspots); download as CSV, Excel, ODS and the other Moodle data formats (`classes/local/student_report.php`, PHPUnit test).
 - **Heavy models and phones:** KTX2 (Basis Universal) textures are supported (self-hosted transcoder in `vendorjs/basis/`); the render resolution is capped at 1.5 on touch screens and at 1 for models above 500,000 triangles; teachers get a warning for models above 1 million triangles with a hint to simplify or compress them.
 - The release workflow checks that the tag matches `$plugin->release` in `version.php`.

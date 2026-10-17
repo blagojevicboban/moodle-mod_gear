@@ -64,11 +64,12 @@ export const pickQuestion = async(gearid, cmid) => {
         preview.textContent = '';
         const text = document.createElement('p');
         text.textContent = q.text;
-        const list = document.createElement('ol');
-        q.options.forEach((option, i) => {
+        // Choices with the correct ones in bold, or the accepted answers of a short answer question.
+        const list = document.createElement(q.quiztype === 'text' ? 'ul' : 'ol');
+        (q.quiztype === 'text' ? q.accepted : q.options).forEach((option, i) => {
             const item = document.createElement('li');
             item.textContent = option;
-            if (i === q.correct) {
+            if (q.quiztype === 'text' || q.corrects.includes(i)) {
                 item.classList.add('font-weight-bold', 'fw-bold');
             }
             list.appendChild(item);

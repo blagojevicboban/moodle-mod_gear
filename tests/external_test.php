@@ -287,11 +287,16 @@ final class external_test extends \advanced_testcase {
 
         $this->setUser($teacher);
         $questions = get_bank_questions::execute($gear->id);
-        $this->assertCount(1, $questions);
-        $this->assertSame((int) $single->id, $questions[0]['id']);
-        $this->assertSame('Single', $questions[0]['name']);
-        $this->assertCount(4, $questions[0]['options']);
-        $this->assertSame(0, $questions[0]['correct']);
+        // Sorted by name: Multi, Short, Single.
+        $this->assertSame(['Multi', 'Short', 'Single'], array_column($questions, 'name'));
+        [$multi, $short, $one] = $questions;
+        $this->assertSame((int) $single->id, $one['id']);
+        $this->assertSame(['single', 0, [0]], [$one['quiztype'], $one['correct'], $one['corrects']]);
+        $this->assertCount(4, $one['options']);
+        // Multiple answers: the options with a positive grade (One and Three) are the correct ones.
+        $this->assertSame(['multi', [0, 2]], [$multi['quiztype'], $multi['corrects']]);
+        // Short answer: only the fully correct answer is accepted.
+        $this->assertSame(['text', ['frog'], false], [$short['quiztype'], $short['accepted'], $short['casesensitive']]);
 
         $this->setUser($student);
         $this->expectException(\required_capability_exception::class);

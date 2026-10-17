@@ -517,8 +517,51 @@ function gear_filter_hotspot_config(?string $config, bool $canmanage): string {
     if (!is_array($decoded)) {
         return '';
     }
-    unset($decoded['correctAnswer']);
+    unset($decoded['correctAnswer'], $decoded['correctAnswers'], $decoded['acceptedAnswers'], $decoded['caseSensitive']);
     return json_encode($decoded);
+}
+
+/**
+ * Check the answer to a quiz hotspot.
+ *
+ * Quiz types (config quizType): "single" (default, correctAnswer is the index of the right option), "multi" (correctAnswers
+ * lists the indexes of all right options, the answer must select exactly those) and "text" (acceptedAnswers lists the accepted
+ * texts, "*" matches any characters, caseSensitive decides whether letter case matters).
+ *
+ * @param array $config Decoded hotspot config
+ * @param string $answer The submitted answer: an index, a comma separated list of indexes or a text
+ * @return bool True when the answer is correct
+ */
+function gear_quiz_answer_is_correct(array $config, string $answer): bool {
+    $type = $config['quizType'] ?? 'single';
+    if ($type === 'multi') {
+        $expected = array_map('intval', (array) ($config['correctAnswers'] ?? []));
+        $given = array_map('intval', array_filter(array_map('trim', explode(',', $answer)), 'is_numeric'));
+        sort($expected);
+        $given = array_values(array_unique($given));
+        sort($given);
+        return $expected !== [] && $expected === $given;
+    }
+    if ($type === 'text') {
+        $normalise = fn(string $text): string => trim(preg_replace('/\s+/u', ' ', $text));
+        $given = $normalise($answer);
+        if ($given === '') {
+            return false;
+        }
+        $flags = empty($config['caseSensitive']) ? 'iu' : 'u';
+        foreach ((array) ($config['acceptedAnswers'] ?? []) as $accepted) {
+            $accepted = $normalise((string) $accepted);
+            if ($accepted === '') {
+                continue;
+            }
+            $pattern = '/^' . str_replace('\*', '.*', preg_quote($accepted, '/')) . '$/' . $flags;
+            if (preg_match($pattern, $given)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    return isset($config['correctAnswer']) && (string) $config['correctAnswer'] === trim($answer);
 }
 
 /**

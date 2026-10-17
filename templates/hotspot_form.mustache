@@ -66,12 +66,31 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm gear-import-question">{{#str}}importquestion, mod_gear{{/str}}</button>
             </div>
             <div class="gear-form-group">
+                <label for="gear-hotspot-input-quiztype-{{cmid}}">{{#str}}quiztype, mod_gear{{/str}}</label>
+                <select id="gear-hotspot-input-quiztype-{{cmid}}" class="form-control custom-select">
+                    <option value="single" {{#isSingle}}selected{{/isSingle}}>{{#str}}quiztype_single, mod_gear{{/str}}</option>
+                    <option value="multi" {{#isMulti}}selected{{/isMulti}}>{{#str}}quiztype_multi, mod_gear{{/str}}</option>
+                    <option value="text" {{#isText}}selected{{/isText}}>{{#str}}quiztype_text, mod_gear{{/str}}</option>
+                </select>
+            </div>
+            <div class="gear-form-group gear-quiz-choice-fields"{{#isText}} hidden{{/isText}}>
                 <label for="gear-hotspot-input-options-{{cmid}}">{{#str}}quizoptions, mod_gear{{/str}}</label>
                 <input type="text" id="gear-hotspot-input-options-{{cmid}}" class="form-control" placeholder="{{#str}}quizoptions_help, mod_gear{{/str}}" value="{{options}}">
             </div>
-            <div class="gear-form-group">
+            <div class="gear-form-group gear-quiz-choice-fields"{{#isText}} hidden{{/isText}}>
                 <label for="gear-hotspot-input-correct-{{cmid}}">{{#str}}quizcorrect, mod_gear{{/str}}</label>
-                <input type="number" id="gear-hotspot-input-correct-{{cmid}}" class="form-control" value="{{correctAnswer}}" min="0">
+                <input type="text" id="gear-hotspot-input-correct-{{cmid}}" class="form-control" value="{{correctAnswer}}" inputmode="numeric"
+                    aria-describedby="gear-hotspot-correct-help-{{cmid}}">
+                <small class="form-text text-muted" id="gear-hotspot-correct-help-{{cmid}}">{{#str}}quizcorrect_help, mod_gear{{/str}}</small>
+            </div>
+            <div class="gear-form-group gear-quiz-text-fields"{{^isText}} hidden{{/isText}}>
+                <label for="gear-hotspot-input-accepted-{{cmid}}">{{#str}}quizaccepted, mod_gear{{/str}}</label>
+                <textarea id="gear-hotspot-input-accepted-{{cmid}}" class="form-control" rows="3" aria-describedby="gear-hotspot-accepted-help-{{cmid}}">{{accepted}}</textarea>
+                <small class="form-text text-muted" id="gear-hotspot-accepted-help-{{cmid}}">{{#str}}quizaccepted_help, mod_gear{{/str}}</small>
+                <div class="form-check mt-1">
+                    <input type="checkbox" class="form-check-input" id="gear-hotspot-input-casesensitive-{{cmid}}" {{#caseSensitive}}checked{{/caseSensitive}}>
+                    <label class="form-check-label" for="gear-hotspot-input-casesensitive-{{cmid}}">{{#str}}quizcasesensitive, mod_gear{{/str}}</label>
+                </div>
             </div>
             <div class="gear-form-group">
                 <label for="gear-hotspot-input-points-{{cmid}}">{{#str}}quizpoints, mod_gear{{/str}}</label>

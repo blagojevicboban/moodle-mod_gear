@@ -2147,9 +2147,7 @@ const WARN_TRIANGLES = 1000000;
                 context.isTeleport = hotspotToEdit.type === 'teleport';
 
                 if (hotspotToEdit.type === 'quiz' && editCfg) {
-                    context.options = editCfg.options ? editCfg.options.join(', ') : '';
-                    context.correctAnswer = editCfg.correctAnswer || 0;
-                    context.points = editCfg.points || 10;
+                    Object.assign(context, this.quizFormContext(editCfg));
                 } else if (hotspotToEdit.type === 'audio' && editCfg) {
                     context.audioUrl = editCfg.audioUrl || '';
                 } else if (hotspotToEdit.type === 'video' && editCfg) {
@@ -2175,6 +2173,41 @@ const WARN_TRIANGLES = 1000000;
         }
 
         /**
+         * Template values of the quiz fields of the hotspot form for an existing quiz hotspot.
+         *
+         * @param {Object} config Hotspot config
+         * @returns {Object} Template context values
+         */
+        quizFormContext(config) {
+            const quizType = config.quizType || 'single';
+            return {
+                isSingle: quizType === 'single',
+                isMulti: quizType === 'multi',
+                isText: quizType === 'text',
+                options: config.options ? config.options.join(', ') : '',
+                correctAnswer: quizType === 'multi' ? (config.correctAnswers || []).join(', ') : (config.correctAnswer || 0),
+                accepted: (config.acceptedAnswers || []).join('\n'),
+                caseSensitive: !!config.caseSensitive,
+                points: config.points || 10,
+            };
+        }
+
+        /**
+         * Show the fields that belong to the chosen quiz type (options for choices, accepted answers for a typed answer).
+         *
+         * @param {HTMLElement} form The hotspot form
+         */
+        showQuizTypeFields(form) {
+            const text = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid).value === 'text';
+            form.querySelectorAll('.gear-quiz-choice-fields').forEach((el) => {
+                el.hidden = text;
+            });
+            form.querySelectorAll('.gear-quiz-text-fields').forEach((el) => {
+                el.hidden = !text;
+            });
+        }
+
+        /**
          * Copy a question of the course question banks into the quiz fields of the hotspot form.
          *
          * @param {HTMLElement} form The hotspot form
@@ -2195,7 +2228,11 @@ const WARN_TRIANGLES = 1000000;
             form.dataset.importedOptions = JSON.stringify(question.options);
             form.dataset.importedJoined = joined;
             field('options').value = joined;
-            field('correct').value = question.correct;
+            field('quiztype').value = question.quiztype;
+            field('correct').value = question.quiztype === 'multi' ? question.corrects.join(', ') : question.correct;
+            field('accepted').value = question.accepted.join('\n');
+            field('casesensitive').checked = question.casesensitive;
+            this.showQuizTypeFields(form);
             if (!field('title').value.trim()) {
                 field('title').value = question.name;
             }
@@ -2214,6 +2251,10 @@ const WARN_TRIANGLES = 1000000;
             var audioFields = form.querySelector('#gear-hotspot-audio-fields-' + this.cmid);
             var videoFields = form.querySelector('#gear-hotspot-video-fields-' + this.cmid);
 
+            const quizType = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid);
+            if (quizType) {
+                quizType.addEventListener('change', () => this.showQuizTypeFields(form));
+            }
             const importButton = form.querySelector('.gear-import-question');
             if (importButton) {
                 importButton.addEventListener('click', () => this.importBankQuestion(form));
@@ -2316,6 +2357,7 @@ const WARN_TRIANGLES = 1000000;
                 var optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
                 var correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
                 var points = form.querySelector('#gear-hotspot-input-points-' + this.cmid).value;
+                const quizType = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid).value;
 
                 // Options copied from the question bank may contain commas, so they are kept as a list.
                 config.options = form.dataset.importedJoined === optionsStr && form.dataset.importedOptions
@@ -2323,8 +2365,36 @@ const WARN_TRIANGLES = 1000000;
                     : optionsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
                 config.correctAnswer = parseInt(correct, 10);
                 config.points = parseInt(points, 10);
+                config.quizType = quizType;
 
-                if (config.options.length < 2) {
+                if (quizType === 'text') {
+                    // Typed answer: no options, a list of accepted answers instead.
+                    delete config.options;
+                    delete config.correctAnswer;
+                    config.acceptedAnswers = form.querySelector('#gear-hotspot-input-accepted-' + this.cmid).value
+                        .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+                    config.caseSensitive = form.querySelector('#gear-hotspot-input-casesensitive-' + this.cmid).checked;
+                    if (!config.acceptedAnswers.length) {
+                        Notification.alert(
+                            await Str.get_string('error', 'core'),
+                            await Str.get_string('quiz_noaccepted', 'mod_gear')
+                        );
+                        return;
+                    }
+                } else if (quizType === 'multi') {
+                    delete config.correctAnswer;
+                    config.correctAnswers = correct.split(',').map(s => parseInt(s.trim(), 10))
+                        .filter(n => !isNaN(n) && n >= 0 && n < config.options.length);
+                    if (!config.correctAnswers.length) {
+                        Notification.alert(
+                            await Str.get_string('error', 'core'),
+                            await Str.get_string('quiz_nocorrect', 'mod_gear')
+                        );
+                        return;
+                    }
+                }
+
+                if (quizType !== 'text' && config.options.length < 2) {
                     Notification.alert(
                         await Str.get_string('error', 'core'),
                         await Str.get_string('quiz_minoptions', 'mod_gear')
@@ -2459,7 +2529,8 @@ const WARN_TRIANGLES = 1000000;
             var contentDiv = popup.querySelector('.gear-hotspot-content');
             var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
 
-            if (!config || !config.options) {
+            const quizType = (config && config.quizType) || 'single';
+            if (!config || (quizType !== 'text' && !config.options)) {
                 Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
                     const note = Object.assign(document.createElement('p'), {className: 'text-danger', textContent: msg});
                     contentDiv.appendChild(note);
@@ -2470,7 +2541,9 @@ const WARN_TRIANGLES = 1000000;
 
             var context = {
                 id: hotspot.id,
-                options: config.options.map((opt, index) => ({
+                multi: quizType === 'multi',
+                text: quizType === 'text',
+                options: (config.options || []).map((opt, index) => ({
                     index: index,
                     text: opt
                 }))
@@ -2481,15 +2554,21 @@ const WARN_TRIANGLES = 1000000;
 
                 var submitBtn = popup.querySelector('.gear-quiz-submit');
                 submitBtn.addEventListener('click', async() => {
-                    var selected = popup.querySelector('input[name="gear-quiz-option"]:checked');
-                    if (!selected) {
+                    let answer;
+                    if (quizType === 'text') {
+                        answer = popup.querySelector('.gear-quiz-text').value.trim();
+                    } else {
+                        const selected = popup.querySelectorAll('input[name="gear-quiz-option"]:checked');
+                        answer = Array.from(selected).map((input) => input.value).join(',');
+                    }
+                    if (!answer) {
                         Notification.alert(
                             await Str.get_string('warning', 'core'),
-                            await Str.get_string('quiz_selectanswer', 'mod_gear')
+                            await Str.get_string(quizType === 'text' ? 'quiz_typeanswer' : 'quiz_selectanswer', 'mod_gear')
                         );
                         return;
                     }
-                    this.submitQuizAnswer(hotspot, selected.value, popup);
+                    this.submitQuizAnswer(hotspot, answer, popup);
                 });
                 return null;
             }).catch(Notification.exception);

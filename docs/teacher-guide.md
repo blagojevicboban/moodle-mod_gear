@@ -55,9 +55,13 @@ Under **Completion conditions** choose automatic completion and tick **The stude
 
 Keep models under about 500,000 triangles for phones. GEAR reads Draco and Meshopt compressed geometry and KTX2 compressed textures (for example made with `gltf-transform` or `gltfpack`), which makes the files much smaller. When a model has more than a million triangles you see a warning in the viewer and the scene is drawn at a lower resolution.
 
+## Quiz types
+
+A *Quiz* hotspot has a **Question type**: *One correct answer* (the number of the right option, counting from 0), *Several correct answers* (the numbers separated by commas, for example `0, 2`; the student must tick exactly those) or *Typed answer* (one accepted answer per line, `*` matches any characters, and you can make letter case matter).
+
 ## Quiz questions from the question bank
 
-When you add or edit a *Quiz* hotspot, press **Import from question bank**, pick a single answer multiple choice or true/false question of the course and save. The title, the text, the answers and the correct answer are copied into the hotspot (images are not). Changing the question in the bank later does not change the hotspot.
+When you add or edit a *Quiz* hotspot, press **Import from question bank**, pick a multiple choice, true/false or short answer question of the course and save. The title, the text, the answers and the correct answer are copied into the hotspot (images are not). Changing the question in the bank later does not change the hotspot.
 
 ## Student progress
 

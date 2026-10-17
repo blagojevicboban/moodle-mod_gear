@@ -104,7 +104,7 @@ $functions = [
     ],
     'mod_gear_get_bank_questions' => [
         'classname'     => 'mod_gear\external\get_bank_questions',
-        'description'   => 'List single answer multiple choice and true/false questions of the course question banks',
+        'description'   => 'List multiple choice, true/false and short answer questions of the course question banks',
         'type'          => 'read',
         'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',

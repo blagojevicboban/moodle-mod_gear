@@ -93,9 +93,8 @@ class submit_quiz extends external_api {
         $score = 0;
         $feedback = '';
 
-        if ($config && isset($config['correctAnswer'])) {
-            // Compare answers (assuming index comparison for now).
-            if ((string)$config['correctAnswer'] === (string)$params['answer']) {
+        if (is_array($config)) {
+            if (gear_quiz_answer_is_correct($config, $params['answer'])) {
                 $correct = true;
                 $score = isset($config['points']) ? (int)$config['points'] : 10;
                 $feedback = get_string('quiz_correct', 'mod_gear');
@@ -111,7 +110,7 @@ class submit_quiz extends external_api {
         $trackrecord->action = 'quiz_submit';
         $trackrecord->data = json_encode([
             'hotspotid' => $hotspot->id,
-            'answer' => $params['answer'],
+            'answer' => \core_text::substr($params['answer'], 0, 255),
             'correct' => $correct,
             'score' => $score,
         ]);

@@ -25,7 +25,7 @@ use context_course;
 use context_module;
 
 /**
- * List the single answer multiple choice and true/false questions of the course question banks.
+ * List the multiple choice, true/false and short answer questions of the course question banks.
  *
  * The teacher copies one of them into a quiz hotspot (the hotspot keeps its own copy of the text and options).
  *
@@ -74,7 +74,7 @@ class get_bank_questions extends external_api {
                   JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
                   JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
                   JOIN {context} ctx ON ctx.id = qc.contextid
-                 WHERE q.qtype IN ('multichoice', 'truefalse') AND q.parent = 0 AND qv.status = 'ready'
+                 WHERE q.qtype IN ('multichoice', 'truefalse', 'shortanswer') AND q.parent = 0 AND qv.status = 'ready'
                        AND qv.version = (SELECT MAX(v.version)
                                            FROM {question_versions} v
                                           WHERE v.questionbankentryid = qbe.id AND v.status = 'ready')
@@ -99,40 +99,59 @@ class get_bank_questions extends external_api {
      * Convert a question to the data of a quiz hotspot.
      *
      * @param \stdClass $question Row of the question table
-     * @return array|null Null when the question has no single correct answer
+     * @return array|null Null when the question cannot be used (no correct answer)
      */
     protected static function convert(\stdClass $question): ?array {
         global $DB;
 
-        if ($question->qtype === 'multichoice') {
-            $single = $DB->get_field('qtype_multichoice_options', 'single', ['questionid' => $question->id]);
-            if (!$single) {
-                return null;
-            }
-        }
         $answers = $DB->get_records('question_answers', ['question' => $question->id], 'id');
-        $options = [];
-        $correct = null;
-        foreach ($answers as $answer) {
-            if ((float) $answer->fraction > 0.999) {
-                if ($correct !== null) {
-                    return null;
-                }
-                $correct = count($options);
-            }
-            $options[] = self::plain($answer->answer, (int) $answer->answerformat);
-        }
-        if ($correct === null || count($options) < 2) {
-            return null;
-        }
-        return [
+        $item = [
             'id' => (int) $question->id,
             'name' => format_string($question->name),
             'qtype' => $question->qtype,
             'text' => self::plain($question->questiontext, (int) $question->questiontextformat),
-            'options' => $options,
-            'correct' => $correct,
+            'quiztype' => 'single',
+            'options' => [],
+            'correct' => -1,
+            'corrects' => [],
+            'accepted' => [],
+            'casesensitive' => false,
         ];
+
+        if ($question->qtype === 'shortanswer') {
+            // Only fully correct answers are accepted (a hotspot quiz has no partial credit).
+            foreach ($answers as $answer) {
+                if ((float) $answer->fraction > 0.999 && trim($answer->answer) !== '') {
+                    $item['accepted'][] = trim($answer->answer);
+                }
+            }
+            if (!$item['accepted']) {
+                return null;
+            }
+            $item['quiztype'] = 'text';
+            $item['casesensitive'] = (bool) $DB->get_field('qtype_shortanswer_options', 'usecase', ['questionid' => $question->id]);
+            return $item;
+        }
+
+        $single = $question->qtype === 'truefalse'
+            || $DB->get_field('qtype_multichoice_options', 'single', ['questionid' => $question->id]);
+        foreach ($answers as $answer) {
+            $fraction = (float) $answer->fraction;
+            if ($single ? $fraction > 0.999 : $fraction > 0) {
+                $item['corrects'][] = count($item['options']);
+            }
+            $item['options'][] = self::plain($answer->answer, (int) $answer->answerformat);
+        }
+        if (count($item['options']) < 2 || !$item['corrects'] || ($single && count($item['corrects']) !== 1)) {
+            return null;
+        }
+        if ($single) {
+            $item['correct'] = $item['corrects'][0];
+        } else {
+            // Multiple answers: the student has to select exactly the options that give credit.
+            $item['quiztype'] = 'multi';
+        }
+        return $item;
     }
 
     /**
@@ -164,7 +183,11 @@ class get_bank_questions extends external_api {
             'qtype' => new external_value(PARAM_ALPHANUMEXT, 'Question type'),
             'text' => new external_value(PARAM_RAW, 'Question text as plain text'),
             'options' => new external_multiple_structure(new external_value(PARAM_RAW, 'Answer as plain text')),
-            'correct' => new external_value(PARAM_INT, 'Index of the correct answer'),
+            'correct' => new external_value(PARAM_INT, 'Index of the correct answer (single), -1 otherwise'),
+            'quiztype' => new external_value(PARAM_ALPHA, 'Quiz type of the hotspot: single, multi or text'),
+            'corrects' => new external_multiple_structure(new external_value(PARAM_INT, 'Index of a correct answer (multi)')),
+            'accepted' => new external_multiple_structure(new external_value(PARAM_RAW, 'Accepted answer (text), * is a wildcard')),
+            'casesensitive' => new external_value(PARAM_BOOL, 'Whether letter case matters (text)'),
         ]));
     }
 }

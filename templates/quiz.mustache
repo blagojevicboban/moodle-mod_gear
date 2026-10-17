@@ -23,6 +23,8 @@
     Example context (json):
     {
         "id": 1,
+        "multi": false,
+        "text": false,
         "options": [
             {"index": 0, "text": "Option 1"},
             {"index": 1, "text": "Option 2"}
@@ -31,12 +33,20 @@
 }}
 <div class="gear-quiz-container">
     <form id="gear-quiz-form-{{id}}">
+        {{#text}}
+        <label class="sr-only visually-hidden" for="gear-quiz-text-{{id}}">{{#str}}quiz_youranswer, mod_gear{{/str}}</label>
+        <input type="text" class="form-control gear-quiz-text" id="gear-quiz-text-{{id}}" maxlength="255" autocomplete="off"
+            placeholder="{{#str}}quiz_youranswer, mod_gear{{/str}}">
+        {{/text}}
+        {{^text}}
+        {{#multi}}<p class="small text-muted mb-1">{{#str}}quiz_selectall, mod_gear{{/str}}</p>{{/multi}}
         {{#options}}
         <div class="form-check">
-            <input class="form-check-input" type="radio" name="gear-quiz-option" id="q-opt-{{id}}-{{index}}" value="{{index}}">
+            <input class="form-check-input" type="{{#multi}}checkbox{{/multi}}{{^multi}}radio{{/multi}}" name="gear-quiz-option" id="q-opt-{{id}}-{{index}}" value="{{index}}">
             <label class="form-check-label" for="q-opt-{{id}}-{{index}}">{{text}}</label>
         </div>
         {{/options}}
+        {{/text}}
         
         <button type="button" class="btn btn-primary btn-sm mt-2 gear-quiz-submit">{{#str}}submit, core{{/str}}</button>
         <div class="gear-quiz-feedback mt-2"></div>

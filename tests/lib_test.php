@@ -28,6 +28,8 @@ namespace mod_gear;
  * @covers     ::gear_delete_instance
  * @covers     ::gear_get_user_grades
  * @covers     ::gear_reset_userdata
+ * @covers     ::gear_quiz_answer_is_correct
+ * @covers     ::gear_filter_hotspot_config
  */
 final class lib_test extends \advanced_testcase {
     /**
@@ -164,5 +166,36 @@ final class lib_test extends \advanced_testcase {
         $status = gear_reset_userdata($resetdata);
         $this->assertNotEmpty($status);
         $this->assertFalse($DB->record_exists('gear_tracking', ['gearid' => $gear->id]));
+    }
+
+    /**
+     * Answers to the three quiz types and what students get from the config.
+     */
+    public function test_quiz_answer_types(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/gear/lib.php');
+
+        $single = ['options' => ['a', 'b'], 'correctAnswer' => 1];
+        $this->assertTrue(gear_quiz_answer_is_correct($single, '1'));
+        $this->assertFalse(gear_quiz_answer_is_correct($single, '0'));
+
+        $multi = ['quizType' => 'multi', 'options' => ['a', 'b', 'c'], 'correctAnswers' => [0, 2]];
+        $this->assertTrue(gear_quiz_answer_is_correct($multi, '2,0'));
+        $this->assertTrue(gear_quiz_answer_is_correct($multi, ' 0, 2 '));
+        $this->assertFalse(gear_quiz_answer_is_correct($multi, '0'));
+        $this->assertFalse(gear_quiz_answer_is_correct($multi, '0,1,2'));
+        $this->assertFalse(gear_quiz_answer_is_correct(['quizType' => 'multi', 'correctAnswers' => []], ''));
+
+        $text = ['quizType' => 'text', 'acceptedAnswers' => ['Frog', 'photo*']];
+        $this->assertTrue(gear_quiz_answer_is_correct($text, '  frog '));
+        $this->assertTrue(gear_quiz_answer_is_correct($text, 'Photosynthesis'));
+        $this->assertFalse(gear_quiz_answer_is_correct($text, 'toad'));
+        $this->assertFalse(gear_quiz_answer_is_correct($text, ''));
+        $this->assertFalse(gear_quiz_answer_is_correct($text + ['caseSensitive' => true], 'frog'));
+        // Regular expression characters in an accepted answer are literal.
+        $this->assertFalse(gear_quiz_answer_is_correct(['quizType' => 'text', 'acceptedAnswers' => ['a.c']], 'abc'));
+
+        $filtered = json_decode(gear_filter_hotspot_config(json_encode($text + $multi + ['caseSensitive' => true]), false), true);
+        $this->assertSame(['quizType', 'options'], array_keys($filtered));
     }
 }

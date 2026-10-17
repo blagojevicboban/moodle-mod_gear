@@ -7,6 +7,7 @@ Requires Moodle 4.5 LTS or later (tested on 4.5, 5.0, 5.1, 5.2 and 5.3) and PHP 
 - **Text alternative for the 3D scene.** The activity settings have a new *Scene description* field. Screen reader users hear it (or the activity name and the number of hotspots) when they reach the viewer, and a hidden list of hotspots lets them open each one from the keyboard.
 
 - **Heavy models.** KTX2 compressed textures work, phones render at a lower resolution, and teachers are warned when a model has more than a million triangles.
+- **More quiz types.** Quiz hotspots can have several correct answers or a typed answer (with accepted answers and a `*` wildcard).
 - **Questions from the question bank.** In the hotspot form, *Import from question bank* copies a single answer multiple choice or true/false question of the course into the quiz fields.
 - **Student progress.** The analytics report lists every student with opened hotspots, solved quizzes, points, grade and last activity; click a name for the details, or download the table (CSV, Excel, ...).
 - **Reports.** A new Report Builder source, *GEAR activity tracking*, makes custom reports per student (hotspot views, quiz answers, time spent); use aggregation for totals per user.
