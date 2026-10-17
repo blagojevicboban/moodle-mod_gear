@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Activity events (`quiz_submitted`, `hotspot_created`, `hotspot_updated`, `hotspot_deleted`, `model_updated`, `report_viewed`) and scheduled task `cleanup_sessions`.
 - Course reset callbacks (`gear_reset_userdata`) and user outline/complete reports.
 - `thirdpartylibs.xml` and `readme_moodle.txt` metadata for bundled Three.js and PeerJS.
+- Accessibility: help, leaderboard and hotspot popups are real dialogs (`role="dialog"`, labelled, Escape closes, Tab stays inside, focus returns to the opener); icon buttons have accessible names; the chat is a live log; keyboard navigation announces the focused hotspot through a status region.
+- `prefers-reduced-motion` is respected (no tooltip transition, hotspot blinking or pulsing).
+- Teacher and student guides in `docs/`.
 
 ### Security
 - `track_event` accepts only `ar_start`, `vr_start` and `hotspot_click` (size-limited JSON, no guests); quiz scores can no longer be forged, as they come from `submit_quiz` only.
@@ -28,10 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restore remaps `requires_id` of hotspots and skips tracking rows of users that were not restored; backup annotates the users.
 - Missing `error:*` and Serbian `hotspotscale_help` strings; declared PeerJS in privacy metadata and fixed session export subcontext.
 - The model file picker accepts only `.glb`, `.gltf`, `.bin` and images (20 files).
+- Grades counted only one quiz submission per user (the query returned one row per user); every submission is now considered and the best score per hotspot is kept.
+- Leaderboard and collaborative session list selected too few user name fields for `fullname()`.
+- Quiz feedback used a core string that does not exist (`incorrect`); the plugin's own strings are used.
+- Tooltip was a live region that was re-announced on every mouse move.
 
 ### Changed
 - Requires Moodle 4.5 or later (supported 4.5 to 5.3). Templates use Bootstrap 5 classes.
 - Removed the unimplemented custom completion rules flag and unused `completion_type` column; added `timecreated` to `gear_hotspots` and `userid` foreign keys.
+- Performance: the 3D scene is not rendered while the tab is hidden or the canvas is scrolled out of view, session polling pauses in a hidden tab, GPU resources and listeners are released when the page is left, and PeerJS is loaded only when a second participant joins the session.
+- CI now runs PostgreSQL 16 (required by Moodle 5.2+) and tests Moodle 4.5 and 5.0 to 5.3.
 - Moved `peerjs.min.js` out of `amd/src/` into `vendorjs/`; scoped CSS variables and rules to `.path-mod-gear` / `.gear-activity`.
 
 ## [1.7.0] - 2026-04-14

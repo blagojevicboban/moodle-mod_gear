@@ -33,13 +33,23 @@
 | 📦 **Backup** | Full Backup/Restore support |
 | 📱 **Mobile** | Moodle Mobile App support |
 
+## 🖼️ Screenshots
+
+| | |
+|---|---|
+| ![Scene with hotspots](docs/screenshots/scene-overview.png) | ![Info hotspot](docs/screenshots/hotspot-popup.png) |
+| ![Quiz hotspot](docs/screenshots/quiz-popup.png) | ![Hotspot list](docs/screenshots/hotspot-list.png) |
+| ![Leaderboard](docs/screenshots/leaderboard.png) | ![Help dialog](docs/screenshots/help-dialog.png) |
+
+![Teacher analytics](docs/screenshots/analytics.png)
+
 ## 📋 Requirements
 
 - **Moodle**: 4.5 LTS to 5.3+
 - **PHP**: 8.2+
 - **Database**: MySQL, MariaDB, or PostgreSQL
 - **Browser**: Chrome, Firefox, Safari, Edge (WebGL support)
-- **AR/VR**: WebXR-compatible browser
+- **AR/VR**: WebXR-compatible browser (see the note on iPhone/iPad below)
 - **OpenAI API Key**: Optional, required only for AI Assistant features
 
 ## 🚀 Installation
@@ -57,6 +67,8 @@ php admin/cli/upgrade.php
 3. Visit Site Administration → Notifications
 
 ## 📖 Usage
+
+Step-by-step guides: [teacher guide](docs/teacher-guide.md) and [student guide](docs/student-guide.md).
 
 ### For Teachers
 
@@ -101,6 +113,23 @@ To use the **AI Assistant**, configure the API settings:
 3. Enter your **API Key**.
 4. (Optional) Specify the **AI Model** (default: `gpt-4o-mini`).
 
+## 🔒 Privacy and data
+
+GEAR stores quiz results, hotspot clicks and (while a session is open) camera positions in the Moodle database; all of it is covered by the Moodle Privacy API (export and deletion).
+
+| Feature | Data that leaves your Moodle site | Where it goes |
+|---------|-----------------------------------|---------------|
+| **AI Assistant** (optional, off by default) | The prompt/topic text a teacher types | The OpenAI-compatible service configured by the administrator |
+| **Collaborative mode, voice and chat** | Peer id, chat messages and audio streams between participants of the same activity | Directly between browsers (WebRTC); the public PeerJS broker is used to connect them |
+
+Models, hotspots, grades and analytics never leave your site. Disable the AI Assistant in the plugin settings if you do not want any external service.
+
+## 📱 Browser notes
+
+- **Desktop and Android (Chrome, Edge, Firefox):** 3D viewer, WebXR VR and AR where the device supports it.
+- **iPhone and iPad (Safari):** the 3D viewer works, but WebXR augmented reality is not available; Apple's AR Quick Look needs a `.usdz` file, which GEAR does not generate yet.
+- **Apple Vision Pro:** WebXR immersive VR is available in Safari on visionOS (may need to be enabled).
+
 ## 🎨 Supported Formats
 
 | Format | Extension | Description |
@@ -132,6 +161,7 @@ mod/gear/
 ├── backup/           # Backup/restore handlers
 ├── classes/          # PHP classes (events, external, privacy, task)
 ├── db/               # Database schema, capabilities, services, tasks
+├── docs/             # Teacher and student guides, screenshots
 ├── lang/             # Language files (en, sr)
 ├── pix/              # Icons
 ├── templates/        # Mustache templates
