@@ -97,7 +97,7 @@ class save_scene_config extends external_api {
             $config['variant'] = $params['variant'];
         }
         if ($params['tour'] !== '') {
-            $config['tour'] = self::clean_tour(json_decode($params['tour'], true));
+            $config['tour'] = self::clean_tour(json_decode($params['tour'], true), (int) $gear->id);
         }
 
         $DB->set_field('gear', 'scene_config', json_encode($config), ['id' => $gear->id]);
@@ -126,9 +126,12 @@ class save_scene_config extends external_api {
      * Validate the guided tour: at most 30 steps with a title, a text, a camera position and target.
      *
      * @param mixed $tour Decoded JSON
+     * @param int $gearid GEAR activity the hotspots of the steps must belong to (0 to skip the check)
      * @return array
      */
-    public static function clean_tour($tour): array {
+    public static function clean_tour($tour, int $gearid = 0): array {
+        global $DB;
+
         $vector = static function ($value): ?array {
             if (!is_array($value) || count($value) !== 3) {
                 return null;
@@ -152,11 +155,18 @@ class save_scene_config extends external_api {
             if ($position === null || $target === null) {
                 continue;
             }
+            $hotspot = (int) ($step['hotspot'] ?? 0);
+            if ($hotspot && $gearid && !$DB->record_exists('gear_hotspots', ['id' => $hotspot, 'gearid' => $gearid])) {
+                $hotspot = 0;
+            }
             $steps[] = [
                 'title' => core_text::substr(clean_param((string) ($step['title'] ?? ''), PARAM_TEXT), 0, 120),
                 'text' => core_text::substr(clean_param((string) ($step['text'] ?? ''), PARAM_TEXT), 0, 1000),
                 'position' => $position,
                 'target' => $target,
+                'hotspot' => $hotspot,
+                'clip' => core_text::substr(clean_param((string) ($step['clip'] ?? ''), PARAM_TEXT), 0, 100),
+                'variant' => core_text::substr(clean_param((string) ($step['variant'] ?? ''), PARAM_TEXT), 0, 100),
             ];
         }
         return $steps;

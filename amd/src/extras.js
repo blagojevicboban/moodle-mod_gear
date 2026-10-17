@@ -32,7 +32,8 @@ import {escapeHtml, prefersReducedMotion} from './dom';
 const STRINGS = [
     'animation', 'animationspeed', 'defaultssaved', 'materialvariant', 'pauseanimation', 'playanimation', 'savedefaults',
     'tour', 'touradd', 'tourclose', 'tourdelete', 'tourdeleteconfirm', 'touredit', 'tourempty', 'tournext', 'tourprevious',
-    'tourmovedown', 'tourmoveup', 'tourstep', 'tourtext', 'tourtitle', 'variantdefault',
+    'tourmovedown', 'tourmoveup', 'tourstep', 'tourtext', 'tourtitle', 'variantdefault', 'tourhotspot', 'tourclip',
+    'tourvariant', 'tournone',
 ];
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2];
 const TOUR_MS = 900;
@@ -464,7 +465,45 @@ export default class SceneExtras {
         });
         if (step && (fly || this.tourIndex === 0)) {
             this.flyTo(step);
+            this.applyStepEffects(step);
         }
+    }
+
+    /**
+     * Run what a step asks for besides moving the camera: play a clip, show a material variant, open a hotspot.
+     *
+     * @param {Object} step Tour step
+     */
+    async applyStepEffects(step) {
+        if (step.clip && this.actions.has(step.clip)) {
+            if (this.clipSelect) {
+                this.clipSelect.value = step.clip;
+            }
+            this.selectClip(step.clip);
+            this.setPlaying(!prefersReducedMotion());
+        }
+        const variant = this.variantNames.indexOf(step.variant);
+        if (variant >= 0) {
+            this.variantSelect.value = String(variant);
+            await this.selectVariant(variant);
+        }
+        if (step.hotspot) {
+            const mesh = (this.viewer.hotspotMeshes || []).find((m) => Number(m.userData.id) === Number(step.hotspot));
+            // A hotspot that is still locked for this student is not in the scene, so the step simply skips it.
+            if (mesh && mesh.userData.type !== 'teleport') {
+                this.viewer.showHotspotPopup(mesh.userData);
+            }
+        }
+    }
+
+    /**
+     * Hotspots of the scene that a tour step can open.
+     *
+     * @returns {Array} List of [id, title]
+     */
+    hotspotChoices() {
+        return (this.viewer.hotspotMeshes || []).filter((m) => m.userData.type !== 'teleport')
+            .map((m) => [String(m.userData.id), m.userData.title || '#' + m.userData.id]);
     }
 
     /**
@@ -552,7 +591,12 @@ export default class SceneExtras {
                 escapeHtml(step ? step.title : '') + '"></div>' +
                 '<div class="mb-3"><label class="form-label" for="' + id + '-text">' + escapeHtml(s.tourtext) + '</label>' +
                 '<textarea class="form-control" rows="4" maxlength="1000" id="' + id + '-text">' +
-                escapeHtml(step ? step.text : '') + '</textarea></div>',
+                escapeHtml(step ? step.text : '') + '</textarea></div>' +
+                this.choiceField(id + '-hotspot', s.tourhotspot, this.hotspotChoices(), step ? step.hotspot : '') +
+                this.choiceField(id + '-clip', s.tourclip, Array.from(this.actions.keys()).map((n) => [n, n]),
+                    step ? step.clip : '') +
+                this.choiceField(id + '-variant', s.tourvariant, this.variantNames.map((n) => [n, n]),
+                    step ? step.variant : ''),
             removeOnClose: true,
         });
         const root = modal.getRoot()[0];
@@ -562,12 +606,35 @@ export default class SceneExtras {
                 values = {
                     title: root.querySelector('#' + id + '-title').value.trim(),
                     text: root.querySelector('#' + id + '-text').value.trim(),
+                    hotspot: Number(root.querySelector('#' + id + '-hotspot')?.value || 0),
+                    clip: root.querySelector('#' + id + '-clip')?.value || '',
+                    variant: root.querySelector('#' + id + '-variant')?.value || '',
                 };
             });
             modal.getRoot().on(ModalEvents.hidden, () => resolve(values));
             modal.getRoot().on(ModalEvents.shown, () => root.querySelector('#' + id + '-title').focus());
             modal.show();
         });
+    }
+
+    /**
+     * A select with "none" and the given choices, or nothing when there are no choices.
+     *
+     * @param {string} id Element id
+     * @param {string} label Label
+     * @param {Array} choices List of [value, text]
+     * @param {*} selected Selected value
+     * @returns {string} HTML
+     */
+    choiceField(id, label, choices, selected) {
+        if (!choices.length) {
+            return '';
+        }
+        const options = [['', this.strings.tournone]].concat(choices).map(([value, text]) =>
+            '<option value="' + escapeHtml(value) + '"' + (String(selected || '') === String(value) ? ' selected' : '') + '>' +
+            escapeHtml(text) + '</option>').join('');
+        return '<div class="mb-3"><label class="form-label" for="' + id + '">' + escapeHtml(label) + '</label>' +
+            '<select class="form-control custom-select" id="' + id + '">' + options + '</select></div>';
     }
 
     /**

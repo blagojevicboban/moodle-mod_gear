@@ -66,7 +66,7 @@ When you add or edit a *Quiz* hotspot, press **Import from question bank**, pick
 ## Animations, variants and tour
 
 - If the model has animations, a panel appears at the bottom left of the viewer: choose a clip, play/pause it and change the speed. Models with material variants also get a *Material variant* selector. Pick what students should see first and press **Save as default**.
-- **Guided tour:** press *Guided tour*, move the camera to the first view and press *Add step from the current view*, then write a title and a text. Repeat for every step; use the arrows to reorder, the pencil to edit the text and the bin to delete. Students see the same panel with *Previous* and *Next*.
+- **Guided tour:** press *Guided tour*, move the camera to the first view and press *Add step from the current view*, then write a title and a text. In the same dialog you can choose a hotspot to open, an animation to play and a material variant to show at that step. Repeat for every step; use the arrows to reorder, the pencil to edit the text and the bin to delete. Students see the same panel with *Previous* and *Next*.
 
 ## 3. Results
 

@@ -10,7 +10,7 @@ Requires Moodle 4.5 LTS or later (tested on 4.5, 5.0, 5.1, 5.2 and 5.3) and PHP 
 - **Questions from the question bank.** In the hotspot form, *Import from question bank* copies a single answer multiple choice or true/false question of the course into the quiz fields.
 - **Reports.** A new Report Builder source, *GEAR activity tracking*, makes custom reports per student (hotspot views, quiz answers, time spent); use aggregation for totals per user.
 - **Animations and material variants.** Models with glTF animations get a small control panel (clip, play/pause, speed); models with `KHR_materials_variants` get a variant selector. Teachers can save the default clip, speed, autoplay and variant.
-- **Guided tour.** Teachers add steps (title, text, current camera view); students move through them with Previous/Next and the camera flies to each view. Steps are part of the activity and of course backups.
+- **Guided tour.** Teachers add steps (title, text, current camera view); students move through them with Previous/Next and the camera flies to each view. A step can also open a hotspot, play an animation and show a material variant. Steps are part of the activity and of course backups.
 
 ## Improved
 

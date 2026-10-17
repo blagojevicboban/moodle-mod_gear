@@ -155,9 +155,11 @@ final class external_test extends \advanced_testcase {
 
         // Animation defaults, variant and guided tour are stored next to the camera and cleaned.
         $tour = json_encode([
-            ['title' => 'One', 'text' => 'Text', 'position' => [1, 2, 3], 'target' => [0, 0, 0]],
+            ['title' => 'One', 'text' => 'Text', 'position' => [1, 2, 3], 'target' => [0, 0, 0],
+                'hotspot' => $quiz->id, 'clip' => 'Spin', 'variant' => 'Copper'],
             ['title' => 'Bad view', 'text' => 'x', 'position' => [1, 2], 'target' => [0, 0, 0]],
-            ['title' => str_repeat('a', 300), 'text' => '<b>x</b>', 'position' => [0, 0, 1], 'target' => [0, 0, 0], 'evil' => 1],
+            ['title' => str_repeat('a', 300), 'text' => '<b>x</b>', 'position' => [0, 0, 1], 'target' => [0, 0, 0], 'evil' => 1,
+                'hotspot' => 999999],
         ]);
         $animation = '{"clip":"Spin","autoplay":true,"speed":99}';
         $this->assertTrue(save_scene_config::execute($gear->id, '', $animation, 'Copper', $tour)['success']);
@@ -169,6 +171,10 @@ final class external_test extends \advanced_testcase {
         $this->assertSame(120, \core_text::strlen($config['tour'][1]['title']));
         $this->assertSame('x', $config['tour'][1]['text']);
         $this->assertArrayNotHasKey('evil', $config['tour'][1]);
+        $this->assertSame([(int) $quiz->id, 'Spin', 'Copper'], [
+            $config['tour'][0]['hotspot'], $config['tour'][0]['clip'], $config['tour'][0]['variant'],
+        ]);
+        $this->assertSame(0, $config['tour'][1]['hotspot']);
 
         // A student cannot change them.
         $this->setUser($student1);
