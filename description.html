@@ -1,109 +1,40 @@
-<div class="mod-gear-description"
-  style="line-height: 1.6; color: #333; font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <h1
-    style="color: #007bff; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-    GEAR: Immersive AR/VR Learning</h1>
-  <p style="font-size: 1.2em; font-style: italic; color: #555;">Bring your
-    lessons to life with interactive 3D content directly inside Moodle.</p>
-  <div style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px;">
-    <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; background: #ea580c; color: #fff; font-size: 0.85em; font-weight: 600;">Moodle 4.5 – 5.3</span>
-    <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; background: #7c3aed; color: #fff; font-size: 0.85em; font-weight: 600;">PHP 8.2+</span>
-    <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; background: #2563eb; color: #fff; font-size: 0.85em; font-weight: 600;">License: GPL v3+</span>
-  </div>
-  <div
-    style="margin-bottom: 20px; padding: 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0;">
-    <h3 style="color: #047857; margin-top: 0; margin-bottom: 10px;">🛡️ What's New in v1.7.1</h3>
-    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #065f46;">
-      <li><strong>🔒 Security &amp; Privacy Hardening:</strong> Server-side quiz grading, hotspot content sanitization, strict file-serving permissions, and full PeerJS/OpenAI privacy metadata declarations.</li>
-      <li><strong>⚙️ Moodle 4.5 – 5.3 Support:</strong> Updated templates for Bootstrap 5, normalized gradebook scaling, course reset support, and scheduled session cleanup.</li>
-      <li><strong>🧪 Automated Test Suite:</strong> Comprehensive PHPUnit and Behat test coverage for external services, grading, backup/restore, and privacy API.</li>
-    </ul>
-  </div>
-  <div
-    style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
-    <h3 style="color: #0369a1; margin-top: 0; margin-bottom: 10px;">🚀 What's New in v1.7.0</h3>
-    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #0c4a6e;">
-      <li><strong>♿ Accessibility:</strong> Keyboard navigation (Tab, Arrow keys, Enter), screen reader support, and mobile long-press for tooltips.</li>
-      <li><strong>🎚️ Hotspot Scale Control:</strong> Teachers can set default hotspot diameter (0.1 to 3.0) via activity settings.</li>
-      <li><strong>✨ Tooltip Animations:</strong> Smooth fade-in/fade-out transitions with scale animations for a polished user experience.</li>
-    </ul>
-  </div>
-  <div
-    style="margin-bottom: 20px; padding: 15px; background: #f5f3ff; border-radius: 8px; border: 1px solid #ddd6fe;">
-    <h3 style="color: #5b21b6; margin-top: 0; margin-bottom: 10px;">🚀 What's New in v1.6.0</h3>
-    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #3b0764;">
-      <li><strong>⚡ Three.js Upgrade:</strong> Migrated from r128 to r160 with performance and WebXR improvements.</li>
-      <li><strong>💬 Hover Tooltips:</strong> Quick context with icons, titles, and descriptions when hovering over hotspots.</li>
-      <li><strong>📦 Self-Hosted Dependencies:</strong> Three.js bundled locally via Rollup for better reliability and performance.</li>
-    </ul>
-  </div>
-  <h2
-    style="color: #2c3e50; border-left: 4px solid #007bff; padding-left: 10px;">
-    🚀 Overview</h2>
-  <p><strong>GEAR</strong> (Geospatial Educational Augmented Reality) is a
-    Moodle activity module that bridges the gap between traditional
-    e-learning and immersive 3D technology. It allows educators to
-    upload, manage, and present 3D models in an interactive spatial
-    environment.</p>
-  <h2
-    style="color: #2c3e50; border-left: 4px solid #28a745; padding-left: 10px;">
-    ✨ Core Features</h2>
-  <div style="margin-bottom: 25px;">
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #007bff;">🎮 3D Viewer &amp; Interaction</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Smooth orbital controls and high-performance glTF/GLB rendering.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #28a745;">📍 Interactive Hotspots</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Multimedia annotations
-        (Text, Audio, Video, Teleport) placed on 3D geometry.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #ffc107;">🧪 Spatial Quizzes</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Embed assessment points in
-        3D. Results are automatically synced with the <strong>Moodle
-          Gradebook</strong>.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #17a2b8;">✨ AI Assistant &amp; 🗣️ Auto TTS</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Generate hotspot descriptions and quizzes using AI, and use built-in Text-to-Speech narration.</p>
-    </div>
-    <div
-      style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-      <strong style="color: #6610f2;">👥 Collaborative Mode &amp; 🎙️ WebRTC Voice</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Real-time multi-user sessions with 3D avatars and P2P spatial voice and text chat.</p>
-    </div>
-  </div>
-  <h2
-    style="color: #2c3e50; border-left: 4px solid #17a2b8; padding-left: 10px;">
-    📋 Requirements</h2>
-  <div
-    style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.9em;">
-    <ul style="margin: 0; padding-left: 20px;">
-      <li><strong>Moodle:</strong> 4.5 LTS to 5.3+</li>
-      <li><strong>PHP:</strong> 8.2+</li>
-      <li><strong>Browser:</strong> Modern browser with WebGL support (Chrome,
-        Edge, Firefox, Safari)</li>
-      <li><strong>Privacy:</strong> Implements Moodle Privacy API
-      </li>
-    </ul>
-  </div>
-  <h2
-    style="color: #2c3e50; border-left: 4px solid #6c757d; padding-left: 10px;">
-    🛠 How it Works</h2>
-  <ol style="padding-left: 20px;">
-    <li><strong>Upload:</strong> Drag and drop your .GLB or .GLTF models.</li>
-    <li><strong>Annotate:</strong> Use the scene editor to place hotspots and
-      assessment points.</li>
-    <li><strong>Engage:</strong> Students explore, collaborate, and complete
-      integrated activities.</li>
-  </ol>
-  <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-  <p style="font-size: 0.85em; text-align: center; color: #777;">Developed by <strong>Boban Blagojević</strong> • 2026 Stable
-    Release<br><em>Geospatial Educational Augmented
-      Reality</em></p>
+<div class="mod-gear-description">
+  <h2>GEAR: Immersive 3D, AR and VR Learning</h2>
+  <p><em>Upload a 3D model, place interactive hotspots on it and let students explore, answer quizzes and learn together, right inside Moodle.</em></p>
+
+  <h3>Features</h3>
+  <ul>
+    <li><strong>3D viewer:</strong> glTF / GLB models with orbit, pan and zoom controls, adjustable lighting and background.</li>
+    <li><strong>Hotspots:</strong> information, quiz, audio, video and teleport points placed directly on the model; the authoring gizmo moves them along the X, Y and Z axes.</li>
+    <li><strong>Spatial quizzes:</strong> multiple-choice questions in the scene. Answers are checked on the server and the points go to the Moodle gradebook.</li>
+    <li><strong>Escape-room style unlocking:</strong> a hotspot can stay hidden until the student solves a given quiz.</li>
+    <li><strong>Teacher analytics, leaderboard and text-to-speech narration.</strong></li>
+    <li><strong>WebXR:</strong> VR (and AR where the device supports it) without installing an app. Works with the Moodle Mobile app.</li>
+    <li><strong>Optional AI assistant</strong> for hotspot texts and quiz questions (off by default).</li>
+    <li><strong>Optional collaborative mode:</strong> shared sessions with avatars, voice and text chat (off by default for new installs).</li>
+    <li><strong>Accessible:</strong> keyboard navigation, screen reader announcements, labelled dialogs and reduced-motion support.</li>
+    <li><strong>Moodle integration:</strong> gradebook, backup and restore, Privacy API, course reset, events and completion on view.</li>
+  </ul>
+
+  <h3>What's new in 1.7.1</h3>
+  <ul>
+    <li><strong>Security:</strong> quiz scores can no longer be forged, correct answers and locked hotspots are no longer sent to students, hotspot content and report output are sanitised, model files are served only to people who can view the activity, and WebRTC peers must be participants of the session.</li>
+    <li><strong>Collaborative mode is now an admin setting</strong> with an optional own PeerJS server; random peer ids are used.</li>
+    <li><strong>Grades:</strong> every quiz submission is counted, the best score per hotspot is kept and the total is scaled to the activity grade.</li>
+    <li><strong>Accessibility and performance:</strong> real dialogs with focus handling, labelled controls, rendering and polling pause in hidden tabs, PeerJS loads only when needed.</li>
+    <li><strong>Quality:</strong> PHPUnit and Behat tests, events, a scheduled cleanup task, course reset, and CI on Moodle 4.5 and 5.0 - 5.3.</li>
+  </ul>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Moodle 4.5 LTS to 5.3, PHP 8.2 or later.</li>
+    <li>A browser with WebGL; VR and AR need a WebXR-capable browser and device. On iPhone and iPad the 3D viewer works but WebXR AR is not available.</li>
+  </ul>
+
+  <h3>Privacy</h3>
+  <p>Models, hotspots, grades and analytics stay on your site. Only two optional features contact outside services: the AI assistant sends the text a teacher types to the configured OpenAI-compatible service, and collaborative mode connects participants through a PeerJS broker (the public PeerJS cloud or your own server) while chat and audio travel directly between their browsers. The plugin implements the Moodle Privacy API.</p>
+
+  <p>Languages: English and Serbian. Source, documentation and issue tracker:
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank" rel="noreferrer noopener">github.com/blagojevicboban/moodle-mod_gear</a>.
+    Licensed under the GNU GPL v3 or later.</p>
 </div>
