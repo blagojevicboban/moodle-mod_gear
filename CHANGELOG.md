@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Developer tooling: end-to-end chat check with a local PeerJS server (`devtools/check-gear-chat.mjs`), modal and scene description checks.
 
 ### Changed
+- Accessibility, checked with axe-core on the viewer, tour, help dialog and hotspot form (0 violations, `devtools/check-gear-axe.mjs`): the hotspot color and size controls have accessible names, hotspot popup and form headings are `h3` (no skipped heading level).
 - Browser pop-ups are replaced by Moodle dialogs: the delete confirmation (`Notification.deleteCancelPromise`) and the topic dialog of the AI assistant (`core/modal_save_cancel`, focus in the field, Enter confirms).
 - Chat messages show the user that the server lists for the sending peer ("User 7") instead of a name the message claims; the label and the viewer texts that were hard coded in English (error title, points awarded, hotspot fallback name, canvas label) are language strings now.
 - The viewer source has no ESLint warnings any more; the hotspot list code is split into smaller methods.

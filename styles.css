@@ -300,7 +300,7 @@
     transform: translate(-50%, -50%) scale(1);
 }
 
-.gear-hotspot-popup h4 {
+.gear-hotspot-popup h3 {
     margin: 0 0 0.5rem;
     font-size: 1rem;
     font-weight: 600;
