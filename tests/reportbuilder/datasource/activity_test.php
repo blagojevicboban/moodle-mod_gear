@@ -127,14 +127,22 @@ final class activity_test extends \core_reportbuilder_testcase {
      * Stress test the source (every column, filter and condition is valid SQL).
      */
     public function test_datasource_stress(): void {
+        global $DB;
         $this->resetAfterTest();
         $course = $this->getDataGenerator()->create_course();
         $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
         /** @var \mod_gear_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_gear');
         $gear = $generator->create_instance(['course' => $course->id]);
-        $this->assertNotEmpty($gear->id);
-        $this->assertNotEmpty($student->id);
+        // The stress test expects every column to return data, so there must be a tracked action.
+        $DB->insert_record('gear_tracking', (object) [
+            'gearid' => $gear->id,
+            'userid' => $student->id,
+            'action' => 'hotspot_click',
+            'data' => '{}',
+            'duration' => 5,
+            'timecreated' => time(),
+        ]);
 
         $this->datasource_stress_test_columns(activity::class);
         $this->datasource_stress_test_columns_aggregation(activity::class);
