@@ -26,6 +26,8 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {TransformControls} from 'three/examples/jsm/controls/TransformControls.js';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
+import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 // Moodle AMD dependencies (external - loaded via RequireJS at runtime).
 import Ajax from 'core/ajax';
@@ -149,6 +151,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.peerjsUrl = options.peerjsurl || '';
             this.peerServer = options.peerserver || null;
             this.aiAvailable = !!options.aiavailable;
+            this.dracoPath = options.dracopath || '';
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -160,6 +163,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.renderer = null;
             this.controls = null;
             this.model = null;
+            this.models = []; // All loaded model objects (the first one is this.model).
             this.hotspotMeshes = [];
             this.raycaster = null;
             this.mouse = new THREE.Vector2();
@@ -686,21 +690,18 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 }
             }])[0];
 
-            // 2. Save Model Transform (Main model).
-            let modelPromise = Promise.resolve();
-            if (this.model && this.modelsData.length > 0) {
-                modelPromise = Ajax.call([{
-                    methodname: 'mod_gear_save_model_transform',
-                    args: {
-                        id: this.modelsData[0].id,
-                        position: JSON.stringify({x: this.model.position.x, y: this.model.position.y, z: this.model.position.z}),
-                        rotation: JSON.stringify({x: this.model.rotation.x, y: this.model.rotation.y, z: this.model.rotation.z}),
-                        scale: this.model.scale.x
-                    }
-                }])[0];
-            }
+            // 2. Save the transform of every model.
+            const modelPromises = this.models.filter((object) => object.userData.modelId).map((object) => Ajax.call([{
+                methodname: 'mod_gear_save_model_transform',
+                args: {
+                    id: object.userData.modelId,
+                    position: JSON.stringify({x: object.position.x, y: object.position.y, z: object.position.z}),
+                    rotation: JSON.stringify({x: object.rotation.x, y: object.rotation.y, z: object.rotation.z}),
+                    scale: object.scale.x
+                }
+            }])[0]);
 
-            Promise.all([scenePromise, modelPromise]).then(async() => {
+            Promise.all([scenePromise, ...modelPromises]).then(async() => {
                 Notification.addNotification({
                     message: await Str.get_string('saveviewsuccess', 'mod_gear'),
                     type: 'success'
@@ -844,61 +845,33 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          * Load 3D models from config data.
          */
         async loadModels() {
-            var loader;
-            var gltf;
-
             try {
                 if (this.modelsData && this.modelsData.length > 0) {
-                    loader = new GLTFLoader();
+                    const loader = this.createGltfLoader();
+                    const total = this.modelsData.length;
 
-                    for (const modelData of this.modelsData) {
-                        gltf = await new Promise((resolve, reject) => {
-                            loader.load(modelData.url, resolve, undefined, reject);
+                    for (let index = 0; index < total; index++) {
+                        const modelData = this.modelsData[index];
+                        const gltf = await new Promise((resolve, reject) => {
+                            loader.load(modelData.url, resolve, (event) => this.showLoadProgress(index, total, event), reject);
                         });
-
-                        this.model = gltf.scene;
-
-                        // Fix model orientation - rotate 180° on X axis to make model upright
-                        // This corrects the common GLTF coordinate system mismatch
-                        this.model.rotation.x = Math.PI;
-
-                        // Apply saved transform if available.
-                        if (modelData.position) {
-                            try {
-                                const p = (typeof modelData.position === 'string')
-                                    ? JSON.parse(modelData.position) : modelData.position;
-                                this.model.position.set(p.x, p.y, p.z);
-                            } catch (e) {
-                                window.console.warn('GEAR: Failed to parse model position', e);
-                            }
+                        const object = this.prepareModel(gltf.scene, modelData);
+                        this.modelContainer.add(object);
+                        this.models.push(object);
+                        if (!this.model) {
+                            this.model = object;
                         }
-                        if (modelData.rotation) {
-                            try {
-                                const r = (typeof modelData.rotation === 'string')
-                                    ? JSON.parse(modelData.rotation) : modelData.rotation;
-                                this.model.rotation.set(r.x, r.y, r.z);
-                            } catch (e) {
-                                window.console.warn('GEAR: Failed to parse model rotation', e);
-                            }
-                        }
-                        if (modelData.scale) {
-                            this.model.scale.setScalar(parseFloat(modelData.scale));
-                        } else {
-                            this.model.scale.setScalar(1);
-                        }
+                    }
 
-                        this.modelContainer.add(this.model);
-
-                        // If scene config has saved camera, use it, otherwise center.
-                        if (this.config.camera && this.config.camera.position) {
-                            const cp = this.config.camera.position;
-                            const ct = this.config.camera.target || [0, 0, 0];
-                            this.camera.position.set(cp[0], cp[1], cp[2]);
-                            this.controls.target.set(ct[0], ct[1], ct[2]);
-                            this.controls.update();
-                        } else {
-                            this.centerCameraOnModel(this.model);
-                        }
+                    // If scene config has saved camera, use it, otherwise center on everything that was loaded.
+                    if (this.config.camera && this.config.camera.position) {
+                        const cp = this.config.camera.position;
+                        const ct = this.config.camera.target || [0, 0, 0];
+                        this.camera.position.set(cp[0], cp[1], cp[2]);
+                        this.controls.target.set(ct[0], ct[1], ct[2]);
+                        this.controls.update();
+                    } else {
+                        this.centerCameraOnModel(this.modelContainer);
                     }
 
                     // Mark as loaded.
@@ -909,11 +882,80 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     this.container.classList.add('loaded');
                 }
             } catch (error) {
-                // Error loading model - show placeholder.
+                // Error loading model - say so instead of silently showing a placeholder.
                 window.console.error('GEAR: Error loading model:', error);
                 this.addPlaceholderModel();
                 this.container.classList.add('loaded');
+                this.announce(await Str.get_string('modelloaderror', 'mod_gear'));
+                Notification.addNotification({
+                    message: await Str.get_string('modelloaderror', 'mod_gear'),
+                    type: 'error'
+                });
             }
+        }
+
+        /**
+         * A glTF loader that also reads Draco and Meshopt compressed models (decoders are self-hosted).
+         *
+         * @returns {GLTFLoader}
+         */
+        createGltfLoader() {
+            const loader = new GLTFLoader();
+            if (this.dracoPath) {
+                const draco = new DRACOLoader();
+                draco.setDecoderPath(this.dracoPath);
+                loader.setDRACOLoader(draco);
+            }
+            loader.setMeshoptDecoder(MeshoptDecoder);
+            return loader;
+        }
+
+        /**
+         * Show the loading progress in the loading overlay.
+         *
+         * @param {number} index Index of the model that is loading
+         * @param {number} total Number of models
+         * @param {ProgressEvent} event Progress event
+         */
+        showLoadProgress(index, total, event) {
+            const label = this.container.querySelector('.gear-loading p');
+            if (!label || !event.lengthComputable) {
+                return;
+            }
+            const done = (index + event.loaded / event.total) / total;
+            label.textContent = Math.round(done * 100) + '%';
+        }
+
+        /**
+         * Apply the saved orientation, position, rotation and scale of a model.
+         *
+         * @param {THREE.Object3D} object The loaded scene
+         * @param {Object} modelData Model record
+         * @returns {THREE.Object3D}
+         */
+        prepareModel(object, modelData) {
+            // Fix model orientation - rotate 180 degrees on X axis to make the model upright (glTF coordinate system).
+            object.rotation.x = Math.PI;
+            object.userData.modelId = modelData.id;
+
+            const parse = (value) => {
+                try {
+                    return typeof value === 'string' ? JSON.parse(value) : value;
+                } catch (e) {
+                    window.console.warn('GEAR: Failed to parse model transform', e);
+                    return null;
+                }
+            };
+            const p = modelData.position ? parse(modelData.position) : null;
+            if (p) {
+                object.position.set(p.x, p.y, p.z);
+            }
+            const r = modelData.rotation ? parse(modelData.rotation) : null;
+            if (r) {
+                object.rotation.set(r.x, r.y, r.z);
+            }
+            object.scale.setScalar(modelData.scale ? parseFloat(modelData.scale) : 1);
+            return object;
         }
 
         /**
@@ -927,6 +969,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 roughness: 0.4
             });
             this.model = new THREE.Mesh(geometry, material);
+            this.models = [this.model];
             this.modelContainer.add(this.model);
         }
 
@@ -1140,7 +1183,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                         return;
                     }
 
-                    var moveIntersects = this.raycaster.intersectObject(this.model, true);
+                    var moveIntersects = this.raycaster.intersectObjects(this.models, true);
                     if (moveIntersects.length > 0) {
                         var worldPoint = moveIntersects[0].point;
                         var localPoint = this.modelContainer.worldToLocal(worldPoint.clone());
@@ -1151,7 +1194,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
                 // Shift+Click to add new hotspot (managers only).
                 if (event.shiftKey && this.canManage && this.model && this.hotspotsEnabled) {
-                    var modelIntersects = this.raycaster.intersectObject(this.model, true);
+                    var modelIntersects = this.raycaster.intersectObjects(this.models, true);
                     if (modelIntersects.length > 0) {
                         var worldPoint = modelIntersects[0].point;
                         var localPoint = this.modelContainer.worldToLocal(worldPoint.clone());

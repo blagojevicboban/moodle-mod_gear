@@ -89,6 +89,7 @@ $jsconfig = [
     'collab' => gear_collaboration_enabled() && !isguestuser(),
     'aiavailable' => $canmanage && gear_ai_available(),
     'peerserver' => gear_get_peer_server(),
+    'dracopath' => (new moodle_url('/mod/gear/vendorjs/draco/'))->out(false),
 ];
 if (!empty($models)) {
     $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);

@@ -131,6 +131,7 @@ $string['modelfile'] = 'Model file';
 $string['modelfile_help'] = 'Upload a 3D model in glTF (.gltf, .glb) format.';
 $string['modelfiles'] = '3D Model Files';
 $string['modelfiles_help'] = 'Upload 3D models in glTF (.gltf) or GLB (.glb) format, together with any textures and .bin files the model needs. You can upload up to 20 files.';
+$string['modelloaderror'] = 'The 3D model could not be loaded. Check that the file is a valid glTF or GLB model.';
 $string['models'] = '3D Models';
 $string['modelsection'] = '3D Models';
 $string['modulename'] = 'GEAR';

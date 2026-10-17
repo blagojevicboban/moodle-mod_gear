@@ -131,6 +131,7 @@ $string['modelfile'] = 'Fajl modela';
 $string['modelfile_help'] = 'Učitajte 3D model u glTF (.gltf, .glb) formatu.';
 $string['modelfiles'] = '3D Model fajlovi';
 $string['modelfiles_help'] = 'Učitajte 3D modele u glTF (.gltf) ili GLB (.glb) formatu, zajedno sa pratećim teksturama i .bin fajlovima. Možete učitati do 20 fajlova.';
+$string['modelloaderror'] = '3D model nije mogao da se učita. Proverite da je fajl ispravan glTF ili GLB model.';
 $string['models'] = '3D Modeli';
 $string['modelsection'] = '3D Modeli';
 $string['modulename'] = 'GEAR';

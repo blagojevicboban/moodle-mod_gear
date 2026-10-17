@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accessibility: help, leaderboard and hotspot popups are real dialogs (`role="dialog"`, labelled, Escape closes, Tab stays inside, focus returns to the opener); icon buttons have accessible names; the chat is a live log; keyboard navigation announces the focused hotspot through a status region.
 - `prefers-reduced-motion` is respected (no tooltip transition, hotspot blinking or pulsing).
 - Teacher and student guides in `docs/`.
+- Compressed models: **Draco** and **Meshopt** compressed glTF/GLB files load (the Draco decoder is self-hosted in `vendorjs/draco/`).
+- Loading progress in percent and a visible error message when a model cannot be loaded (before, a blue placeholder cube replaced it silently).
+- **Several models in one scene**: the transform of every model is saved with *Save Current View* (before, only the first one), and hotspots can be placed on any of them.
 - The AI assistant now uses the **Moodle AI subsystem** (`core_ai`, `generate_text` action): the administrator configures providers, models, rate limits and logging in Site administration > General > AI, and every user has to accept the Moodle AI usage policy once. The button is shown only when the assistant is enabled in the GEAR settings, a provider supports text generation and the AI tools are not switched off for the course. Quiz answers are cut out of the model's text even when it adds markdown or a sentence around the JSON.
 - Admin settings `collab_enabled` (collaborative mode, off for new installs) and `peerjs_server` (optional own PeerJS server); on upgrade the mode stays enabled where it was already in use.
 - `gear_sessions.peerid`: every browser session uses a random WebRTC peer id that is shared only through the session list.

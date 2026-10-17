@@ -17,3 +17,10 @@ Third-party JavaScript libraries in mod_gear
      1. Download the prebuilt `peerjs.min.js` from the official PeerJS release (or `node_modules/peerjs/dist/peerjs.min.js`), strip the trailing sourceMappingURL comment if needed, and place it in `vendorjs/peerjs.min.js`.
      2. Update the version number in thirdpartylibs.xml.
 
+3. Draco decoder (MIT-compatible Apache-2.0 license)
+   - Source: https://github.com/google/draco (the prebuilt decoder shipped with Three.js)
+   - Location: vendorjs/draco/ (draco_decoder.js, draco_decoder.wasm, draco_wasm_wrapper.js)
+   - How to update: copy the three files from node_modules/three/examples/jsm/libs/draco/gltf/ after updating Three.js, and keep the version in thirdpartylibs.xml.
+
+4. meshoptimizer decoder (MIT license)
+   - Bundled into amd/build/viewer.min.js from three/examples/jsm/libs/meshopt_decoder.module.js; it is updated together with Three.js.

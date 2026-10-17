@@ -135,7 +135,7 @@ Models, hotspots, grades and analytics never leave your site. Keep the AI Assist
 
 | Format | Extension | Description |
 |--------|-----------|-------------|
-| GLB | `.glb` | Binary glTF single file (recommended) |
+| GLB | `.glb` | Binary glTF single file (recommended); Draco and Meshopt compression are supported |
 | glTF | `.gltf` + `.bin` + images | JSON glTF with companion binary/texture assets |
 
 ## 🛠️ Development

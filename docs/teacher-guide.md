@@ -9,6 +9,7 @@ and (optionally) work together. Quiz points go to the Moodle gradebook.
 2. Give it a **name** and an optional description.
 3. Under **3D models** upload a `.glb` file (recommended, one file) or a `.gltf` together with its `.bin` and texture images
    (up to 20 files). Other file types are not accepted.
+   You can upload several models; they appear together in one scene and *Save Current View* remembers where you placed each of them. Draco and Meshopt compressed models are supported, which keeps big models small.
 4. Under **Scene settings** choose the background colour, lighting (studio, outdoor, dark), the default hotspot diameter and whether
    hotspots are shown and can be edited.
 5. Under **Grade** set the maximum grade. The points of all quiz hotspots together equal the full grade.

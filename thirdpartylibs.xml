@@ -22,5 +22,28 @@
       <copyright>2013 Michelle Bu and Eric Zhang</copyright>
     </copyrights>
   </library>
+  <library>
+    <location>vendorjs/draco</location>
+    <name>Draco decoder</name>
+    <description>Google Draco WebAssembly and JavaScript decoder (from the Three.js examples) for Draco compressed glTF models.</description>
+    <version>1.5.6</version>
+    <license>Apache-2.0</license>
+    <licenseversion>2.0</licenseversion>
+    <repository>https://github.com/google/draco</repository>
+    <copyrights>
+      <copyright>2017 The Draco Authors</copyright>
+    </copyrights>
+  </library>
+  <library>
+    <location>amd/build/viewer.min.js</location>
+    <name>meshoptimizer decoder</name>
+    <description>Meshopt decoder for compressed glTF models (bundled into the AMD viewer bundle from the Three.js examples).</description>
+    <version>0.20</version>
+    <license>MIT</license>
+    <repository>https://github.com/zeux/meshoptimizer</repository>
+    <copyrights>
+      <copyright>2016-2024 Arseny Kapoulkine</copyright>
+    </copyrights>
+  </library>
 </libraries>
 
