@@ -42,9 +42,9 @@ On any hotspot set **Requires Quiz (Unlock)** to another quiz hotspot. The hotsp
 
 ### AI Assistant (optional)
 
-If the administrator has enabled it (**Site administration → Plugins → Activity modules → GEAR**), the hotspot editor shows **AI Assist**:
-type a short topic and the plugin fills in the text or, for quizzes, the options and the correct answer. Review what it generates before saving.
-Only the topic text you type is sent to the configured AI service.
+If the administrator has enabled it (**Site administration → Plugins → Activity modules → GEAR → Enable AI Assistant**) and configured an AI provider with text generation (**Site administration → General → AI**), the hotspot editor shows **AI Assist**. The first time you use it Moodle asks you to accept the AI usage policy.
+Type a short topic and the plugin fills in the text or, for quizzes, the options and the correct answer. Review what it generates before saving.
+Only the topic text you type is sent to the AI provider configured by your administrator.
 
 ## 3. Results
 

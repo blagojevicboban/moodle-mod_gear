@@ -32,6 +32,9 @@ import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import Str from 'core/str';
 import Templates from 'core/templates';
+import Policy from 'core_ai/policy';
+import PolicyModal from 'core_ai/policymodal';
+import CustomEvents from 'core/custom_interaction_events';
 
 /* global Peer */
 
@@ -145,6 +148,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.userid = options.userid || 0; // The current user ID for WebRTC
             this.peerjsUrl = options.peerjsurl || '';
             this.peerServer = options.peerserver || null;
+            this.aiAvailable = !!options.aiavailable;
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -2021,6 +2025,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         showAddHotspotForm(point, hotspotToEdit) {
             var context = {
                 cmid: this.cmid,
+                aiAvailable: this.aiAvailable,
                 posX: point.x.toFixed(3),
                 posY: point.y.toFixed(3),
                 posZ: point.z.toFixed(3),
@@ -2100,6 +2105,14 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             // AI Assist button.
             var aiBtn = form.querySelector('.gear-ai-btn');
             aiBtn.addEventListener('click', async() => {
+                // The AI usage policy of Moodle has to be accepted once per user.
+                if (!await Policy.getPolicyStatus(this.userid)) {
+                    const policyModal = await PolicyModal.create();
+                    policyModal.getModal().on(CustomEvents.events.activate, policyModal.getActionSelector('save'), () => {
+                        aiBtn.click();
+                    });
+                    return;
+                }
                 var type = typeSelect.value;
                 var prompt = window.prompt(await Str.get_string('ai_prompt', 'mod_gear'), "");
                 if (prompt) {

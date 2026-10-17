@@ -21,6 +21,8 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
+use core_ai\aiactions\generate_text;
+use core_ai\manager;
 /**
  * Generate content using AI.
  *
@@ -51,7 +53,7 @@ class generate_content extends external_api {
      * @return array
      */
     public static function execute(int $gearid, string $prompt, string $type = 'info'): array {
-        global $CFG;
+        global $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'gearid' => $gearid,
@@ -60,74 +62,40 @@ class generate_content extends external_api {
         ]);
 
         // Access checks.
-        $cm = get_coursemodule_from_instance('gear', $gearid, 0, false, MUST_EXIST);
+        $cm = get_coursemodule_from_instance('gear', $params['gearid'], 0, false, MUST_EXIST);
         $context = context_module::instance($cm->id);
         self::validate_context($context);
         require_capability('mod/gear:manage', $context);
 
-        // Check settings.
-        $enabled = get_config('mod_gear', 'ai_enabled');
-        $apikey = get_config('mod_gear', 'ai_apikey');
-        $model = get_config('mod_gear', 'ai_model') ?: 'gpt-3.5-turbo';
-
-        if (!$enabled || empty($apikey)) {
+        // The assistant is an opt-in feature that uses the AI providers of the site (Site administration > General > AI).
+        if (!gear_ai_available()) {
             throw new \moodle_exception('error:ainotconfigured', 'mod_gear');
         }
-
-        // Construct System Prompt.
-        $systemprompt = "You are a helpful assistant for an Augmented/Virtual Reality learning platform. ";
-        $userprompt = "";
-
-        if ($type === 'quiz') {
-            $systemprompt .= "Generate a multiple choice question based on the user's topic. ";
-            $systemprompt .= "Return ONLY valid JSON with this structure: { \"question\": \"Question text\", ";
-            $systemprompt .= "\"options\": [\"A\", \"B\", \"C\"], \"correct\": 0, \"points\": 10, ";
-            $systemprompt .= "\"explanation\": \"Optional explanation\" }. ";
-            $systemprompt .= "Ensure correct index is 0-based. Do not include markdown formatting.";
-            $userprompt = "Topic: " . $prompt;
-        } else {
-            $systemprompt .= "Write a short, engaging description (max 50 words) about the topic ";
-            $systemprompt .= "suitable for a popup info card.";
-            $userprompt = "Topic: " . $prompt;
+        $manager = \core\di::get(manager::class);
+        $checkcontext = method_exists($manager, 'is_action_enabled_in_context');
+        if ($checkcontext && !$manager->is_action_enabled_in_context($context, generate_text::class)) {
+            throw new \moodle_exception('error:aidisabledhere', 'mod_gear');
+        }
+        if (!manager::get_user_policy_status((int) $USER->id)) {
+            throw new \moodle_exception('error:aipolicy', 'mod_gear');
         }
 
-        // Call OpenAI API.
-        $url = 'https://api.openai.com/v1/chat/completions';
-        $apidata = [
-            'model' => $model,
-            'messages' => [
-                ['role' => 'system', 'content' => $systemprompt],
-                ['role' => 'user', 'content' => $userprompt],
-            ],
-            'temperature' => 0.7,
-        ];
-
-        require_once($CFG->libdir . '/filelib.php');
-        $curl = new \curl();
-        $curl->setHeader([
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $apikey,
-        ]);
-
-        $response = $curl->post($url, json_encode($apidata));
-        $info = $curl->get_info();
-        $httpcode = $info['http_code'] ?? 0;
-
-        if ($httpcode !== 200 || !$response) {
-            throw new \moodle_exception('error:apierror', 'mod_gear', '', $httpcode);
+        $instructions = $params['type'] === 'quiz' ? self::quiz_instructions() : self::info_instructions();
+        $action = new generate_text(
+            contextid: $context->id,
+            userid: (int) $USER->id,
+            prompttext: $instructions . "\n\nTopic: " . $params['prompt'],
+        );
+        $response = $manager->process_action($action);
+        if (!$response->get_success()) {
+            throw new \moodle_exception('error:apierror', 'mod_gear', '', $response->get_errormessage());
         }
 
-        $json = json_decode($response, true);
-        $content = $json['choices'][0]['message']['content'] ?? '';
-
-        // Clean up markdown code blocks if present (common issue with LLMs returning JSON).
-        if ($type === 'quiz') {
-            $content = trim($content);
-            $content = str_replace([chr(96) . chr(96) . chr(96) . 'json', chr(96) . chr(96) . chr(96)], '', $content);
-            // Validate JSON.
-            $test = json_decode($content);
-            if (!$test) {
-                 throw new \moodle_exception('error:invalidjson', 'mod_gear');
+        $content = trim((string) ($response->get_response_data()['generatedcontent'] ?? ''));
+        if ($params['type'] === 'quiz') {
+            $content = self::extract_json($content);
+            if (!is_array(json_decode($content, true))) {
+                throw new \moodle_exception('error:invalidjson', 'mod_gear');
             }
         }
 
@@ -135,6 +103,41 @@ class generate_content extends external_api {
             'success' => true,
             'content' => $content,
         ];
+    }
+
+    /**
+     * Instructions for an information hotspot.
+     *
+     * @return string
+     */
+    protected static function info_instructions(): string {
+        return 'You help a teacher build an interactive 3D learning scene. Write a short, engaging description '
+            . '(at most 50 words) about the topic below, suitable for a popup info card. Return plain text only.';
+    }
+
+    /**
+     * Instructions for a quiz hotspot.
+     *
+     * @return string
+     */
+    protected static function quiz_instructions(): string {
+        return 'You help a teacher build an interactive 3D learning scene. '
+            . 'Write one multiple choice question about the topic below. '
+            . 'Return ONLY valid JSON with this structure: {"question": "Question text", "options": ["A", "B", "C"], '
+            . '"correct": 0, "points": 10, "explanation": "Optional explanation"}. The correct index is 0-based. '
+            . 'Do not use markdown.';
+    }
+
+    /**
+     * Cut the JSON object out of a model answer (models like to wrap it in markdown fences or add a sentence around it).
+     *
+     * @param string $text Model answer
+     * @return string JSON text (or the unchanged text when no object was found)
+     */
+    protected static function extract_json(string $text): string {
+        $start = strpos($text, '{');
+        $end = strrpos($text, '}');
+        return ($start !== false && $end !== false && $end > $start) ? substr($text, $start, $end - $start + 1) : $text;
     }
 
     /**

@@ -688,3 +688,20 @@ function gear_get_peer_server(): ?array {
         'secure' => $secure,
     ];
 }
+
+/**
+ * Whether the AI assistant can be used: it is switched on in the plugin settings and the site has an enabled
+ * core AI provider that supports text generation.
+ *
+ * @return bool
+ */
+function gear_ai_available(): bool {
+    if (!get_config('mod_gear', 'ai_enabled') || !class_exists('\core_ai\manager')) {
+        return false;
+    }
+    try {
+        return \core\di::get(\core_ai\manager::class)->is_action_available(\core_ai\aiactions\generate_text::class);
+    } catch (\Throwable $e) {
+        return false;
+    }
+}

@@ -55,6 +55,9 @@ module.exports = function(grunt) {
                     }(),
                     external: [
                         'core/ajax',
+                        'core/custom_interaction_events',
+                        'core_ai/policy',
+                        'core_ai/policymodal',
                         'core/notification',
                         'core/str',
                         'core/templates'

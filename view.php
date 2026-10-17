@@ -87,6 +87,7 @@ $jsconfig = [
     'userid' => $USER->id,
     'peerjsurl' => (new moodle_url('/mod/gear/vendorjs/peerjs.min.js'))->out(false),
     'collab' => gear_collaboration_enabled() && !isguestuser(),
+    'aiavailable' => $canmanage && gear_ai_available(),
     'peerserver' => gear_get_peer_server(),
 ];
 if (!empty($models)) {

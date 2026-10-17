@@ -123,5 +123,13 @@ function xmldb_gear_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026101700, 'gear');
     }
 
+    if ($oldversion < 2026101800) {
+        // The AI assistant now uses the AI providers of Moodle (Site administration > General > AI): drop the own key and model.
+        unset_config('ai_apikey', 'mod_gear');
+        unset_config('ai_model', 'mod_gear');
+
+        upgrade_mod_savepoint(true, 2026101800, 'gear');
+    }
+
     return true;
 }

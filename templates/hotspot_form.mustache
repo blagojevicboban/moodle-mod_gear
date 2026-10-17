@@ -57,7 +57,7 @@
                     <option value="video" {{#isVideo}}selected{{/isVideo}}>{{#str}}hotspottype_video, mod_gear{{/str}}</option>
                     <option value="teleport" {{#isTeleport}}selected{{/isTeleport}}>{{#str}}hotspottype_teleport, mod_gear{{/str}}</option>
                 </select>
-                <button type="button" class="btn btn-info gear-ai-btn" title="{{#str}}aiassist_help, mod_gear{{/str}}">{{#str}}aiassist, mod_gear{{/str}}</button>
+                <button type="button" class="btn btn-info gear-ai-btn"{{^aiAvailable}} hidden{{/aiAvailable}} title="{{#str}}aiassist_help, mod_gear{{/str}}">{{#str}}aiassist, mod_gear{{/str}}</button>
             </div>
         </div>
 

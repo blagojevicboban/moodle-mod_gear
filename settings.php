@@ -61,21 +61,4 @@ if ($ADMIN->fulltree) {
         get_string('enableai_desc', 'mod_gear'),
         0
     ));
-
-    // API Key (Password field).
-    $settings->add(new admin_setting_configpasswordunmask(
-        'mod_gear/ai_apikey',
-        get_string('aiapikey', 'mod_gear'),
-        get_string('aiapikey_desc', 'mod_gear'),
-        ''
-    ));
-
-    // Model Name.
-    $settings->add(new admin_setting_configtext(
-        'mod_gear/ai_model',
-        get_string('aimodel', 'mod_gear'),
-        get_string('aimodel_desc', 'mod_gear'),
-        'gpt-4o-mini',
-        PARAM_TEXT
-    ));
 }

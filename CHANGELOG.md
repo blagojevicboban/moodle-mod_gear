@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accessibility: help, leaderboard and hotspot popups are real dialogs (`role="dialog"`, labelled, Escape closes, Tab stays inside, focus returns to the opener); icon buttons have accessible names; the chat is a live log; keyboard navigation announces the focused hotspot through a status region.
 - `prefers-reduced-motion` is respected (no tooltip transition, hotspot blinking or pulsing).
 - Teacher and student guides in `docs/`.
+- The AI assistant now uses the **Moodle AI subsystem** (`core_ai`, `generate_text` action): the administrator configures providers, models, rate limits and logging in Site administration > General > AI, and every user has to accept the Moodle AI usage policy once. The button is shown only when the assistant is enabled in the GEAR settings, a provider supports text generation and the AI tools are not switched off for the course. Quiz answers are cut out of the model's text even when it adds markdown or a sentence around the JSON.
 - Admin settings `collab_enabled` (collaborative mode, off for new installs) and `peerjs_server` (optional own PeerJS server); on upgrade the mode stays enabled where it was already in use.
 - `gear_sessions.peerid`: every browser session uses a random WebRTC peer id that is shared only through the session list.
 
@@ -41,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tooltip was a live region that was re-announced on every mouse move.
 
 ### Changed
+- **Upgrade note:** the plugin's own OpenAI API key and model settings (`ai_apikey`, `ai_model`) were removed. After the upgrade configure an AI provider with text generation in Moodle's AI settings; the GEAR setting *Enable AI Assistant* stays as it was.
 - Requires Moodle 4.5 or later (supported 4.5 to 5.3). Templates use Bootstrap 5 classes.
 - Removed the unimplemented custom completion rules flag and unused `completion_type` column; added `timecreated` to `gear_hotspots` and `userid` foreign keys.
 - Performance: the 3D scene is not rendered while the tab is hidden or the canvas is scrolled out of view, session polling pauses in a hidden tab, GPU resources and listeners are released when the page is left, and PeerJS is loaded only when a second participant joins the session.

@@ -58,9 +58,7 @@ class provider implements
             'timemodified' => 'privacy:metadata:gear_sessions:timemodified',
         ], 'privacy:metadata:gear_sessions');
 
-        $collection->add_external_location_link('openai', [
-            'data' => 'privacy:metadata:external_openai:data',
-        ], 'privacy:metadata:external_openai');
+        $collection->add_subsystem_link('core_ai', [], 'privacy:metadata:core_ai');
 
         $collection->add_external_location_link('peerjs', [
             'peerid' => 'privacy:metadata:external_peerjs:peerid',

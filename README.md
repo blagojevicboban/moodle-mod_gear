@@ -19,7 +19,7 @@
 | ♿ **Accessibility** | Keyboard navigation, screen reader labels, and touch/long-press for mobile |
 | 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
 | 🧩 **Gamification** | Branching scenarios & escape-room style conditional unlocking |
-| ✨ **AI Assist** | Generate hotspot content and quizzes using OpenAI-compatible API |
+| ✨ **AI Assist** | Generate hotspot content and quizzes with the AI providers of Moodle (core AI subsystem) |
 | 🗣️ **Text-to-Speech**| Native auto-narration of informational hotspots |
 | 📝 **Quizzes** | In-world multiple choice questions with grading |
 | 👥 **Collaborative** | Real-time multi-user sessions with avatars |
@@ -50,7 +50,7 @@
 - **Database**: MySQL, MariaDB, or PostgreSQL
 - **Browser**: Chrome, Firefox, Safari, Edge (WebGL support)
 - **AR/VR**: WebXR-compatible browser (see the note on iPhone/iPad below)
-- **OpenAI API Key**: Optional, required only for AI Assistant features
+- **AI provider**: Optional, required only for the AI Assistant (Site administration → General → AI)
 
 ## 🚀 Installation
 
@@ -107,11 +107,12 @@ Step-by-step guides: [teacher guide](docs/teacher-guide.md) and [student guide](
 
 ## ⚙️ Configuration
 
-To use the **AI Assistant**, configure the API settings:
-1. Go to **Site Administration → Plugins → Activity Modules → GEAR**.
-2. Enable **Enable AI Assistant**.
-3. Enter your **API Key**.
-4. (Optional) Specify the **AI Model** (default: `gpt-4o-mini`).
+To use the **AI Assistant**:
+1. Configure an AI provider that supports text generation in **Site Administration → General → AI → AI providers** (for example OpenAI, Azure, Gemini or Ollama).
+2. Go to **Site Administration → Plugins → Activity Modules → GEAR** and enable **Enable AI Assistant**.
+3. Teachers see the **AI Assist** button in the hotspot editor. Each user accepts Moodle's AI usage policy the first time.
+
+Models, quotas and logging are managed by Moodle (*AI → Usage report*).
 
 ## 🔒 Privacy and data
 
@@ -119,7 +120,7 @@ GEAR stores quiz results, hotspot clicks and (while a session is open) camera po
 
 | Feature | Data that leaves your Moodle site | Where it goes |
 |---------|-----------------------------------|---------------|
-| **AI Assistant** (optional, off by default) | The prompt/topic text a teacher types | The OpenAI-compatible service configured by the administrator |
+| **AI Assistant** (optional, off by default) | The prompt/topic text a teacher types | The AI provider that the administrator configured in Moodle's AI settings (users accept the Moodle AI usage policy first) |
 | **Collaborative mode, voice and chat** (optional, off for new installs) | A random peer id and IP address (to the PeerJS broker); chat messages and audio go directly between the browsers of the participants | The public PeerJS cloud, or your own PeerJS server (setting *PeerJS server URL*) |
 
 Models, hotspots, grades and analytics never leave your site. Keep the AI Assistant and collaborative mode switched off in the plugin settings if you do not want any external service.

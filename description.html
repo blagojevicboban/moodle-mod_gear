@@ -10,7 +10,7 @@
     <li><strong>Escape-room style unlocking:</strong> a hotspot can stay hidden until the student solves a given quiz.</li>
     <li><strong>Teacher analytics, leaderboard and text-to-speech narration.</strong></li>
     <li><strong>WebXR:</strong> VR (and AR where the device supports it) without installing an app. Works with the Moodle Mobile app.</li>
-    <li><strong>Optional AI assistant</strong> for hotspot texts and quiz questions (off by default).</li>
+    <li><strong>Optional AI assistant</strong> for hotspot texts and quiz questions, using the AI providers of Moodle (off by default).</li>
     <li><strong>Optional collaborative mode:</strong> shared sessions with avatars, voice and text chat (off by default for new installs).</li>
     <li><strong>Accessible:</strong> keyboard navigation, screen reader announcements, labelled dialogs and reduced-motion support.</li>
     <li><strong>Moodle integration:</strong> gradebook, backup and restore, Privacy API, course reset, events and completion on view.</li>
@@ -19,6 +19,7 @@
   <h3>What's new in 1.7.1</h3>
   <ul>
     <li><strong>Security:</strong> quiz scores can no longer be forged, correct answers and locked hotspots are no longer sent to students, hotspot content and report output are sanitised, model files are served only to people who can view the activity, and WebRTC peers must be participants of the session.</li>
+    <li><strong>AI assistant on the Moodle AI subsystem:</strong> providers, models, quotas and the usage policy are managed in Moodle's AI settings; the plugin no longer stores an API key.</li>
     <li><strong>Collaborative mode is now an admin setting</strong> with an optional own PeerJS server; random peer ids are used.</li>
     <li><strong>Grades:</strong> every quiz submission is counted, the best score per hotspot is kept and the total is scaled to the activity grade.</li>
     <li><strong>Accessibility and performance:</strong> real dialogs with focus handling, labelled controls, rendering and polling pause in hidden tabs, PeerJS loads only when needed.</li>
@@ -32,7 +33,7 @@
   </ul>
 
   <h3>Privacy</h3>
-  <p>Models, hotspots, grades and analytics stay on your site. Only two optional features contact outside services: the AI assistant sends the text a teacher types to the configured OpenAI-compatible service, and collaborative mode connects participants through a PeerJS broker (the public PeerJS cloud or your own server) while chat and audio travel directly between their browsers. The plugin implements the Moodle Privacy API.</p>
+  <p>Models, hotspots, grades and analytics stay on your site. Only two optional features contact outside services: the AI assistant sends the text a teacher types to the AI provider the administrator set up in Moodle's AI settings, and collaborative mode connects participants through a PeerJS broker (the public PeerJS cloud or your own server) while chat and audio travel directly between their browsers. The plugin implements the Moodle Privacy API.</p>
 
   <p>Languages: English and Serbian. Source, documentation and issue tracker:
     <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank" rel="noreferrer noopener">github.com/blagojevicboban/moodle-mod_gear</a>.
