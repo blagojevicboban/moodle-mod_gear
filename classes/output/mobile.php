@@ -16,12 +16,14 @@
 
 namespace mod_gear\output;
 
-
-
 use context_module;
+use moodle_url;
 
 /**
  * Mobile output class for mod_gear.
+ *
+ * The Moodle app cannot run the WebGL/WebXR viewer, so the app shows the description, the student's progress and a
+ * button that opens the activity in the browser (with automatic login).
  *
  * @package    mod_gear
  * @copyright  2026 Boban Blagojevic
@@ -29,37 +31,49 @@ use context_module;
  */
 class mobile {
     /**
-     * Returns the mobile view data.
+     * Returns the mobile view of the activity.
      *
-     * @param array $args
+     * @param array $args Arguments from the app (cmid, courseid, userid)
      * @return array
      */
     public static function mobile_course_view($args) {
-        global $DB, $CFG;
+        global $DB, $OUTPUT, $USER;
 
         $args = (object) $args;
-        $cm = get_coursemodule_from_id('gear', $args->cmid);
-        $gear = $DB->get_record('gear', ['id' => $cm->instance]);
+        $cm = get_coursemodule_from_id('gear', $args->cmid, 0, false, MUST_EXIST);
+        $gear = $DB->get_record('gear', ['id' => $cm->instance], '*', MUST_EXIST);
         $context = context_module::instance($cm->id);
+        require_login($cm->course, false, $cm, true, true);
+        require_capability('mod/gear:view', $context);
 
         $data = [
-            'gear' => $gear,
             'cmid' => $cm->id,
-            'courseid' => $cm->course,
-            'name' => $gear->name,
-            'intro' => format_text($gear->intro, $gear->introformat, ['context' => $context]),
-            'warning' => get_string('mobile_warning', 'mod_gear'),
+            'name' => format_string($gear->name, true, ['context' => $context]),
+            'intro' => format_module_intro('gear', $gear, $cm->id),
+            'viewurl' => (new moodle_url('/mod/gear/view.php', ['id' => $cm->id]))->out(false),
         ];
+
+        // Progress of the current user (not for teachers, who see the report in the browser).
+        if (!has_capability('mod/gear:manage', $context)) {
+            $rows = (new \mod_gear\local\student_report($gear))->rows([$USER]);
+            $row = reset($rows);
+            $data['progress'] = [
+                'viewed' => $row['viewed'] . ' / ' . $row['viewable'],
+                'solved' => $row['solved'] . ' / ' . $row['quizzes'],
+                'points' => $row['points'] . ' / ' . $row['maxpoints'],
+                'hasquizzes' => $row['quizzes'] > 0,
+            ];
+        }
 
         return [
             'templates' => [
                 [
                     'id' => 'main',
-                    'html' => file_get_contents($CFG->dirroot . '/mod/gear/templates/mobile_view.mustache'),
+                    'html' => $OUTPUT->render_from_template('mod_gear/mobile_view', $data),
                 ],
             ],
-            'javascript' => '', // Add mobile-specific JS here if needed.
-            'otherdata' => $data,
+            'javascript' => '',
+            'otherdata' => '',
         ];
     }
 }

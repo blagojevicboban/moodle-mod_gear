@@ -17,7 +17,8 @@
 {{!
     @template mod_gear/mobile_view
 
-    Mobile view template for mod_gear.
+    View of a GEAR activity in the Moodle app (rendered on the server, shown by the app). The 3D viewer needs a browser,
+    so the page offers a button that opens the activity in the browser.
 
     @copyright  2026 Boban Blagojevic
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -29,27 +30,42 @@
     * none
 
     Context variables required for this template:
-    * name - Module name
-    * intro - Module introduction
-    * warning - Mobile usage warning
+    * name - Activity name (already formatted with format_string, so it is not escaped again)
+    * intro - Activity description (formatted HTML)
+    * viewurl - URL of the activity in the browser
+    * progress - Optional progress of the student (viewed, solved, points, hasquizzes)
 
     Example context (json):
     {
-        "name": "Explore Solar System",
-        "intro": "<p>Welcome to the VR simulation.</p>",
-        "warning": "This content is optimized for the Moodle app."
+        "name": "Explore the gear",
+        "intro": "<p>Find all the parts of the gear.</p>",
+        "viewurl": "https://example.com/mod/gear/view.php?id=1",
+        "progress": {"viewed": "2 / 5", "solved": "1 / 2", "points": "10 / 20", "hasquizzes": true}
     }
 }}
-<div>
-    {{#name}}<h3>{{{name}}}</h3>{{/name}}
-    <div class="intro">
-        {{{intro}}}
-    </div>
-    <div class="alert alert-info">
-        {{warning}}
-    </div>
-    <!-- In the future, we can embed a simplified 3D viewer here or a button to open in browser -->
-    <div class="gear-mobile-placeholder mt-3">
-        <p>This activity provides immersive 3D content.</p>
-    </div>
+<div class="ion-padding">
+    <h2>{{{name}}}</h2>
+    <div class="gear-mobile-intro">{{{intro}}}</div>
+    {{#progress}}
+    <ion-list>
+        <ion-item>
+            <ion-label>{{#str}}hotspotsviewed, mod_gear{{/str}}</ion-label>
+            <ion-note slot="end">{{viewed}}</ion-note>
+        </ion-item>
+        {{#hasquizzes}}
+        <ion-item>
+            <ion-label>{{#str}}quizzessolved, mod_gear{{/str}}</ion-label>
+            <ion-note slot="end">{{solved}}</ion-note>
+        </ion-item>
+        <ion-item>
+            <ion-label>{{#str}}points, mod_gear{{/str}}</ion-label>
+            <ion-note slot="end">{{points}}</ion-note>
+        </ion-item>
+        {{/hasquizzes}}
+    </ion-list>
+    {{/progress}}
+    <p>{{#str}}mobile_warning, mod_gear{{/str}}</p>
+    <ion-button expand="block" core-link href="{{viewurl}}" [capture]="false" inApp="false" [autoLogin]="'yes'">
+        {{#str}}mobile_open, mod_gear{{/str}}
+    </ion-button>
 </div>

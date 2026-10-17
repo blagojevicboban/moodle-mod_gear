@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Developer tooling: end-to-end chat check with a local PeerJS server (`devtools/check-gear-chat.mjs`), modal and scene description checks.
 
 ### Changed
+- **Moodle app:** the app view was a raw template that the app could not show; it is now rendered on the server and shows the description, the student's progress (hotspots, quizzes, points) and a button that opens the 3D scene in the browser with automatic login (the WebGL/WebXR viewer needs a browser).
 - Accessibility, checked with axe-core on the viewer, tour, help dialog and hotspot form (0 violations, `devtools/check-gear-axe.mjs`): the hotspot color and size controls have accessible names, hotspot popup and form headings are `h3` (no skipped heading level).
 - Browser pop-ups are replaced by Moodle dialogs: the delete confirmation (`Notification.deleteCancelPromise`) and the topic dialog of the AI assistant (`core/modal_save_cancel`, focus in the field, Enter confirms).
 - Chat messages show the user that the server lists for the sending peer ("User 7") instead of a name the message claims; the label and the viewer texts that were hard coded in English (error title, points awarded, hotspot fallback name, canvas label) are language strings now.
