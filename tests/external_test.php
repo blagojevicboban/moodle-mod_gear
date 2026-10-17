@@ -161,7 +161,7 @@ final class external_test extends \advanced_testcase {
         $this->assertTrue(save_scene_config::execute($gear->id, '', $animation, 'Copper', $tour)['success']);
         $config = json_decode($DB->get_field('gear', 'scene_config', ['id' => $gear->id]), true);
         $this->assertSame([1, 2, 3], $config['camera']['position']);
-        $this->assertSame(['clip' => 'Spin', 'autoplay' => true, 'speed' => 3.0], $config['animation']);
+        $this->assertEquals(['clip' => 'Spin', 'autoplay' => true, 'speed' => 3], $config['animation']);
         $this->assertSame('Copper', $config['variant']);
         $this->assertCount(2, $config['tour']);
         $this->assertSame(120, \core_text::strlen($config['tour'][1]['title']));
