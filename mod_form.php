@@ -71,7 +71,7 @@ class mod_gear_mod_form extends moodleform_mod {
                 'subdirs' => 1,
                 'maxbytes' => $maxbytes,
                 'maxfiles' => 20,
-                'accepted_types' => ['.glb', '.gltf', '.bin', 'image'],
+                'accepted_types' => ['.glb', '.gltf', '.bin', '.usdz', 'image'],
             ]
         );
         $mform->addHelpButton('modelfiles', 'modelfiles', 'gear');

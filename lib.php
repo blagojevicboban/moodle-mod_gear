@@ -452,7 +452,9 @@ function gear_pluginfile(
     }
 
     // Models are loaded by the same-origin viewer, no CORS header is needed. Never render uploads inline.
-    send_stored_file($file, 86400, 0, true, $options);
+    // USDZ files must open inline in AR Quick Look; everything else is always a download.
+    $inline = strtolower(pathinfo($filename, PATHINFO_EXTENSION)) === 'usdz';
+    send_stored_file($file, 86400, 0, !$inline, $options);
     return true;
 }
 
@@ -487,6 +489,12 @@ function gear_get_models(int $gearid, int $contextid): array {
             $filename
         );
         $model->url = $url->out();
+        // An optional USDZ version of the model (same name) opens in AR Quick Look on iPhone and iPad.
+        $usdzname = pathinfo($filename, PATHINFO_FILENAME) . '.usdz';
+        $model->usdzurl = '';
+        if (get_file_storage()->file_exists($contextid, 'mod_gear', 'model', 0, $filepath, $usdzname)) {
+            $model->usdzurl = moodle_url::make_pluginfile_url($contextid, 'mod_gear', 'model', 0, $filepath, $usdzname)->out();
+        }
         $result[] = $model;
     }
 

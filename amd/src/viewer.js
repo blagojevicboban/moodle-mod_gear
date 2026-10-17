@@ -152,6 +152,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.peerServer = options.peerserver || null;
             this.aiAvailable = !!options.aiavailable;
             this.dracoPath = options.dracopath || '';
+            this.usdzUrl = options.usdzurl || '';
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -185,10 +186,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 this.setupScene();
                 this.setupControls();
                 this.setupRaycaster();
-                this.setupEventListeners();
 
-                // Check WebXR support and setup fallback if needed
+                // Find out what WebXR can do before the AR and VR buttons are wired up.
                 await this.checkWebXRSupport();
+                this.setupEventListeners();
 
                 // Wait for overlay UI to be added to DOM before proceeding
                 await this.setupOverlay();
@@ -270,6 +271,9 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     } catch (e) {
                         // VR not supported - ignore
                     }
+
+                    this.arSupported = arSupported;
+                    this.vrSupported = vrSupported;
 
                     // Hide buttons if not supported (no warning needed for desktop browsers)
                     if (!arSupported && arBtn) {
@@ -819,12 +823,40 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
          * @param {HTMLElement} button AR button element
          */
         async setupARButton(button) {
-            if (!this.arSupported) {
+            if (!this.arSupported && this.canOpenQuickLook()) {
+                // iPhone and iPad: no WebXR AR, but Safari opens a USDZ file in AR Quick Look.
+                button.style.display = '';
+                button.disabled = false;
+                button.addEventListener('click', () => this.openQuickLook());
+            } else if (!this.arSupported) {
                 button.disabled = true;
                 button.title = await Str.get_string('arnotsupported', 'mod_gear');
             } else {
                 button.addEventListener('click', () => this.startARSession());
             }
+        }
+
+        /**
+         * Whether AR Quick Look (Apple's AR viewer for USDZ files) can be used for this activity.
+         *
+         * @returns {boolean}
+         */
+        canOpenQuickLook() {
+            return !!this.usdzUrl && document.createElement('a').relList.supports('ar');
+        }
+
+        /**
+         * Open the USDZ version of the model in AR Quick Look.
+         */
+        openQuickLook() {
+            const anchor = document.createElement('a');
+            anchor.rel = 'ar';
+            anchor.href = this.usdzUrl;
+            anchor.appendChild(document.createElement('img'));
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            this.trackEvent('ar_start');
         }
 
         /**

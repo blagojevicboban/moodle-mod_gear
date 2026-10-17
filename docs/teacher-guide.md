@@ -71,6 +71,6 @@ An administrator has to enable it first (**Site administration → Plugins → A
 
 ## 6. Good to know
 
-- **Browsers:** WebGL is required. VR/AR needs a WebXR-capable browser and device. On iPhone and iPad the 3D viewer works but WebXR AR does not.
+- **Browsers:** WebGL is required. VR/AR needs a WebXR-capable browser and device. On iPhone and iPad the 3D viewer works but WebXR AR does not; to offer AR there, upload a `.usdz` file with the same name next to the model (`engine.glb` + `engine.usdz`) and the **View in AR** button opens it in Apple's AR Quick Look.
 - **Backup and restore:** models, hotspots and branching rules are included; learner data only when "include user data" is selected.
 - **Large models:** keep the file small (a few MB). Compress textures and reduce polygons before uploading.

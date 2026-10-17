@@ -129,7 +129,7 @@ Models, hotspots, grades and analytics never leave your site. Keep the AI Assist
 ## 📱 Browser notes
 
 - **Desktop and Android (Chrome, Edge, Firefox):** 3D viewer, WebXR VR and AR where the device supports it.
-- **iPhone and iPad (Safari):** the 3D viewer works, but WebXR augmented reality is not available; Apple's AR Quick Look needs a `.usdz` file, which GEAR does not generate yet.
+- **iPhone and iPad (Safari):** the 3D viewer works, but WebXR augmented reality is not available; AR is possible through Apple's AR Quick Look when you upload a `.usdz` file with the same name as the model (GEAR does not convert models).
 - **Apple Vision Pro:** WebXR immersive VR is available in Safari on visionOS (may need to be enabled).
 
 ## 🎨 Supported Formats
@@ -137,6 +137,7 @@ Models, hotspots, grades and analytics never leave your site. Keep the AI Assist
 | Format | Extension | Description |
 |--------|-----------|-------------|
 | GLB | `.glb` | Binary glTF single file (recommended); Draco and Meshopt compression are supported |
+| USDZ | `.usdz` | Optional companion with the same name as the model (`engine.glb` + `engine.usdz`) for AR Quick Look on iPhone and iPad |
 | glTF | `.gltf` + `.bin` + images | JSON glTF with companion binary/texture assets |
 
 ## 🛠️ Development

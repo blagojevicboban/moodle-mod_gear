@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accessibility: help, leaderboard and hotspot popups are real dialogs (`role="dialog"`, labelled, Escape closes, Tab stays inside, focus returns to the opener); icon buttons have accessible names; the chat is a live log; keyboard navigation announces the focused hotspot through a status region.
 - `prefers-reduced-motion` is respected (no tooltip transition, hotspot blinking or pulsing).
 - Teacher and student guides in `docs/`.
+- **AR on iPhone and iPad:** upload a `.usdz` file with the same name as the model (for example `engine.glb` and `engine.usdz`) and Safari opens it in AR Quick Look (Apple does not offer WebXR AR on iOS). Experimental: it has been tested with a simulated Safari only, not on a device.
 - **Completion rules** (Moodle custom completion API): *open every hotspot* (teleport points and still locked hotspots do not count) and *earn at least N quiz points*; they are evaluated when a hotspot is opened or a quiz answered and are shown on the course page.
 - **Group mode** (`FEATURE_GROUPS`, `FEATURE_GROUPINGS`): with separate groups the leaderboard and the shared session show only members of the user's groups.
 - Compressed models: **Draco** and **Meshopt** compressed glTF/GLB files load (the Draco decoder is self-hosted in `vendorjs/draco/`).
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WebRTC: peer ids are random instead of `mod_gear_<activity>_<user>`, incoming calls and chat connections are accepted only from participants of the session list, and guests cannot join.
 
 ### Fixed
+- **The AR and VR buttons were always disabled**, even in browsers with WebXR: the support flags were never stored, and the buttons were wired before WebXR was checked.
 - Editing the activity settings no longer resets the saved camera and the hotspot checkboxes.
 - The viewer is no longer started for an activity without a model.
 - Grades are scaled so that the points of all quiz hotspots equal the full grade; the grade item and sessions are removed with the activity.

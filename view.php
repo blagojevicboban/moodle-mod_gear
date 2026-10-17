@@ -75,6 +75,7 @@ $models = gear_get_models($gear->id, $context->id);
 
 // Check if user can manage hotspots.
 $canmanage = has_capability('mod/gear:manage', $context);
+$usdzurls = array_filter(array_column($models, 'usdzurl'));
 
 // Prepare JS configuration.
 $jsconfig = [
@@ -89,6 +90,7 @@ $jsconfig = [
     'collab' => gear_collaboration_enabled() && !isguestuser(),
     'aiavailable' => $canmanage && gear_ai_available(),
     'peerserver' => gear_get_peer_server(),
+    'usdzurl' => $usdzurls ? reset($usdzurls) : '',
     'dracopath' => (new moodle_url('/mod/gear/vendorjs/draco/'))->out(false),
 ];
 if (!empty($models)) {
