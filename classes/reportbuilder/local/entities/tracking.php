@@ -75,6 +75,7 @@ class tracking extends base {
         $gearalias = $this->get_table_alias('gear');
 
         $columns[] = (new column('name', new lang_string('name'), $this->get_entity_name()))
+            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$gearalias}.name")
             ->set_is_sortable(true)
@@ -109,7 +110,8 @@ class tracking extends base {
         $trackingalias = $this->get_table_alias('gear_tracking');
         $gearalias = $this->get_table_alias('gear');
 
-        $filters[] = new filter(text::class, 'name', new lang_string('name'), $this->get_entity_name(), "{$gearalias}.name");
+        $filters[] = (new filter(text::class, 'name', new lang_string('name'), $this->get_entity_name(), "{$gearalias}.name"))
+            ->add_joins($this->get_joins());
         $filters[] = new filter(
             text::class,
             'action',
