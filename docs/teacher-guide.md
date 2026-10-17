@@ -51,6 +51,10 @@ Only the topic text you type is sent to the AI provider configured by your admin
 
 Under **Completion conditions** choose automatic completion and tick **The student has opened every hotspot** and/or **The student earns at least this many quiz points**. Teleport points and hotspots that are still locked do not count for the first rule.
 
+## Large models
+
+Keep models under about 500,000 triangles for phones. GEAR reads Draco and Meshopt compressed geometry and KTX2 compressed textures (for example made with `gltf-transform` or `gltfpack`), which makes the files much smaller. When a model has more than a million triangles you see a warning in the viewer and the scene is drawn at a lower resolution.
+
 ## Quiz questions from the question bank
 
 When you add or edit a *Quiz* hotspot, press **Import from question bank**, pick a single answer multiple choice or true/false question of the course and save. The title, the text, the answers and the correct answer are copied into the hotspot (images are not). Changing the question in the bank later does not change the hotspot.

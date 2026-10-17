@@ -27,6 +27,7 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {TransformControls} from 'three/examples/jsm/controls/TransformControls.js';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
+import {KTX2Loader} from 'three/examples/jsm/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 // Moodle AMD dependencies (external - loaded via RequireJS at runtime).
@@ -43,6 +44,10 @@ import SyncManager from './sync';
 import SceneExtras from './extras';
 import {pickQuestion} from './bank';
 import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
+
+// Above this many triangles the scene is rendered at pixel ratio 1; above the second limit the teacher is warned.
+const HEAVY_TRIANGLES = 500000;
+const WARN_TRIANGLES = 1000000;
 
     /**
      * GEAR Viewer class.
@@ -77,6 +82,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             this.peerServer = options.peerserver || null;
             this.aiAvailable = !!options.aiavailable;
             this.dracoPath = options.dracopath || '';
+            this.basisPath = options.basispath || '';
             this.usdzUrl = options.usdzurl || '';
             this.sceneName = options.name || '';
 
@@ -844,6 +850,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
 
                     // Animations, material variants and the guided tour.
                     await this.extras.ready();
+                    await this.adaptToModelSize();
 
                     // Mark as loaded.
                     this.container.classList.add('loaded');
@@ -877,8 +884,41 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 draco.setDecoderPath(this.dracoPath);
                 loader.setDRACOLoader(draco);
             }
+            if (this.basisPath) {
+                // KTX2 (Basis Universal) textures: the transcoder picks the format that this GPU supports.
+                this.ktx2Loader = new KTX2Loader();
+                this.ktx2Loader.setTranscoderPath(this.basisPath);
+                this.ktx2Loader.detectSupport(this.renderer);
+                loader.setKTX2Loader(this.ktx2Loader);
+            }
             loader.setMeshoptDecoder(MeshoptDecoder);
             return loader;
+        }
+
+        /**
+         * Lower the render resolution for heavy models and phones, and tell the teacher when a model is too heavy.
+         */
+        async adaptToModelSize() {
+            let triangles = 0;
+            this.modelContainer.traverse((object) => {
+                if (object.isMesh && object.geometry) {
+                    const geometry = object.geometry;
+                    triangles += (geometry.index ? geometry.index.count : geometry.attributes.position.count) / 3;
+                }
+            });
+            this.triangleCount = Math.round(triangles);
+            const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            let ratio = Math.min(window.devicePixelRatio, touch ? 1.5 : 2);
+            if (triangles > HEAVY_TRIANGLES) {
+                ratio = Math.min(ratio, 1);
+            }
+            this.renderer.setPixelRatio(ratio);
+            if (this.canManage && triangles > WARN_TRIANGLES) {
+                Notification.addNotification({
+                    message: await Str.get_string('modeltoolarge', 'mod_gear', this.triangleCount.toLocaleString()),
+                    type: 'warning'
+                });
+            }
         }
 
         /**
@@ -1005,6 +1045,9 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => m.dispose());
                 }
             });
+            if (this.ktx2Loader) {
+                this.ktx2Loader.dispose();
+            }
             this.renderer.dispose();
             if (this.tooltipElement) {
                 this.tooltipElement.remove();

@@ -151,6 +151,7 @@ $string['modelfiles_help'] = 'Učitajte 3D modele u glTF (.gltf) ili GLB (.glb) 
 $string['modelloaderror'] = '3D model nije mogao da se učita. Proverite da je fajl ispravan glTF ili GLB model.';
 $string['models'] = '3D Modeli';
 $string['modelsection'] = '3D Modeli';
+$string['modeltoolarge'] = 'Ovaj model ima {$a} trouglova i može biti spor na telefonima i starijim računarima. Razmotrite pojednostavljenje ili kompresiju (Draco ili Meshopt za geometriju, KTX2 za teksture).';
 $string['modulename'] = 'GEAR';
 $string['modulename_help'] = 'GEAR modul omogućava nastavnicima kreiranje imerzivnih AR/VR obrazovnih iskustava sa 3D modelima, hotspotovima i interaktivnim elementima.';
 $string['modulenameplural'] = 'GEAR Aktivnosti';

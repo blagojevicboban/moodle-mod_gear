@@ -93,6 +93,7 @@ $jsconfig = [
     'peerserver' => gear_get_peer_server(),
     'usdzurl' => $usdzurls ? reset($usdzurls) : '',
     'dracopath' => (new moodle_url('/mod/gear/vendorjs/draco/'))->out(false),
+    'basispath' => (new moodle_url('/mod/gear/vendorjs/basis/'))->out(false),
 ];
 if (!empty($models)) {
     $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);

@@ -17,6 +17,14 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Check that the tag matches version.php
+        run: |
+          RELEASE=$(grep -oP "release\s*=\s*'\K[^']+" version.php)
+          if [ "$RELEASE" != "${{ steps.version.outputs.VERSION }}" ]; then
+            echo "Tag v${{ steps.version.outputs.VERSION }} does not match \$plugin->release '$RELEASE' in version.php" >&2
+            exit 1
+          fi
+
       - name: Create release zip
         run: |
           mkdir -p release/gear

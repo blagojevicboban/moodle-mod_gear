@@ -35,6 +35,18 @@
     </copyrights>
   </library>
   <library>
+    <location>vendorjs/basis</location>
+    <name>Basis Universal transcoder</name>
+    <description>Basis Universal WebAssembly and JavaScript transcoder (from the Three.js examples) for KTX2 textures in glTF models.</description>
+    <version>r160</version>
+    <license>Apache-2.0</license>
+    <licenseversion>2.0</licenseversion>
+    <repository>https://github.com/BinomialLLC/basis_universal</repository>
+    <copyrights>
+      <copyright>2019-2024 Binomial LLC</copyright>
+    </copyrights>
+  </library>
+  <library>
     <location>amd/build/viewer.min.js</location>
     <name>meshoptimizer decoder</name>
     <description>Meshopt decoder for compressed glTF models (bundled into the AMD viewer bundle from the Three.js examples).</description>

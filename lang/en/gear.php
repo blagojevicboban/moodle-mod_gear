@@ -151,6 +151,7 @@ $string['modelfiles_help'] = 'Upload 3D models in glTF (.gltf) or GLB (.glb) for
 $string['modelloaderror'] = 'The 3D model could not be loaded. Check that the file is a valid glTF or GLB model.';
 $string['models'] = '3D Models';
 $string['modelsection'] = '3D Models';
+$string['modeltoolarge'] = 'This model has {$a} triangles and may be slow on phones and older computers. Consider simplifying it or compressing it (Draco or Meshopt for geometry, KTX2 for textures).';
 $string['modulename'] = 'GEAR';
 $string['modulename_help'] = 'The GEAR activity module enables teachers to create immersive AR/VR learning experiences with 3D models, hotspots, and interactive elements.';
 $string['modulenameplural'] = 'GEAR Activities';

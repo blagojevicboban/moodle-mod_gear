@@ -22,5 +22,10 @@ Third-party JavaScript libraries in mod_gear
    - Location: vendorjs/draco/ (draco_decoder.js, draco_decoder.wasm, draco_wasm_wrapper.js)
    - How to update: copy the three files from node_modules/three/examples/jsm/libs/draco/gltf/ after updating Three.js, and keep the version in thirdpartylibs.xml.
 
-4. meshoptimizer decoder (MIT license)
+4. Basis Universal transcoder (Apache-2.0 license)
+   - Source: https://github.com/BinomialLLC/basis_universal (the prebuilt transcoder shipped with Three.js)
+   - Location: vendorjs/basis/ (basis_transcoder.js, basis_transcoder.wasm)
+   - How to update: copy the two files from node_modules/three/examples/jsm/libs/basis/ after updating Three.js, and keep the version in thirdpartylibs.xml.
+
+5. meshoptimizer decoder (MIT license)
    - Bundled into amd/build/viewer.min.js from three/examples/jsm/libs/meshopt_decoder.module.js; it is updated together with Three.js.
