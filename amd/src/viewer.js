@@ -41,6 +41,7 @@ import ModalSaveCancel from 'core/modal_save_cancel';
 import ModalEvents from 'core/modal_events';
 import SyncManager from './sync';
 import SceneExtras from './extras';
+import {pickQuestion} from './bank';
 import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
 
     /**
@@ -2131,6 +2132,35 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
         }
 
         /**
+         * Copy a question of the course question banks into the quiz fields of the hotspot form.
+         *
+         * @param {HTMLElement} form The hotspot form
+         */
+        async importBankQuestion(form) {
+            let question;
+            try {
+                question = await pickQuestion(this.gearid, this.cmid);
+            } catch (e) {
+                Notification.exception(e);
+                return;
+            }
+            if (!question) {
+                return;
+            }
+            const field = (name) => form.querySelector('#gear-hotspot-input-' + name + '-' + this.cmid);
+            const joined = question.options.join(', ');
+            form.dataset.importedOptions = JSON.stringify(question.options);
+            form.dataset.importedJoined = joined;
+            field('options').value = joined;
+            field('correct').value = question.correct;
+            if (!field('title').value.trim()) {
+                field('title').value = question.name;
+            }
+            field('content').value = '<p>' + escapeHtml(question.text) + '</p>';
+            Notification.addNotification({message: await Str.get_string('importquestionimported', 'mod_gear'), type: 'info'});
+        }
+
+        /**
          * Setup event listeners for the hotspot form.
          *
          * @param {HTMLElement} form
@@ -2140,6 +2170,11 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             var quizFields = form.querySelector('#gear-hotspot-quiz-fields-' + this.cmid);
             var audioFields = form.querySelector('#gear-hotspot-audio-fields-' + this.cmid);
             var videoFields = form.querySelector('#gear-hotspot-video-fields-' + this.cmid);
+
+            const importButton = form.querySelector('.gear-import-question');
+            if (importButton) {
+                importButton.addEventListener('click', () => this.importBankQuestion(form));
+            }
 
             typeSelect.addEventListener('change', () => {
                 quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
@@ -2239,7 +2274,10 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 var correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
                 var points = form.querySelector('#gear-hotspot-input-points-' + this.cmid).value;
 
-                config.options = optionsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                // Options copied from the question bank may contain commas, so they are kept as a list.
+                config.options = form.dataset.importedJoined === optionsStr && form.dataset.importedOptions
+                    ? JSON.parse(form.dataset.importedOptions)
+                    : optionsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
                 config.correctAnswer = parseInt(correct, 10);
                 config.points = parseInt(points, 10);
 

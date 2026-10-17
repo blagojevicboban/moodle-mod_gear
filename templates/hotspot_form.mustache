@@ -63,6 +63,9 @@
 
         <div id="gear-hotspot-quiz-fields-{{cmid}}" style="{{^isQuiz}}display:none;{{/isQuiz}}">
             <div class="gear-form-group">
+                <button type="button" class="btn btn-outline-secondary btn-sm gear-import-question">{{#str}}importquestion, mod_gear{{/str}}</button>
+            </div>
+            <div class="gear-form-group">
                 <label for="gear-hotspot-input-options-{{cmid}}">{{#str}}quizoptions, mod_gear{{/str}}</label>
                 <input type="text" id="gear-hotspot-input-options-{{cmid}}" class="form-control" placeholder="{{#str}}quizoptions_help, mod_gear{{/str}}" value="{{options}}">
             </div>

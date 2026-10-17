@@ -51,6 +51,14 @@ Only the topic text you type is sent to the AI provider configured by your admin
 
 Under **Completion conditions** choose automatic completion and tick **The student has opened every hotspot** and/or **The student earns at least this many quiz points**. Teleport points and hotspots that are still locked do not count for the first rule.
 
+## Quiz questions from the question bank
+
+When you add or edit a *Quiz* hotspot, press **Import from question bank**, pick a single answer multiple choice or true/false question of the course and save. The title, the text, the answers and the correct answer are copied into the hotspot (images are not). Changing the question in the bank later does not change the hotspot.
+
+## Reports per student
+
+*Site administration > Reports > Report builder > Custom reports > New report*, source **GEAR activity tracking**. The report lists every tracked action (hotspot views, quiz answers, AR/VR sessions) with the user, course, activity, time and duration. Use *Aggregation* on the action column (count) and group by user to get totals per student, and the filters to limit the report to one course or activity.
+
 ## Animations, variants and tour
 
 - If the model has animations, a panel appears at the bottom left of the viewer: choose a clip, play/pause it and change the speed. Models with material variants also get a *Material variant* selector. Pick what students should see first and press **Save as default**.

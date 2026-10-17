@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2026-10-17
 
 ### Added
+- **Questions from the question bank:** the quiz fields of the hotspot form have an *Import from question bank* button (single answer multiple choice and true/false questions of the course; Moodle 4.5 course context and the question banks of Moodle 5.x). The hotspot gets a copy of the text and the answers (images are not copied); options that contain commas are kept intact. New web service `mod_gear_get_bank_questions` (capability `mod/gear:manage`).
+- **Report Builder source** *GEAR activity tracking*: custom reports (and aggregation, for example a count of hotspot views per student) over the tracked actions of the users, with the course, activity, user, action, time and duration. Tests for the source (`tests/reportbuilder`).
 - **Animations:** the clips of a glTF model (play/pause, clip and speed selection, off by default under *reduced motion*); the teacher saves the default clip, speed and autoplay with *Save as default*.
 - **Material variants** (`KHR_materials_variants`): a selector in the viewer; the teacher saves the default variant.
 - **Guided tour:** the teacher walks the scene and adds steps (title, text and the current camera view); students follow them with *Previous/Next*, the camera flies to each view (jumps under *reduced motion*), the step text is read out by screen readers. Steps are stored in the scene configuration (no database change, included in backups) and validated on the server (at most 30 steps).

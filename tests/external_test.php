@@ -17,6 +17,7 @@
 namespace mod_gear;
 
 use mod_gear\external\delete_hotspot;
+use mod_gear\external\get_bank_questions;
 use mod_gear\external\get_hotspots;
 use mod_gear\external\get_leaderboard;
 use mod_gear\external\get_scene_data;
@@ -37,6 +38,7 @@ use mod_gear\external\track_event;
  * @covers     \mod_gear\external\save_hotspot
  * @covers     \mod_gear\external\delete_hotspot
  * @covers     \mod_gear\external\get_hotspots
+ * @covers     \mod_gear\external\get_bank_questions
  * @covers     \mod_gear\external\get_scene_data
  * @covers     \mod_gear\external\track_event
  * @covers     \mod_gear\external\submit_quiz
@@ -254,5 +256,39 @@ final class external_test extends \advanced_testcase {
         submit_quiz::execute($gear->id, $quiz['id'], '1');
         $this->assertSame(['Quiz', 'Secret'], array_column(get_hotspots::execute($gear->id)['hotspots'], 'title'));
         $this->assertCount(2, get_scene_data::execute($gear->id)['hotspots']);
+    }
+
+    /**
+     * Test that only single answer questions with one correct answer are offered from the question bank.
+     */
+    public function test_get_bank_questions(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        /** @var \mod_gear_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_gear');
+        $gear = $generator->create_instance(['course' => $course->id]);
+
+        /** @var \core_question_generator $questiongenerator */
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $category = $questiongenerator->create_question_category(['contextid' => \context_course::instance($course->id)->id]);
+        $catid = $category->id;
+        $single = $questiongenerator->create_question('multichoice', 'one_of_four', ['category' => $catid, 'name' => 'Single']);
+        $questiongenerator->create_question('multichoice', 'two_of_four', ['category' => $catid, 'name' => 'Multi']);
+        $questiongenerator->create_question('shortanswer', null, ['category' => $catid, 'name' => 'Short']);
+
+        $this->setUser($teacher);
+        $questions = get_bank_questions::execute($gear->id);
+        $this->assertCount(1, $questions);
+        $this->assertSame((int) $single->id, $questions[0]['id']);
+        $this->assertSame('Single', $questions[0]['name']);
+        $this->assertCount(4, $questions[0]['options']);
+        $this->assertSame(0, $questions[0]['correct']);
+
+        $this->setUser($student);
+        $this->expectException(\required_capability_exception::class);
+        get_bank_questions::execute($gear->id);
     }
 }
