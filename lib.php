@@ -620,3 +620,71 @@ function gear_reset_userdata($data): array {
 
     return $status;
 }
+
+/**
+ * Ids of the quiz hotspots a user has answered correctly.
+ *
+ * @param int $gearid The GEAR instance id
+ * @param int $userid The user id
+ * @return int[] Hotspot ids
+ */
+function gear_get_solved_quiz_ids(int $gearid, int $userid): array {
+    global $DB;
+
+    $solved = [];
+    $conditions = ['gearid' => $gearid, 'userid' => $userid, 'action' => 'quiz_submit'];
+    $records = $DB->get_records('gear_tracking', $conditions, '', 'id, data');
+    foreach ($records as $record) {
+        $data = json_decode($record->data, true);
+        if (!empty($data['correct']) && !empty($data['hotspotid'])) {
+            $solved[(int) $data['hotspotid']] = (int) $data['hotspotid'];
+        }
+    }
+    return array_values($solved);
+}
+
+/**
+ * Whether a hotspot is available to a user: hotspots that require another quiz stay hidden until it has been solved.
+ *
+ * @param stdClass $hotspot Hotspot record (needs the config JSON)
+ * @param int[] $solved Quiz hotspot ids the user has solved
+ * @param bool $canmanage Whether the user may manage the activity (managers always see everything)
+ * @return bool True when the hotspot may be shown
+ */
+function gear_hotspot_is_unlocked(stdClass $hotspot, array $solved, bool $canmanage): bool {
+    if ($canmanage) {
+        return true;
+    }
+    $config = json_decode($hotspot->config ?? '', true);
+    $required = is_array($config) && !empty($config['requires_id']) ? (int) $config['requires_id'] : 0;
+    return !$required || in_array($required, $solved, true);
+}
+
+/**
+ * Whether collaborative mode (shared sessions, WebRTC voice and chat) is enabled by the administrator.
+ *
+ * @return bool
+ */
+function gear_collaboration_enabled(): bool {
+    return (bool) get_config('mod_gear', 'collab_enabled');
+}
+
+/**
+ * Connection options of the configured PeerJS server, or null to use the public PeerJS cloud.
+ *
+ * @return array|null Options (host, port, path, secure) for the Peer constructor
+ */
+function gear_get_peer_server(): ?array {
+    $url = trim((string) get_config('mod_gear', 'peerjs_server'));
+    $parts = $url === '' ? false : parse_url($url);
+    if (!$parts || empty($parts['host'])) {
+        return null;
+    }
+    $secure = ($parts['scheme'] ?? 'https') === 'https';
+    return [
+        'host' => $parts['host'],
+        'port' => (int) ($parts['port'] ?? ($secure ? 443 : 80)),
+        'path' => $parts['path'] ?? '/',
+        'secure' => $secure,
+    ];
+}

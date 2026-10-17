@@ -86,6 +86,8 @@ $jsconfig = [
     'canmanage' => $canmanage,
     'userid' => $USER->id,
     'peerjsurl' => (new moodle_url('/mod/gear/vendorjs/peerjs.min.js'))->out(false),
+    'collab' => gear_collaboration_enabled() && !isguestuser(),
+    'peerserver' => gear_get_peer_server(),
 ];
 if (!empty($models)) {
     $PAGE->requires->js_call_amd('mod_gear/viewer', 'init', [$jsconfig]);

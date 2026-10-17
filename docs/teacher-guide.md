@@ -55,7 +55,7 @@ Only the topic text you type is sent to the configured AI service.
 ## 4. Collaborative mode
 
 Students who open the same activity see each other as 3D avatars and can use text chat and microphone voice chat.
-The browsers connect directly to each other (WebRTC) through a public PeerJS broker; no audio or chat is stored in Moodle.
+An administrator has to enable it first (**Site administration → Plugins → Activity modules → GEAR → Enable collaborative mode**; off by default on new sites). The browsers connect directly to each other (WebRTC) through a PeerJS broker (the public PeerJS cloud, or your own server set under *PeerJS server URL*); no audio or chat is stored in Moodle. Only people who are in the activity's session list can call or chat with each other, and guests cannot join.
 
 ## 5. Accessibility
 

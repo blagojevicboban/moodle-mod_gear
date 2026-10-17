@@ -91,6 +91,7 @@
         <FIELD NAME="gearid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="position" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON x,y,z"/>
         <FIELD NAME="rotation" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON x,y,z"/>
+        <FIELD NAME="peerid" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="Random WebRTC peer id of this browser session"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

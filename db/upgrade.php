@@ -107,5 +107,21 @@ function xmldb_gear_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026101601, 'gear');
     }
 
+    if ($oldversion < 2026101700) {
+        // Random peer id per browser session (the predictable user based id is no longer used).
+        $table = new xmldb_table('gear_sessions');
+        $field = new xmldb_field('peerid', XMLDB_TYPE_CHAR, '64', null, null, null, null, 'rotation');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Collaborative mode is now an admin setting that is off for new installs; keep it on where it already worked.
+        if (get_config('mod_gear', 'collab_enabled') === false) {
+            set_config('collab_enabled', 1, 'mod_gear');
+        }
+
+        upgrade_mod_savepoint(true, 2026101700, 'gear');
+    }
+
     return true;
 }

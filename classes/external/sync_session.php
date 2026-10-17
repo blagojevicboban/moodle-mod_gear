@@ -41,6 +41,7 @@ class sync_session extends external_api {
             'gearid' => new external_value(PARAM_INT, 'GEAR activity ID'),
             'position' => new external_value(PARAM_RAW, 'JSON position {x,y,z}', VALUE_DEFAULT, ''),
             'rotation' => new external_value(PARAM_RAW, 'JSON rotation {x,y,z}', VALUE_DEFAULT, ''),
+            'peerid' => new external_value(PARAM_ALPHANUMEXT, 'Random WebRTC peer id of this browser', VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -50,12 +51,14 @@ class sync_session extends external_api {
      * @param int $gearid GEAR activity ID
      * @param string $position Current position
      * @param string $rotation Current rotation
+     * @param string $peerid Random WebRTC peer id
      * @return array List of other active users
      */
     public static function execute(
         int $gearid,
         string $position = '',
-        string $rotation = ''
+        string $rotation = '',
+        string $peerid = ''
     ): array {
         global $DB, $USER;
 
@@ -63,6 +66,7 @@ class sync_session extends external_api {
             'gearid' => $gearid,
             'position' => $position,
             'rotation' => $rotation,
+            'peerid' => $peerid,
         ]);
 
         $gearid = $params['gearid'];
@@ -76,11 +80,17 @@ class sync_session extends external_api {
         self::validate_context($context);
         require_capability('mod/gear:view', $context);
 
+        // Shared sessions are an opt-in feature and not for guests.
+        if (!gear_collaboration_enabled() || isguestuser()) {
+            throw new \moodle_exception('collabdisabled', 'mod_gear');
+        }
+
         // Update or insert current user session.
         $session = $DB->get_record('gear_sessions', ['gearid' => $gearid, 'userid' => $userid]);
         if ($session) {
             $session->position = $params['position'];
             $session->rotation = $params['rotation'];
+            $session->peerid = substr($params['peerid'], 0, 64);
             $session->timemodified = $now;
             $DB->update_record('gear_sessions', $session);
         } else {
@@ -89,6 +99,7 @@ class sync_session extends external_api {
             $session->userid = $userid;
             $session->position = $params['position'];
             $session->rotation = $params['rotation'];
+            $session->peerid = substr($params['peerid'], 0, 64);
             $session->timemodified = $now;
             $DB->insert_record('gear_sessions', $session);
         }
@@ -118,6 +129,7 @@ class sync_session extends external_api {
                 'lastname' => $other->lastname,
                 'position' => $other->position,
                 'rotation' => $other->rotation,
+                'peerid' => (string) $other->peerid,
             ];
         }
 
@@ -137,6 +149,7 @@ class sync_session extends external_api {
                 'lastname' => new external_value(PARAM_TEXT, 'Last Name'),
                 'position' => new external_value(PARAM_RAW, 'JSON position'),
                 'rotation' => new external_value(PARAM_RAW, 'JSON rotation'),
+                'peerid' => new external_value(PARAM_ALPHANUMEXT, 'WebRTC peer id'),
             ])
         );
     }

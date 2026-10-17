@@ -120,9 +120,9 @@ GEAR stores quiz results, hotspot clicks and (while a session is open) camera po
 | Feature | Data that leaves your Moodle site | Where it goes |
 |---------|-----------------------------------|---------------|
 | **AI Assistant** (optional, off by default) | The prompt/topic text a teacher types | The OpenAI-compatible service configured by the administrator |
-| **Collaborative mode, voice and chat** | Peer id, chat messages and audio streams between participants of the same activity | Directly between browsers (WebRTC); the public PeerJS broker is used to connect them |
+| **Collaborative mode, voice and chat** (optional, off for new installs) | A random peer id and IP address (to the PeerJS broker); chat messages and audio go directly between the browsers of the participants | The public PeerJS cloud, or your own PeerJS server (setting *PeerJS server URL*) |
 
-Models, hotspots, grades and analytics never leave your site. Disable the AI Assistant in the plugin settings if you do not want any external service.
+Models, hotspots, grades and analytics never leave your site. Keep the AI Assistant and collaborative mode switched off in the plugin settings if you do not want any external service.
 
 ## 📱 Browser notes
 

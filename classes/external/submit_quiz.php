@@ -83,6 +83,11 @@ class submit_quiz extends external_api {
         // Get hotspot to verify answer.
         $hotspot = $DB->get_record('gear_hotspots', ['id' => $params['hotspotid'], 'gearid' => $gear->id], '*', MUST_EXIST);
 
+        $solved = gear_get_solved_quiz_ids($gear->id, (int) $USER->id);
+        if (!gear_hotspot_is_unlocked($hotspot, $solved, has_capability('mod/gear:manage', $context))) {
+            throw new \moodle_exception('nopermissions', 'error', '', get_string('hotspot', 'mod_gear'));
+        }
+
         $config = json_decode($hotspot->config, true);
         $correct = false;
         $score = 0;

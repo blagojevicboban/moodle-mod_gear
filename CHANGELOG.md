@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accessibility: help, leaderboard and hotspot popups are real dialogs (`role="dialog"`, labelled, Escape closes, Tab stays inside, focus returns to the opener); icon buttons have accessible names; the chat is a live log; keyboard navigation announces the focused hotspot through a status region.
 - `prefers-reduced-motion` is respected (no tooltip transition, hotspot blinking or pulsing).
 - Teacher and student guides in `docs/`.
+- Admin settings `collab_enabled` (collaborative mode, off for new installs) and `peerjs_server` (optional own PeerJS server); on upgrade the mode stays enabled where it was already in use.
+- `gear_sessions.peerid`: every browser session uses a random WebRTC peer id that is shared only through the session list.
 
 ### Security
 - `track_event` accepts only `ar_start`, `vr_start` and `hotspot_click` (size-limited JSON, no guests); quiz scores can no longer be forged, as they come from `submit_quiz` only.
@@ -23,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `report.php` takes hotspot titles from the hotspot table and escapes all output (stored XSS).
 - `gear_pluginfile` requires `mod/gear:view`, serves only the `model` area as a download and no longer sends a CORS wildcard.
 - Viewer: chat messages, quiz feedback and tooltips no longer insert untrusted text as HTML.
+- Hotspots that require a quiz are no longer sent to students until the quiz is solved (before, the content was in the network response and unlocking was lost on reload); `submit_quiz` refuses locked quizzes.
+- WebRTC: peer ids are random instead of `mod_gear_<activity>_<user>`, incoming calls and chat connections are accepted only from participants of the session list, and guests cannot join.
 
 ### Fixed
 - Editing the activity settings no longer resets the saved camera and the hotspot checkboxes.

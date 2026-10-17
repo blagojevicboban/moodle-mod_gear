@@ -54,6 +54,7 @@ class provider implements
             'gearid' => 'privacy:metadata:gear_sessions:gearid',
             'position' => 'privacy:metadata:gear_sessions:position',
             'rotation' => 'privacy:metadata:gear_sessions:rotation',
+            'peerid' => 'privacy:metadata:gear_sessions:peerid',
             'timemodified' => 'privacy:metadata:gear_sessions:timemodified',
         ], 'privacy:metadata:gear_sessions');
 

@@ -178,11 +178,53 @@ final class external_test extends \advanced_testcase {
         $this->assertSame((int) $student1->id, $board[0]['userid']);
         $this->assertSame(20, $board[0]['score']);
 
+        // Collaborative mode is off by default.
+        try {
+            sync_session::execute($gear->id, '{"x":1,"y":0,"z":0}', '{"x":0,"y":0,"z":0}', 'peera');
+            $this->fail('sync_session must be refused while collaborative mode is disabled');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('collabdisabled', $e->errorcode);
+        }
+
         // Collaborative sync between student 1 and student 2.
-        sync_session::execute($gear->id, '{"x":1,"y":0,"z":0}', '{"x":0,"y":0,"z":0}');
+        set_config('collab_enabled', 1, 'mod_gear');
+        sync_session::execute($gear->id, '{"x":1,"y":0,"z":0}', '{"x":0,"y":0,"z":0}', 'peera');
         $this->setUser($student2);
-        $others = sync_session::execute($gear->id, '{"x":2,"y":0,"z":0}', '{"x":0,"y":0,"z":0}');
+        $others = sync_session::execute($gear->id, '{"x":2,"y":0,"z":0}', '{"x":0,"y":0,"z":0}', 'peerb');
         $this->assertCount(1, $others);
         $this->assertSame((int) $student1->id, $others[0]['userid']);
+        $this->assertSame('peera', $others[0]['peerid']);
+    }
+
+    /**
+     * A hotspot that requires a quiz is not sent to students (and cannot be answered) until the quiz has been solved.
+     */
+    public function test_locked_hotspot_is_hidden_until_quiz_is_solved(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $gear = $this->getDataGenerator()->create_module('gear', ['course' => $course->id]);
+
+        $this->setUser($teacher);
+        $origin = '{"x":0,"y":0,"z":0}';
+        $quizconfig = '{"options":["a","b"],"correctAnswer":1,"points":10}';
+        $quiz = save_hotspot::execute(0, $gear->id, 0, 'quiz', 'Quiz', '', $origin, 'info', $quizconfig);
+        $lockedconfig = '{"requires_id":"' . $quiz['id'] . '"}';
+        save_hotspot::execute(0, $gear->id, 0, 'info', 'Secret', '<p>secret</p>', $origin, 'info', $lockedconfig);
+        $this->assertCount(2, get_hotspots::execute($gear->id)['hotspots']);
+
+        $this->setUser($student);
+        $titles = array_column(get_hotspots::execute($gear->id)['hotspots'], 'title');
+        $this->assertSame(['Quiz'], $titles);
+        $this->assertCount(1, get_scene_data::execute($gear->id)['hotspots']);
+
+        submit_quiz::execute($gear->id, $quiz['id'], '0');
+        $this->assertCount(1, get_hotspots::execute($gear->id)['hotspots']);
+
+        submit_quiz::execute($gear->id, $quiz['id'], '1');
+        $this->assertSame(['Quiz', 'Secret'], array_column(get_hotspots::execute($gear->id)['hotspots'], 'title'));
+        $this->assertCount(2, get_scene_data::execute($gear->id)['hotspots']);
     }
 }

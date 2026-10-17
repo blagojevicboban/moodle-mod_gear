@@ -53,7 +53,7 @@ class get_hotspots extends external_api {
      * @return array
      */
     public static function execute(int $gearid): array {
-        global $DB;
+        global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), ['gearid' => $gearid]);
         $gearid = $params['gearid'];
@@ -68,12 +68,16 @@ class get_hotspots extends external_api {
         require_capability('mod/gear:view', $context);
 
         $canmanage = has_capability('mod/gear:manage', $context);
+        $solved = $canmanage ? [] : gear_get_solved_quiz_ids($gearid, (int) $USER->id);
 
         // Get hotspots.
         $hotspots = $DB->get_records('gear_hotspots', ['gearid' => $gearid], 'sortorder ASC');
 
         $result = [];
         foreach ($hotspots as $hotspot) {
+            if (!gear_hotspot_is_unlocked($hotspot, $solved, $canmanage)) {
+                continue;
+            }
             $result[] = [
                 'id' => $hotspot->id,
                 'modelid' => $hotspot->modelid ?? 0,

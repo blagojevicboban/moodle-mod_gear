@@ -25,6 +25,28 @@
 defined('MOODLE_INTERNAL') || die;
 
 if ($ADMIN->fulltree) {
+    // Collaborative mode (WebRTC voice and chat).
+    $settings->add(new admin_setting_heading(
+        'mod_gear/collab_settings',
+        get_string('collabsettings', 'mod_gear'),
+        get_string('collabsettings_desc', 'mod_gear')
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_gear/collab_enabled',
+        get_string('collabenabled', 'mod_gear'),
+        get_string('collabenabled_desc', 'mod_gear'),
+        0
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'mod_gear/peerjs_server',
+        get_string('peerjsserver', 'mod_gear'),
+        get_string('peerjsserver_desc', 'mod_gear'),
+        '',
+        PARAM_URL
+    ));
+
     // AI Settings Section.
     $settings->add(new admin_setting_heading(
         'mod_gear/ai_settings',

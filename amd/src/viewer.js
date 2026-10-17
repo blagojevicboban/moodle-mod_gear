@@ -141,10 +141,10 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.modelsData = [];
             this.hotspotsData = [];
             this.hotspotsData = [];
-            this.completedQuizzes = []; // Track gamification progress
             this.canManage = options.canmanage || false;
             this.userid = options.userid || 0; // The current user ID for WebRTC
             this.peerjsUrl = options.peerjsurl || '';
+            this.peerServer = options.peerserver || null;
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -1607,16 +1607,6 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 sphere.position.set(pos.x, pos.y, pos.z);
                 sphere.userData = hotspot;
 
-                // Branching logic
-                if (hotspot.config) {
-                    const hConfig = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
-                    const reqId = hConfig.requires_id ? parseInt(hConfig.requires_id, 10) : 0;
-                    if (reqId && !this.completedQuizzes.includes(reqId) && !this.canManage) {
-                        sphere.visible = false;
-                        sphere.userData.requires_id = reqId;
-                    }
-                }
-
                 // Audio Support.
                 if (hotspot.type === 'audio' && hotspot.config) {
                     const config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
@@ -1702,15 +1692,6 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             }
 
             for (const hotspot of this.hotspotsData) {
-                // Check branching
-                if (hotspot.config) {
-                    const config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
-                    const reqId = config.requires_id ? parseInt(config.requires_id, 10) : 0;
-                    if (reqId && !this.completedQuizzes.includes(reqId) && !this.canManage) {
-                        continue; // Hide from students if locked
-                    }
-                }
-
                 var icon = 'fa-dot-circle';
                 if (hotspot.type === 'quiz') {
                     icon = 'fa-question-circle';
@@ -2395,8 +2376,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                     okBadge.className = 'badge badge-success bg-success';
                     okBadge.textContent = msg;
                     feedbackDiv.append(okBadge, ' +' + response.score + ' pts');
-                    this.completedQuizzes.push(hotspot.id);
-                    this.checkHotspotUnlocks();
+                    await this.refreshHotspots();
                 } else {
                     const msg = await Str.get_string('quiz_incorrect', 'mod_gear');
                     feedbackDiv.textContent = '';
@@ -2411,35 +2391,39 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         }
 
         /**
-         * Check if gamification condition unlocks any hotspots
+         * Ask the server for hotspots that have just been unlocked (by solving a quiz) and add them to the scene.
+         * The server never sends locked hotspots to students, so unlocking survives a page reload.
          */
-        checkHotspotUnlocks() {
-            let unlocked = false;
-            if (this.hotspotMeshes) {
-                this.hotspotMeshes.forEach(mesh => {
-                    if (!mesh.visible && mesh.userData && mesh.userData.requires_id) {
-                        if (this.completedQuizzes.includes(parseInt(mesh.userData.requires_id, 10))) {
-                            mesh.visible = true;
-                            unlocked = true;
-                            // Add pop animation
-                            mesh.scale.set(0.01, 0.01, 0.01);
-                            let scaleTarget = this.hotspotScale;
-                            let growth = setInterval(() => {
-                                let curr = mesh.scale.x;
-                                if (curr >= scaleTarget) {
-                                    clearInterval(growth);
-                                } else {
-                                    mesh.scale.set(curr + 0.1, curr + 0.1, curr + 0.1);
-                                }
-                            }, 30);
-                        }
+        async refreshHotspots() {
+            var known = new Set(this.hotspotMeshes.map(m => m.userData.id));
+
+            await this.fetchSceneData();
+            var all = this.hotspotsData;
+            var added = all.filter(h => !known.has(h.id));
+            if (added.length === 0) {
+                return;
+            }
+
+            this.hotspotsData = added;
+            this.loadHotspots();
+            this.hotspotsData = all;
+            this.renderHotspotsNav();
+
+            // Pop animation for the new hotspots.
+            this.hotspotMeshes.filter(m => !known.has(m.userData.id)).forEach(mesh => {
+                var target = this.hotspotScale;
+                mesh.scale.set(0.01, 0.01, 0.01);
+                var growth = setInterval(() => {
+                    var curr = mesh.scale.x;
+                    if (curr >= target) {
+                        clearInterval(growth);
+                    } else {
+                        mesh.scale.set(curr + 0.1, curr + 0.1, curr + 0.1);
                     }
-                });
-            }
-            if (unlocked) {
-                this.renderHotspotsNav();
-            }
+                }, 30);
+            });
         }
+
         /**
          * Generate content using AI.
          *
@@ -2483,6 +2467,26 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             this.calls = {}; // PeerId -> call
             this.dataConns = {}; // PeerId -> dataConn
             this.voiceEnabled = false;
+
+            // Random id of this browser session. The server lists the participants and only those peers are accepted.
+            var bytes = new Uint8Array(12);
+            window.crypto.getRandomValues(bytes);
+            this.peerId = 'gear' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+            this.known = {}; // PeerId -> userid of the current participants.
+        }
+
+        /**
+         * Whether a peer is a participant of this session. Unknown peers get one fresh look at the session list.
+         *
+         * @param {string} peerId Peer id
+         * @returns {Promise<boolean>}
+         */
+        async acceptPeer(peerId) {
+            if (this.known[peerId]) {
+                return true;
+            }
+            await this.sync();
+            return !!this.known[peerId];
         }
 
         initPeer() {
@@ -2502,10 +2506,13 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 this.peerPromise = null;
                 return;
             }
-            var myPeerId = 'mod_gear_' + this.viewer.gearid + '_' + this.viewer.userid;
-            this.peer = new Peer(myPeerId);
+            this.peer = new Peer(this.peerId, this.viewer.peerServer || {});
 
-            this.peer.on('call', (call) => {
+            this.peer.on('call', async(call) => {
+                if (!await this.acceptPeer(call.peer)) {
+                    call.close();
+                    return;
+                }
                 if (this.localStream) {
                     call.answer(this.localStream);
                 } else {
@@ -2514,7 +2521,11 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 this.handleCall(call);
             });
 
-            this.peer.on('connection', (conn) => {
+            this.peer.on('connection', async(conn) => {
+                if (!await this.acceptPeer(conn.peer)) {
+                    conn.close();
+                    return;
+                }
                 this.handleDataConnection(conn);
             });
         }
@@ -2566,8 +2577,7 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         handleCall(call) {
             call.on('stream', (remoteStream) => {
-                var parts = call.peer.split('_');
-                var peerUserId = parseInt(parts[parts.length - 1], 10);
+                var peerUserId = this.known[call.peer];
 
                 var avatar = this.avatars[peerUserId];
                 // Only attach if avatar exists and doesn't already have audio
@@ -2655,8 +2665,8 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
 
         sync() {
             if (!this.viewer.camera) {
- return;
-}
+                return Promise.resolve();
+            }
 
             // Use Three.js properties.
             var pos = this.viewer.camera.position;
@@ -2668,15 +2678,17 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             var posObj = {x: pos.x, y: pos.y, z: pos.z};
             var rotObj = {x: rot.x, y: rot.y, z: rot.z}; // Euler
 
-            Ajax.call([{
+            return Ajax.call([{
                 methodname: 'mod_gear_sync_session',
                 args: {
                     gearid: this.viewer.gearid,
                     position: JSON.stringify(posObj),
-                    rotation: JSON.stringify(rotObj)
+                    rotation: JSON.stringify(rotObj),
+                    peerid: this.peerId
                 }
             }])[0].then((users) => {
                 this.updateAvatars(users);
+                return users;
             }).catch((e) => {
                 window.console.warn('Sync error', e);
             });
@@ -2685,8 +2697,12 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
         updateAvatars(users) {
             var activeIds = new Set();
 
+            this.known = {};
             users.forEach((user) => {
                 activeIds.add(user.userid);
+                if (user.peerid) {
+                    this.known[user.peerid] = user.userid;
+                }
 
                 if (!this.avatars[user.userid]) {
                     this.createAvatar(user);
@@ -2702,6 +2718,18 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 }
             });
 
+            // Close calls and chat connections of peers that left the session.
+            [this.calls, this.dataConns].forEach((map) => {
+                Object.keys(map).forEach((peerId) => {
+                    if (!this.known[peerId]) {
+                        if (map[peerId] && map[peerId].close) {
+                            map[peerId].close();
+                        }
+                        delete map[peerId];
+                    }
+                });
+            });
+
             // PeerJS is only needed when somebody else is in the session.
             if (!this.peer && users.some((user) => user.userid != this.viewer.userid)) {
                 this.initPeer();
@@ -2710,8 +2738,8 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
             // Connect uncalled voice peers
             if (this.peer) {
                 users.forEach((user) => {
-                    if (user.userid != this.viewer.userid) {
-                        var pId = 'mod_gear_' + this.viewer.gearid + '_' + user.userid;
+                    if (user.userid != this.viewer.userid && user.peerid) {
+                        var pId = user.peerid;
                         if (this.voiceEnabled && !this.calls[pId]) {
                             var call = this.peer.call(pId, this.localStream);
                             if (call) {
@@ -2780,21 +2808,6 @@ const htmlToText = (html) => new DOMParser().parseFromString(String(html ?? ''),
                 // Optional: dispose geometry/material.
             }
             delete this.avatars[userid];
-
-            // Clean up WebRTC calls if disconnected
-            var peerId = 'mod_gear_' + this.viewer.gearid + '_' + userid;
-            if (this.calls[peerId]) {
-                if (this.calls[peerId].close) {
- this.calls[peerId].close();
-}
-                delete this.calls[peerId];
-            }
-            if (this.dataConns[peerId]) {
-                if (this.dataConns[peerId].close) {
- this.dataConns[peerId].close();
-}
-                delete this.dataConns[peerId];
-            }
         }
     }
 
@@ -2812,6 +2825,16 @@ function init(options) {
     // UI listeners for collaboration (Voice & Chat).
     document.addEventListener('gear:scene:loaded', (e) => {
         if (e.detail.cmid == options.cmid) {
+            if (!options.collab) {
+                // Collaborative mode is off: no shared session, no WebRTC, no chat; hide its controls.
+                ['gear-voice-btn-', 'gear-chat-toggle-btn-', 'gear-chat-panel-'].forEach((prefix) => {
+                    var el = document.getElementById(prefix + options.cmid);
+                    if (el) {
+                        el.style.display = 'none';
+                    }
+                });
+                return;
+            }
             sync.start();
 
             // Voice chat button listener.
