@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2026-10-17
 
 ### Added
+- **Animations:** the clips of a glTF model (play/pause, clip and speed selection, off by default under *reduced motion*); the teacher saves the default clip, speed and autoplay with *Save as default*.
+- **Material variants** (`KHR_materials_variants`): a selector in the viewer; the teacher saves the default variant.
+- **Guided tour:** the teacher walks the scene and adds steps (title, text and the current camera view); students follow them with *Previous/Next*, the camera flies to each view (jumps under *reduced motion*), the step text is read out by screen readers. Steps are stored in the scene configuration (no database change, included in backups) and validated on the server (at most 30 steps).
+- `mod_gear_save_scene_config` accepts the optional `animation`, `variant` and `tour` parameters next to `camera`.
 - **Text alternative for the 3D scene:** a *Scene description* field in the activity settings (stored in the scene configuration); the canvas label uses it, or the activity name and the number of hotspots, and a visually hidden list of hotspots lets screen reader and keyboard users open every hotspot.
 - Developer tooling: end-to-end chat check with a local PeerJS server (`devtools/check-gear-chat.mjs`), modal and scene description checks.
 

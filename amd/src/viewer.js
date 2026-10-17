@@ -40,6 +40,7 @@ import CustomEvents from 'core/custom_interaction_events';
 import ModalSaveCancel from 'core/modal_save_cancel';
 import ModalEvents from 'core/modal_events';
 import SyncManager from './sync';
+import SceneExtras from './extras';
 import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
 
     /**
@@ -94,6 +95,8 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             this.mouse = new THREE.Vector2();
             this.audioListener = null;
             this.modelContainer = new THREE.Group();
+            this.extras = new SceneExtras(this);
+            this.clock = new THREE.Clock();
             this.movingHotspotId = null; // Track hotspot being moved.
             this.tooltipElement = null; // Tooltip element for hover display.
             this.activeTooltipHotspot = null; // Track which hotspot tooltip is showing.
@@ -820,6 +823,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                         });
                         const object = this.prepareModel(gltf.scene, modelData);
                         this.modelContainer.add(object);
+                        this.extras.addModel(gltf, object);
                         this.models.push(object);
                         if (!this.model) {
                             this.model = object;
@@ -836,6 +840,9 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     } else {
                         this.centerCameraOnModel(this.modelContainer);
                     }
+
+                    // Animations, material variants and the guided tour.
+                    await this.extras.ready();
 
                     // Mark as loaded.
                     this.container.classList.add('loaded');
@@ -961,6 +968,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
          */
         animate() {
             this.renderer.setAnimationLoop(() => {
+                const delta = this.clock.getDelta();
                 if (!this.renderer.xr.isPresenting && (!this.pageVisible || !this.inViewport)) {
                     return;
                 }
@@ -968,6 +976,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     this.modelContainer.rotation.y += 0.005;
                 }
 
+                this.extras.update(delta);
                 this.controls.update();
                 this.renderer.render(this.scene, this.camera);
             });
@@ -981,6 +990,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 return;
             }
             this.renderer.setAnimationLoop(null);
+            this.extras.destroy();
             window.removeEventListener('resize', this.resizeHandler);
             document.removeEventListener('visibilitychange', this.visibilityHandler);
             if (this.viewObserver) {

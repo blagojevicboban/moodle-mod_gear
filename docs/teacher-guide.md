@@ -51,6 +51,11 @@ Only the topic text you type is sent to the AI provider configured by your admin
 
 Under **Completion conditions** choose automatic completion and tick **The student has opened every hotspot** and/or **The student earns at least this many quiz points**. Teleport points and hotspots that are still locked do not count for the first rule.
 
+## Animations, variants and tour
+
+- If the model has animations, a panel appears at the bottom left of the viewer: choose a clip, play/pause it and change the speed. Models with material variants also get a *Material variant* selector. Pick what students should see first and press **Save as default**.
+- **Guided tour:** press *Guided tour*, move the camera to the first view and press *Add step from the current view*, then write a title and a text. Repeat for every step; use the arrows to reorder, the pencil to edit the text and the bin to delete. Students see the same panel with *Previous* and *Next*.
+
 ## 3. Results
 
 - **Gradebook:** each quiz hotspot counts once, with the best score of the student; the total is scaled to the activity grade.

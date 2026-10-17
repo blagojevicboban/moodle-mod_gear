@@ -129,6 +129,7 @@ final class external_test extends \advanced_testcase {
      * Test track_event action whitelist, submit_quiz scoring, leaderboard, and session sync.
      */
     public function test_tracking_quiz_leaderboard_and_sync(): void {
+        global $DB;
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
@@ -149,6 +150,33 @@ final class external_test extends \advanced_testcase {
         // Teacher updates scene config and model transform.
         $this->setUser($teacher);
         $this->assertTrue(save_scene_config::execute($gear->id, '{"position":[1,2,3]}')['success']);
+
+        // Animation defaults, variant and guided tour are stored next to the camera and cleaned.
+        $tour = json_encode([
+            ['title' => 'One', 'text' => 'Text', 'position' => [1, 2, 3], 'target' => [0, 0, 0]],
+            ['title' => 'Bad view', 'text' => 'x', 'position' => [1, 2], 'target' => [0, 0, 0]],
+            ['title' => str_repeat('a', 300), 'text' => '<b>x</b>', 'position' => [0, 0, 1], 'target' => [0, 0, 0], 'evil' => 1],
+        ]);
+        $animation = '{"clip":"Spin","autoplay":true,"speed":99}';
+        $this->assertTrue(save_scene_config::execute($gear->id, '', $animation, 'Copper', $tour)['success']);
+        $config = json_decode($DB->get_field('gear', 'scene_config', ['id' => $gear->id]), true);
+        $this->assertSame([1, 2, 3], $config['camera']['position']);
+        $this->assertSame(['clip' => 'Spin', 'autoplay' => true, 'speed' => 3.0], $config['animation']);
+        $this->assertSame('Copper', $config['variant']);
+        $this->assertCount(2, $config['tour']);
+        $this->assertSame(120, \core_text::strlen($config['tour'][1]['title']));
+        $this->assertSame('x', $config['tour'][1]['text']);
+        $this->assertArrayNotHasKey('evil', $config['tour'][1]);
+
+        // A student cannot change them.
+        $this->setUser($student1);
+        try {
+            save_scene_config::execute($gear->id, '', '', null, '[]');
+            $this->fail('Expected required_capability_exception');
+        } catch (\required_capability_exception $e) {
+            $this->assertNotEmpty($e->getMessage());
+        }
+        $this->setUser($teacher);
         $this->assertTrue(save_model_transform::execute($model->id, '{"x":1,"y":2,"z":3}', null, 2.0)['success']);
 
         // Student 1 cannot forge quiz_submit via track_event.

@@ -711,3 +711,75 @@
     cursor: pointer;
     background: none;
 }
+
+/* Animations, material variants and guided tour. */
+.gear-activity .gear-extras {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 1500;
+    max-width: calc(100% - 40px);
+}
+
+.gear-activity .gear-extras-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.gear-activity .gear-extras-select {
+    width: auto;
+    max-width: 170px;
+    background-color: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.gear-activity .gear-tour {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    width: 440px;
+    max-width: calc(100% - 40px);
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgba(20, 20, 40, 0.88);
+    color: #fff;
+    backdrop-filter: blur(8px);
+    z-index: 1600;
+}
+
+.gear-activity .gear-tour[hidden] {
+    display: none;
+}
+
+.gear-activity .gear-tour-head,
+.gear-activity .gear-tour-nav,
+.gear-activity .gear-tour-edit {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.gear-activity .gear-tour-head .close {
+    color: #fff;
+    opacity: 0.9;
+}
+
+.gear-activity .gear-tour-body {
+    margin: 8px 0 12px;
+    white-space: pre-line;
+}
+
+.gear-activity .gear-tour-edit {
+    justify-content: flex-start;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}

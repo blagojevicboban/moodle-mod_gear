@@ -21,6 +21,7 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use context_module;
+use core_text;
 
 
 /**
@@ -39,7 +40,10 @@ class save_scene_config extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'gearid' => new external_value(PARAM_INT, 'GEAR activity ID'),
-            'camera' => new external_value(PARAM_RAW, 'JSON camera settings (position, target)'),
+            'camera' => new external_value(PARAM_RAW, 'JSON camera settings (position, target)', VALUE_DEFAULT, ''),
+            'animation' => new external_value(PARAM_RAW, 'JSON default animation (clip, autoplay, speed)', VALUE_DEFAULT, ''),
+            'variant' => new external_value(PARAM_TEXT, 'Default material variant name', VALUE_DEFAULT, null),
+            'tour' => new external_value(PARAM_RAW, 'JSON list of guided tour steps', VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -48,14 +52,26 @@ class save_scene_config extends external_api {
      *
      * @param int $gearid GEAR activity ID
      * @param string $camera JSON camera settings
+     * @param string $animation JSON default animation settings
+     * @param string|null $variant Default material variant name
+     * @param string $tour JSON list of guided tour steps
      * @return array
      */
-    public static function execute(int $gearid, string $camera): array {
+    public static function execute(
+        int $gearid,
+        string $camera = '',
+        string $animation = '',
+        ?string $variant = null,
+        string $tour = ''
+    ): array {
         global $DB;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'gearid' => $gearid,
             'camera' => $camera,
+            'animation' => $animation,
+            'variant' => $variant,
+            'tour' => $tour,
         ]);
 
         $gear = $DB->get_record('gear', ['id' => $params['gearid']], '*', MUST_EXIST);
@@ -71,13 +87,79 @@ class save_scene_config extends external_api {
             $config = [];
         }
 
-        $config['camera'] = json_decode($params['camera'], true);
+        if ($params['camera'] !== '') {
+            $config['camera'] = json_decode($params['camera'], true);
+        }
+        if ($params['animation'] !== '') {
+            $config['animation'] = self::clean_animation(json_decode($params['animation'], true));
+        }
+        if ($params['variant'] !== null) {
+            $config['variant'] = $params['variant'];
+        }
+        if ($params['tour'] !== '') {
+            $config['tour'] = self::clean_tour(json_decode($params['tour'], true));
+        }
 
         $DB->set_field('gear', 'scene_config', json_encode($config), ['id' => $gear->id]);
 
         return [
             'success' => true,
         ];
+    }
+
+    /**
+     * Keep only the known, validated animation settings.
+     *
+     * @param mixed $animation Decoded JSON
+     * @return array
+     */
+    public static function clean_animation($animation): array {
+        $animation = is_array($animation) ? $animation : [];
+        return [
+            'clip' => clean_param((string) ($animation['clip'] ?? ''), PARAM_TEXT),
+            'autoplay' => !empty($animation['autoplay']),
+            'speed' => max(0.1, min(3.0, (float) ($animation['speed'] ?? 1))),
+        ];
+    }
+
+    /**
+     * Validate the guided tour: at most 30 steps with a title, a text, a camera position and target.
+     *
+     * @param mixed $tour Decoded JSON
+     * @return array
+     */
+    public static function clean_tour($tour): array {
+        $vector = static function ($value): ?array {
+            if (!is_array($value) || count($value) !== 3) {
+                return null;
+            }
+            $result = [];
+            foreach ($value as $number) {
+                if (!is_numeric($number)) {
+                    return null;
+                }
+                $result[] = round((float) $number, 4);
+            }
+            return $result;
+        };
+        $steps = [];
+        foreach (array_slice(is_array($tour) ? $tour : [], 0, 30) as $step) {
+            if (!is_array($step)) {
+                continue;
+            }
+            $position = $vector($step['position'] ?? null);
+            $target = $vector($step['target'] ?? null);
+            if ($position === null || $target === null) {
+                continue;
+            }
+            $steps[] = [
+                'title' => core_text::substr(clean_param((string) ($step['title'] ?? ''), PARAM_TEXT), 0, 120),
+                'text' => core_text::substr(clean_param((string) ($step['text'] ?? ''), PARAM_TEXT), 0, 1000),
+                'position' => $position,
+                'target' => $target,
+            ];
+        }
+        return $steps;
     }
 
     /**
