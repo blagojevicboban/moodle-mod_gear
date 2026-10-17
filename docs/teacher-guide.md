@@ -59,7 +59,11 @@ Keep models under about 500,000 triangles for phones. GEAR reads Draco and Mesho
 
 When you add or edit a *Quiz* hotspot, press **Import from question bank**, pick a single answer multiple choice or true/false question of the course and save. The title, the text, the answers and the correct answer are copied into the hotspot (images are not). Changing the question in the bank later does not change the hotspot.
 
-## Reports per student
+## Student progress
+
+Open **Analytics Reports** in the activity. Below the totals, *Student progress* lists every student (choose a group if the activity uses groups): hotspots opened out of the ones available to that student, quizzes solved, points, grade and the last activity. Click a name to see each hotspot (views, quiz attempts, best score, still locked), or download the table with *Download table data as*.
+
+## Reports per student (Report Builder)
 
 *Site administration > Reports > Report builder > Custom reports > New report*, source **GEAR activity tracking**. The report lists every tracked action (hotspot views, quiz answers, AR/VR sessions) with the user, course, activity, time and duration. Use *Aggregation* on the action column (count) and group by user to get totals per student, and the filters to limit the report to one course or activity.
 

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2026-10-17
 
 ### Added
+- **Student progress in the analytics report:** every student (by group, without the teachers) with opened hotspots (of the hotspots available to that student), solved quizzes, points, grade and last activity; a details page per student (views per hotspot, quiz attempts, best score, locked hotspots); download as CSV, Excel, ODS and the other Moodle data formats (`classes/local/student_report.php`, PHPUnit test).
 - **Heavy models and phones:** KTX2 (Basis Universal) textures are supported (self-hosted transcoder in `vendorjs/basis/`); the render resolution is capped at 1.5 on touch screens and at 1 for models above 500,000 triangles; teachers get a warning for models above 1 million triangles with a hint to simplify or compress them.
 - The release workflow checks that the tag matches `$plugin->release` in `version.php`.
 - **Questions from the question bank:** the quiz fields of the hotspot form have an *Import from question bank* button (single answer multiple choice and true/false questions of the course; Moodle 4.5 course context and the question banks of Moodle 5.x). The hotspot gets a copy of the text and the answers (images are not copied); options that contain commas are kept intact. New web service `mod_gear_get_bank_questions` (capability `mod/gear:manage`).
