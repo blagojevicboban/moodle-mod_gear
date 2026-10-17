@@ -11,11 +11,11 @@
   <div style="margin-bottom: 20px; padding: 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0;">
     <h3 style="color: #047857; margin-top: 0; margin-bottom: 10px;">What's New in v1.8.0</h3>
     <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #065f46;">
-      <li><strong>Accessible dialogs:</strong> the browser pop-ups for deleting a hotspot and for the AI topic are replaced by Moodle dialogs with focus handling.</li>
-      <li><strong>Text alternative for the 3D scene:</strong> a new <em>Scene description</em> setting, a labelled canvas and a hidden hotspot list for screen reader and keyboard users.</li>
-      <li><strong>Chat:</strong> the sender shown for a message comes from the server's session list, not from the message; verified end to end between two browsers.</li>
-      <li><strong>Translations:</strong> remaining English texts in the viewer are language strings now.</li>
-      <li><strong>Included since 1.7.1:</strong> server-side quiz grading and unlocking, AI through Moodle's AI subsystem, completion rules, group mode, Draco/Meshopt models, several models per scene, AR Quick Look for iPhone and iPad.</li>
+      <li><strong>Guided tours, animations and material variants:</strong> walk students through the scene step by step (each step can open a hotspot, play an animation or switch the material), play the animations of a glTF model and switch its material variants.</li>
+      <li><strong>Richer quizzes:</strong> one correct answer, several correct answers or a typed answer, and quiz questions copied from the course question bank.</li>
+      <li><strong>Student progress:</strong> per student hotspots opened, quizzes solved, points and grade in the activity report, with details and download, plus a Report Builder source for custom reports.</li>
+      <li><strong>Large models and phones:</strong> KTX2 compressed textures, lower render resolution for heavy models and touch screens, and a warning for teachers when a model is too heavy.</li>
+      <li><strong>Accessibility and the Moodle app:</strong> Moodle dialogs, a text alternative for the 3D scene and checked with axe; the app shows the student's progress and opens the scene in the browser.</li>
     </ul>
   </div>
 
@@ -25,16 +25,16 @@
   <h2 style="color: #2c3e50; border-left: 4px solid #28a745; padding-left: 10px;">Core features</h2>
   <div style="margin-bottom: 25px;">
     <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #007bff;">3D viewer and interaction</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">glTF / GLB models (also Draco and Meshopt compressed, several per scene) with orbit, pan and zoom, adjustable lighting and background.</p>
+      <p style="font-size: 0.95em; margin-top: 5px;">glTF / GLB models (also Draco, Meshopt and KTX2 compressed, several per scene) with orbit, pan and zoom, adjustable lighting and background, glTF animations (clip, speed, autoplay) and material variants.</p>
     </div>
     <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #28a745;">Interactive hotspots</strong>
       <p style="font-size: 0.95em; margin-top: 5px;">Information, quiz, audio, video (MP4, YouTube, Vimeo) and teleport points placed directly on the model, with visual X/Y/Z gizmos for precise placement.</p>
     </div>
     <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #d39e00;">Spatial quizzes and completion</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Multiple-choice questions in the scene, checked on the server and synced with the <strong>Moodle gradebook</strong>. Completion rules: open every hotspot and/or earn a minimum of quiz points.</p>
+      <p style="font-size: 0.95em; margin-top: 5px;">Questions in the scene with one correct answer, several correct answers or a typed answer (with wildcards), written by hand or copied from the course question bank. Checked on the server and synced with the <strong>Moodle gradebook</strong>. Completion rules: open every hotspot and/or earn a minimum of quiz points.</p>
     </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #fd7e14;">Escape-room style unlocking</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Branching scenarios: a hotspot stays hidden until the student solves the required quiz. Teleport waypoints guide the camera.</p>
+    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #fd7e14;">Guided tours and escape-room style unlocking</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Step by step tours: the camera flies to each view, and a step can open a hotspot, play an animation or switch the material. Branching scenarios: a hotspot stays hidden until the student solves the required quiz. Teleport waypoints guide the camera.</p>
     </div>
     <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #17a2b8;">Optional AI assistant and text-to-speech</strong>
       <p style="font-size: 0.95em; margin-top: 5px;">Generate hotspot texts and quiz questions with the AI providers of Moodle (off by default). Information hotspots can be read aloud.</p>
@@ -42,11 +42,11 @@
     <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #6610f2;">Optional collaborative mode</strong>
       <p style="font-size: 0.95em; margin-top: 5px;">Shared sessions with 3D avatars and peer-to-peer voice and text chat, group aware. Off by default for new installs.</p>
     </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #6c757d;">Analytics, leaderboard and spatial audio</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Teacher dashboard with hotspot clicks and AR/VR starts, a leaderboard, and positional audio that reacts to the student's distance.</p>
+    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #6c757d;">Student progress, analytics and leaderboard</strong>
+      <p style="font-size: 0.95em; margin-top: 5px;">Progress of every student (hotspots opened, quizzes solved, points, grade, last activity) with a details page and download as CSV or Excel, a Report Builder source for custom reports, hotspot statistics, a leaderboard, and positional audio that reacts to the student's distance.</p>
     </div>
     <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #20c997;">Accessible and fast</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Keyboard navigation, screen reader announcements, labelled dialogs and reduced motion support; optimised WebGL scaling for mobile devices and VR headsets.</p>
+      <p style="font-size: 0.95em; margin-top: 5px;">Keyboard navigation, screen reader announcements, a text alternative for the scene, labelled dialogs and reduced motion support (checked with axe); lower render resolution for heavy models, phones and VR headsets.</p>
     </div>
   </div>
 
@@ -54,7 +54,7 @@
   <ul style="list-style-type: none; padding-left: 0;">
     <li style="margin-bottom: 10px; padding: 10px; background: #fffbe6; border-radius: 6px;"><strong>WebXR ready:</strong> one-click VR, and AR where the device supports it, without installing an app.</li>
     <li style="margin-bottom: 10px; padding: 10px; background: #fff3e0; border-radius: 6px;"><strong>iPhone and iPad:</strong> the 3D viewer works; for AR upload a <code>.usdz</code> file with the same name as the model and it opens in AR Quick Look.</li>
-    <li style="margin-bottom: 10px; padding: 10px; background: #e6f7ff; border-radius: 6px;"><strong>Moodle Mobile app:</strong> supported.</li>
+    <li style="margin-bottom: 10px; padding: 10px; background: #e6f7ff; border-radius: 6px;"><strong>Moodle app:</strong> shows the description and the student's progress, and opens the 3D scene in the browser with automatic login (the 3D viewer itself needs a browser).</li>
   </ul>
 
   <h2 style="color: #2c3e50; border-left: 4px solid #17a2b8; padding-left: 10px;">Requirements</h2>
