@@ -37,6 +37,8 @@ import Templates from 'core/templates';
 import Policy from 'core_ai/policy';
 import PolicyModal from 'core_ai/policymodal';
 import CustomEvents from 'core/custom_interaction_events';
+import ModalSaveCancel from 'core/modal_save_cancel';
+import ModalEvents from 'core/modal_events';
 import SyncManager from './sync';
 import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
 
@@ -74,6 +76,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             this.aiAvailable = !!options.aiavailable;
             this.dracoPath = options.dracopath || '';
             this.usdzUrl = options.usdzurl || '';
+            this.sceneName = options.name || '';
 
             this.container = document.getElementById('gear-viewer-' + this.cmid);
             this.canvas = document.getElementById('gear-canvas-' + this.cmid);
@@ -103,6 +106,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
          */
         async init() {
             try {
+                this.pointLabel = await Str.get_string('point', 'mod_gear');
                 await this.loadThreeJS();
                 this.setupScene();
                 this.setupControls();
@@ -522,6 +526,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             }).then((html, js) => {
                 Templates.appendNodeContents(this.container, html, js);
                 this.setupOverlayEventListeners();
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -631,6 +636,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     message: await Str.get_string('saveviewsuccess', 'mod_gear'),
                     type: 'success'
                 });
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -652,6 +658,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     modal.querySelector('.close').addEventListener('click', () => closeDialog(modal));
 
                     openDialog(modal);
+                    return null;
                 }).catch(Notification.exception);
             } else {
                 openDialog(modal);
@@ -675,6 +682,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     modal.querySelector('.close').addEventListener('click', () => closeDialog(modal));
 
                     this.fetchAndRenderLeaderboard(modal);
+                    return null;
                 }).catch(Notification.exception);
             } else {
                 this.fetchAndRenderLeaderboard(modal);
@@ -701,6 +709,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 }
             }])[0].then((scores) => {
                 this.renderLeaderboardTable(content, scores);
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -735,6 +744,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
 
             Templates.render('mod_gear/leaderboard_table', context).then((html, js) => {
                 Templates.replaceNodeContents(container, html, js);
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -1195,7 +1205,6 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             // Keyboard navigation for accessibility.
             this.canvas.setAttribute('tabindex', '0');
             this.canvas.setAttribute('role', 'application');
-            this.canvas.setAttribute('aria-label', '3D Viewer - Use arrow keys to navigate, Enter to select hotspots');
 
             this.canvas.addEventListener('focus', () => {
                 this.canvas.style.outline = '2px solid #6366f1';
@@ -1357,7 +1366,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             // Build tooltip content with accessible labels.
             var content = '<div style="display:flex;align-items:center;margin-bottom:6px;">';
             content += '<i class="fa ' + icon + '" style="margin-right:8px;font-size:16px;color:#6366f1;" aria-hidden="true"></i>';
-            content += '<strong>' + escapeHtml(hotspot.title || 'Hotspot') + '</strong>';
+            content += '<strong>' + escapeHtml(hotspot.title || this.pointLabel) + '</strong>';
             content += '</div>';
 
             if (hotspot.content) {
@@ -1371,7 +1380,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
             }
 
             // Set accessible text for screen readers.
-            this.tooltipElement.setAttribute('aria-label', (hotspot.title || 'Hotspot') + ': ' + htmlToText(hotspot.content));
+            this.tooltipElement.setAttribute('aria-label', (hotspot.title || this.pointLabel) + ': ' + htmlToText(hotspot.content));
             this.tooltipElement.innerHTML = content;
 
             // Show tooltip with animation.
@@ -1469,7 +1478,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 clientY: window.innerHeight / 2
             };
             this.showTooltip(mesh.userData, syntheticEvent);
-            this.announce((mesh.userData.title || 'Hotspot') +
+            this.announce((mesh.userData.title || this.pointLabel) +
                 (mesh.userData.content ? ': ' + htmlToText(mesh.userData.content).substring(0, 200) : ''));
         }
 
@@ -1519,17 +1528,26 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     } else {
                         this.showHotspotPopup(hotspotMesh.userData);
 
-                        // Toggle audio in VR directly since standard DOM popups are hard to click inside headset.
-                        if (hotspotMesh.userData.type === 'audio' && hotspotMesh.children.length > 0) {
-                            var audio = hotspotMesh.children[0];
-                            if (audio.isPlaying) {
-                                audio.pause();
-                            } else {
-                                audio.play();
-                            }
-                        }
+                        this.toggleVrAudio(hotspotMesh);
                     }
                 }
+            }
+        }
+
+        /**
+         * Toggle the audio of an audio hotspot directly, because DOM popups are hard to click inside a headset.
+         *
+         * @param {THREE.Mesh} hotspotMesh The hotspot mesh
+         */
+        toggleVrAudio(hotspotMesh) {
+            if (hotspotMesh.userData.type !== 'audio' || hotspotMesh.children.length === 0) {
+                return;
+            }
+            const audio = hotspotMesh.children[0];
+            if (audio.isPlaying) {
+                audio.pause();
+            } else {
+                audio.play();
             }
         }
 
@@ -1576,6 +1594,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     message: await Str.get_string('hotspotmoved', 'mod_gear'),
                     type: 'success'
                 });
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -1671,17 +1690,73 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     message: await Str.get_string('hotspotdeleted', 'mod_gear'),
                     type: 'success'
                 });
+                return null;
             }).catch(Notification.exception);
         }
 
         /**
          * Render hotspot list in the floating dropdown.
          */
+        /**
+         * Close the hotspot dropdown that contains the given element.
+         *
+         * @param {HTMLElement} element An element inside the dropdown
+         */
+        closeNavDropdown(element) {
+            const dropdown = element.closest('.dropdown');
+            if (dropdown) {
+                dropdown.classList.remove('show');
+                dropdown.querySelector('.dropdown-menu').classList.remove('show');
+            }
+        }
+
+        /**
+         * Connect the buttons of one entry of the hotspot list (open, and for managers edit and delete).
+         *
+         * @param {Object} hotspot Hotspot data
+         */
+        wireHotspotNavItem(hotspot) {
+            const item = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
+            if (!item) {
+                return;
+            }
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.focusHotspot(hotspot.id);
+                this.closeNavDropdown(item);
+            });
+            if (!this.canManage) {
+                return;
+            }
+
+            const editBtn = document.getElementById('gear-hotspot-nav-edit-' + hotspot.id);
+            if (editBtn) {
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const pos = hotspot.position || {x: 0, y: 0, z: 0};
+                    this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
+                    this.closeNavDropdown(item);
+                });
+            }
+
+            const deleteBtn = document.getElementById('gear-hotspot-nav-delete-' + hotspot.id);
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', async(e) => {
+                    e.stopPropagation();
+                    if (await this.confirmDeleteHotspot()) {
+                        this.deleteHotspot(hotspot.id);
+                    }
+                });
+            }
+        }
+
         async renderHotspotsNav() {
             var menu = this.container.querySelector('.gear-hotspots-menu');
             if (!menu) {
                 return;
             }
+
+            await this.describeScene();
 
             menu.innerHTML = '';
 
@@ -1715,46 +1790,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     });
 
                     Templates.appendNodeContents(menu, html, "");
-                    const item = document.getElementById('gear-hotspot-nav-item-' + hotspot.id);
-                    if (item) {
-                        item.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            this.focusHotspot(hotspot.id);
-                            // Close dropdown after selection.
-                            var dropdown = item.closest('.dropdown');
-                            if (dropdown) {
-                                dropdown.classList.remove('show');
-                                dropdown.querySelector('.dropdown-menu').classList.remove('show');
-                            }
-                        });
-
-                        if (this.canManage) {
-                            const editBtn = document.getElementById('gear-hotspot-nav-edit-' + hotspot.id);
-                            if (editBtn) {
-                                editBtn.addEventListener('click', (e) => {
-                                    e.stopPropagation();
-                                    var pos = hotspot.position || {x: 0, y: 0, z: 0};
-                                    this.showAddHotspotForm({x: pos.x, y: pos.y, z: pos.z}, hotspot);
-                                    // Close dropdown
-                                    var dropdown = item.closest('.dropdown');
-                                    if (dropdown) {
-                                        dropdown.classList.remove('show');
-                                        dropdown.querySelector('.dropdown-menu').classList.remove('show');
-                                    }
-                                });
-                            }
-
-                            var deleteBtn = document.getElementById('gear-hotspot-nav-delete-' + hotspot.id);
-                            if (deleteBtn) {
-                                deleteBtn.addEventListener('click', async(e) => {
-                                    e.stopPropagation();
-                                    if (window.confirm(await Str.get_string('deletehotspotconfirm', 'mod_gear'))) {
-                                        this.deleteHotspot(hotspot.id);
-                                    }
-                                });
-                            }
-                        }
-                    }
+                    this.wireHotspotNavItem(hotspot);
                 } catch (e) {
                     Notification.exception(e);
                 }
@@ -1948,7 +1984,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     });
 
                     popup.querySelector('.gear-delete-hotspot')?.addEventListener('click', async() => {
-                        if (window.confirm(await Str.get_string('deletehotspotconfirm', 'mod_gear'))) {
+                        if (await this.confirmDeleteHotspot()) {
                             this.deleteHotspot(hotspot.id);
                             closePopup();
                         }
@@ -2009,6 +2045,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 // Track interaction.
                 this.trackEvent('hotspot_click', {hotspotId: hotspot.id, title: hotspot.title});
 
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -2079,6 +2116,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
 
                 this.setupHotspotFormEventListeners(form);
 
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -2097,6 +2135,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 quizFields.style.display = (typeSelect.value === 'quiz') ? 'block' : 'none';
                 audioFields.style.display = (typeSelect.value === 'audio') ? 'block' : 'none';
                 videoFields.style.display = (typeSelect.value === 'video') ? 'block' : 'none';
+                return null;
             });
 
             // AI Assist button.
@@ -2111,7 +2150,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     return;
                 }
                 var type = typeSelect.value;
-                var prompt = window.prompt(await Str.get_string('ai_prompt', 'mod_gear'), "");
+                var prompt = await this.askAiTopic();
                 if (prompt) {
                     aiBtn.disabled = true;
                     aiBtn.textContent = await Str.get_string('generating', 'mod_gear');
@@ -2136,6 +2175,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                             form.querySelector('#gear-hotspot-input-title-' + this.cmid).value = prompt;
                             form.querySelector('#gear-hotspot-input-content-' + this.cmid).value = data;
                         }
+                        return null;
                     }).catch(async(err) => {
                         aiBtn.disabled = false;
                         aiBtn.textContent = await Str.get_string('aiassist', 'mod_gear');
@@ -2143,6 +2183,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                             await Str.get_string('error', 'core'),
                             err.message || await Str.get_string('generationfailed', 'mod_gear')
                         );
+                        return null;
                     });
                 }
             });
@@ -2329,8 +2370,10 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
 
             if (!config || !config.options) {
                 Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
-                    contentDiv.innerHTML += '<p class="text-danger">' + msg + '</p>';
-                });
+                    const note = Object.assign(document.createElement('p'), {className: 'text-danger', textContent: msg});
+                    contentDiv.appendChild(note);
+                    return null;
+                }).catch(Notification.exception);
                 return;
             }
 
@@ -2357,6 +2400,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     }
                     this.submitQuizAnswer(hotspot, selected.value, popup);
                 });
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -2385,7 +2429,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                     var okBadge = document.createElement('span');
                     okBadge.className = 'badge badge-success bg-success';
                     okBadge.textContent = msg;
-                    feedbackDiv.append(okBadge, ' +' + response.score + ' pts');
+                    feedbackDiv.append(okBadge, ' ' + await Str.get_string('quizpointsawarded', 'mod_gear', response.score));
                     await this.refreshHotspots();
                 } else {
                     const msg = await Str.get_string('quiz_incorrect', 'mod_gear');
@@ -2397,6 +2441,7 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                 }
 
                 submitBtn.disabled = true;
+                return null;
             }).catch(Notification.exception);
         }
 
@@ -2431,6 +2476,95 @@ import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} f
                         mesh.scale.set(curr + 0.1, curr + 0.1, curr + 0.1);
                     }
                 }, 30);
+            });
+        }
+
+        /**
+         * Text alternative of the 3D scene: the label of the canvas and a visually hidden list of hotspots
+         * that screen reader users can move through and open.
+         */
+        async describeScene() {
+            const alt = ((this.config && this.config.alt) || '').trim() || await Str.get_string('scenedefaultalt', 'mod_gear', {
+                name: this.sceneName,
+                count: this.hotspotsData.length,
+            });
+            this.canvas.setAttribute('aria-label', alt + ' ' + await Str.get_string('canvaslabel', 'mod_gear'));
+
+            let region = this.container.querySelector('.gear-sr-scene');
+            if (!region) {
+                region = document.createElement('div');
+                region.className = 'gear-sr-scene visually-hidden';
+                region.setAttribute('role', 'region');
+                this.container.appendChild(region);
+            }
+            region.setAttribute('aria-label', await Str.get_string('scenedescription', 'mod_gear'));
+            region.textContent = '';
+            const intro = document.createElement('p');
+            intro.textContent = alt;
+            region.appendChild(intro);
+
+            const list = document.createElement('ul');
+            const fallback = await Str.get_string('point', 'mod_gear');
+            this.hotspotsData.forEach((hotspot) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = hotspot.title || fallback;
+                button.addEventListener('click', () => this.focusHotspot(hotspot.id));
+                const item = document.createElement('li');
+                item.appendChild(button);
+                list.appendChild(item);
+            });
+            region.appendChild(list);
+        }
+
+        /**
+         * Ask the teacher to confirm that a hotspot is deleted.
+         *
+         * @returns {Promise<boolean>} True when the deletion was confirmed
+         */
+        async confirmDeleteHotspot() {
+            try {
+                await Notification.deleteCancelPromise(
+                    await Str.get_string('confirm', 'core'),
+                    await Str.get_string('deletehotspotconfirm', 'mod_gear'),
+                    await Str.get_string('delete', 'core')
+                );
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        /**
+         * Ask the teacher for the topic the AI assistant should write about.
+         *
+         * @returns {Promise<string>} The topic, or an empty string when the dialog was cancelled
+         */
+        async askAiTopic() {
+            const inputId = 'gear-ai-topic-' + this.cmid;
+            const label = escapeHtml(await Str.get_string('ai_prompt', 'mod_gear'));
+            const modal = await ModalSaveCancel.create({
+                title: await Str.get_string('aiassist', 'mod_gear'),
+                body: '<div class="mb-3"><label for="' + inputId + '" class="form-label">' + label + '</label>' +
+                    '<input type="text" class="form-control" id="' + inputId + '" maxlength="200"></div>',
+                removeOnClose: true,
+            });
+            const root = modal.getRoot()[0];
+            const input = root.querySelector('#' + inputId);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    root.querySelector('[data-action="save"]').click();
+                }
+            });
+            return new Promise((resolve) => {
+                let topic = '';
+                modal.getRoot().on(ModalEvents.save, () => {
+                    topic = input.value.trim();
+                });
+                modal.getRoot().on(ModalEvents.hidden, () => resolve(topic));
+                modal.getRoot().on(ModalEvents.shown, () => input.focus());
+                modal.show();
             });
         }
 

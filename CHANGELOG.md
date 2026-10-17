@@ -5,6 +5,20 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-10-17
+
+### Added
+- **Text alternative for the 3D scene:** a *Scene description* field in the activity settings (stored in the scene configuration); the canvas label uses it, or the activity name and the number of hotspots, and a visually hidden list of hotspots lets screen reader and keyboard users open every hotspot.
+- Developer tooling: end-to-end chat check with a local PeerJS server (`devtools/check-gear-chat.mjs`), modal and scene description checks.
+
+### Changed
+- Browser pop-ups are replaced by Moodle dialogs: the delete confirmation (`Notification.deleteCancelPromise`) and the topic dialog of the AI assistant (`core/modal_save_cancel`, focus in the field, Enter confirms).
+- Chat messages show the user that the server lists for the sending peer ("User 7") instead of a name the message claims; the label and the viewer texts that were hard coded in English (error title, points awarded, hotspot fallback name, canvas label) are language strings now.
+- The viewer source has no ESLint warnings any more; the hotspot list code is split into smaller methods.
+
+### Verified
+- Chat between two browsers over WebRTC with a local PeerJS server (message delivered, sender label correct, PeerJS loaded lazily).
+
 ## [1.7.1] - 2026-10-16
 
 ### Added

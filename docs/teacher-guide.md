@@ -64,6 +64,8 @@ An administrator has to enable it first (**Site administration → Plugins → A
 
 ## 5. Accessibility
 
+- **Scene description:** fill in *Scene description* in the activity settings (for example "Cross section of a four-stroke engine; the hotspots label the valves and the crankshaft"). Screen reader users hear it when they reach the 3D viewer; if you leave it empty the activity name and the number of hotspots are used. A hidden list of all hotspots lets them open each one without the mouse.
+
 - Focus the viewer with **Tab**, move between hotspots with the **arrow keys**, open one with **Enter** or **Space**, close it with **Escape**.
 - The focused hotspot is announced to screen readers.
 - Dialogs trap the keyboard and return focus to the button that opened them.

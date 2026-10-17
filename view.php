@@ -81,6 +81,7 @@ $usdzurls = array_filter(array_column($models, 'usdzurl'));
 $jsconfig = [
     'cmid' => $cm->id,
     'gearid' => $gear->id,
+    'name' => format_string($gear->name),
     'config' => json_decode($gear->scene_config ?? '{}', true),
     'ar_enabled' => (bool) $gear->ar_enabled,
     'vr_enabled' => (bool) $gear->vr_enabled,

@@ -103,6 +103,12 @@ class mod_gear_mod_form extends moodleform_mod {
         $mform->addElement('select', 'lighting', get_string('lighting', 'gear'), $lightingoptions);
         $mform->setDefault('lighting', 'studio');
 
+        // Text alternative of the 3D scene for screen readers.
+        $attributes = ['rows' => 3, 'cols' => 60, 'maxlength' => 500];
+        $mform->addElement('textarea', 'scene_alt', get_string('scenealt', 'gear'), $attributes);
+        $mform->setType('scene_alt', PARAM_TEXT);
+        $mform->addHelpButton('scene_alt', 'scenealt', 'gear');
+
         // Hotspots settings.
         $mform->addElement('header', 'hotspotsettings', get_string('hotspots', 'gear'));
         $mform->addElement('advcheckbox', 'enablehotspots', get_string('enablehotspots', 'gear'));
@@ -227,6 +233,7 @@ class mod_gear_mod_form extends moodleform_mod {
             if ($config) {
                 $defaultvalues['background_color'] = $config['background'] ?? '#1a1a2e';
                 $defaultvalues['lighting'] = $config['lighting'] ?? 'studio';
+                $defaultvalues['scene_alt'] = $config['alt'] ?? '';
                 if (isset($config['camera']['hotspotScale'])) {
                     $defaultvalues['hotspot_scale'] = $config['camera']['hotspotScale'];
                 }

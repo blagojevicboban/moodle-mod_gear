@@ -145,7 +145,7 @@ export default class SyncManager {
 
             Notification.addNotification({message: await Str.get_string('voicejoined', 'mod_gear'), type: 'success'});
         } catch (e) {
-            Notification.alert('Error', await Str.get_string('voicenotsupported', 'mod_gear'));
+            Notification.alert(await Str.get_string('error', 'core'), await Str.get_string('voicenotsupported', 'mod_gear'));
         }
     }
 
@@ -176,11 +176,12 @@ export default class SyncManager {
         conn.on('open', () => {
             this.dataConns[conn.peer] = conn;
         });
-        conn.on('data', (data) => {
+        conn.on('data', async(data) => {
             if (!data || typeof data.text !== 'string') {
                 return;
             }
-            this.displayChatMessage(String(data.sender || '').substring(0, 50), data.text.substring(0, 500), 'other');
+            const sender = await Str.get_string('chatuser', 'mod_gear', this.known[conn.peer] || '?');
+            this.displayChatMessage(sender, data.text.substring(0, 500), 'other');
         });
         conn.on('close', () => {
             delete this.dataConns[conn.peer];
@@ -196,13 +197,13 @@ export default class SyncManager {
     }
 
     sendChatMessage(text) {
-        var msg = {sender: 'User ' + this.viewer.userid, text: text};
+        var msg = {text: text};
         Object.values(this.dataConns).forEach(conn => {
             if (conn.open) {
                 conn.send(msg);
             }
         });
-        this.displayChatMessage('Me', text, 'self');
+        Str.get_string('chatme', 'mod_gear').then((me) => this.displayChatMessage(me, text, 'self')).catch(Notification.exception);
     }
 
     displayChatMessage(sender, text, type) {

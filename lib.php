@@ -283,6 +283,7 @@ function gear_build_scene_config(stdClass $gear, ?string $existing): string {
         ? (float) $gear->hotspot_scale : ($config['camera']['hotspotScale'] ?? 1.5);
     $config['hotspots']['enabled'] = isset($gear->enablehotspots)
         ? (bool) $gear->enablehotspots : ($config['hotspots']['enabled'] ?? true);
+    $config['alt'] = isset($gear->scene_alt) ? trim((string) $gear->scene_alt) : ($config['alt'] ?? '');
     $config['hotspots']['edit'] = isset($gear->edithotspots)
         ? (bool) $gear->edithotspots : ($config['hotspots']['edit'] ?? false);
     return json_encode($config);

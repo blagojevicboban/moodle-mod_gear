@@ -1,0 +1,86 @@
+<div class="mod-gear-description">
+  <h2>GEAR: Immersive 3D, AR and VR Learning</h2>
+  <p>Upload a 3D model, place interactive hotspots on it and let students explore, answer quizzes and learn together, right inside Moodle.</p>
+  <div>
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml/badge.svg" alt="Moodle Plugin CI"></a>
+    <a href="https://moodle.org" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://img.shields.io/badge/Moodle-4.5%20to%205.3-orange.svg" alt="Moodle 4.5 to 5.3"></a>
+    <a href="https://php.net" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://img.shields.io/badge/PHP-8.2%2B-purple.svg" alt="PHP 8.2+"></a>
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License GPL v3"></a>
+  </div>
+
+  <div>
+    <h3>What's New in v1.8.0</h3>
+    <ul>
+      <li><strong>Accessible dialogs:</strong> the browser pop-ups for deleting a hotspot and for the AI topic are replaced by Moodle dialogs with focus handling.</li>
+      <li><strong>Text alternative for the 3D scene:</strong> a new <em>Scene description</em> setting, a labelled canvas and a hidden hotspot list for screen reader and keyboard users.</li>
+      <li><strong>Chat:</strong> the sender shown for a message comes from the server's session list, not from the message; verified end to end between two browsers.</li>
+      <li><strong>Translations:</strong> remaining English texts in the viewer are language strings now.</li>
+      <li><strong>Included since 1.7.1:</strong> server-side quiz grading and unlocking, AI through Moodle's AI subsystem, completion rules, group mode, Draco/Meshopt models, several models per scene, AR Quick Look for iPhone and iPad.</li>
+    </ul>
+  </div>
+
+  <h2>Overview</h2>
+  <p><strong>GEAR</strong> (Geospatial Educational Augmented Reality) is a Moodle activity module that bridges the gap between traditional e-learning and immersive 3D technology. Educators upload 3D models, annotate them with hotspots and assessment points, and students explore, collaborate and are graded inside Moodle.</p>
+
+  <h2>Core features</h2>
+  <div>
+    <div><strong>3D viewer and interaction</strong>
+      <p>glTF / GLB models (also Draco and Meshopt compressed, several per scene) with orbit, pan and zoom, adjustable lighting and background.</p>
+    </div>
+    <div><strong>Interactive hotspots</strong>
+      <p>Information, quiz, audio, video (MP4, YouTube, Vimeo) and teleport points placed directly on the model, with visual X/Y/Z gizmos for precise placement.</p>
+    </div>
+    <div><strong>Spatial quizzes and completion</strong>
+      <p>Multiple-choice questions in the scene, checked on the server and synced with the <strong>Moodle gradebook</strong>. Completion rules: open every hotspot and/or earn a minimum of quiz points.</p>
+    </div>
+    <div><strong>Escape-room style unlocking</strong>
+      <p>Branching scenarios: a hotspot stays hidden until the student solves the required quiz. Teleport waypoints guide the camera.</p>
+    </div>
+    <div><strong>Optional AI assistant and text-to-speech</strong>
+      <p>Generate hotspot texts and quiz questions with the AI providers of Moodle (off by default). Information hotspots can be read aloud.</p>
+    </div>
+    <div><strong>Optional collaborative mode</strong>
+      <p>Shared sessions with 3D avatars and peer-to-peer voice and text chat, group aware. Off by default for new installs.</p>
+    </div>
+    <div><strong>Analytics, leaderboard and spatial audio</strong>
+      <p>Teacher dashboard with hotspot clicks and AR/VR starts, a leaderboard, and positional audio that reacts to the student's distance.</p>
+    </div>
+    <div><strong>Accessible and fast</strong>
+      <p>Keyboard navigation, screen reader announcements, labelled dialogs and reduced motion support; optimised WebGL scaling for mobile devices and VR headsets.</p>
+    </div>
+  </div>
+
+  <h2>AR/VR and mobile</h2>
+  <ul>
+    <li><strong>WebXR ready:</strong> one-click VR, and AR where the device supports it, without installing an app.</li>
+    <li><strong>iPhone and iPad:</strong> the 3D viewer works; for AR upload a <code>.usdz</code> file with the same name as the model and it opens in AR Quick Look.</li>
+    <li><strong>Moodle Mobile app:</strong> supported.</li>
+  </ul>
+
+  <h2>Requirements</h2>
+  <div>
+    <ul>
+      <li><strong>Moodle:</strong> 4.5 LTS to 5.3 (for Moodle 4.1 to 4.4 use version 1.7.0)</li>
+      <li><strong>PHP:</strong> 8.2 or later</li>
+      <li><strong>Browser:</strong> modern browser with WebGL (Chrome, Edge, Firefox, Safari); VR and AR need a WebXR-capable browser and device</li>
+      <li><strong>AI assistant (optional):</strong> an AI provider with text generation configured in Moodle's AI settings</li>
+    </ul>
+  </div>
+
+  <h2>Privacy</h2>
+  <p>Models, hotspots, grades and analytics stay on your site and are covered by the Moodle Privacy API. Only two optional features contact outside services: the AI assistant sends the text a teacher types to the AI provider the administrator set up in Moodle's AI settings, and collaborative mode connects participants through a PeerJS broker (the public PeerJS cloud or your own server) while chat and audio travel directly between their browsers.</p>
+
+  <h2>How it works</h2>
+  <ol>
+    <li><strong>Upload:</strong> add your .glb or .gltf models (optionally a .usdz for iPhone AR).</li>
+    <li><strong>Annotate:</strong> Shift + click on the model to place hotspots and assessment points.</li>
+    <li><strong>Engage:</strong> students explore, collaborate and complete the integrated activities.</li>
+  </ol>
+
+  <hr>
+  <p>Developed by <strong>Boban Blagojevi&#263;</strong><br>
+    Languages: English and Serbian. Source, documentation and issue tracker:
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank" rel="noreferrer noopener">github.com/blagojevicboban/moodle-mod_gear</a><br>
+    Video: <a href="https://youtu.be/idQx3iFJHNA" target="_blank" rel="noreferrer noopener">https://youtu.be/idQx3iFJHNA</a><br>
+    Licensed under the GNU GPL v3 or later.</p>
+</div>

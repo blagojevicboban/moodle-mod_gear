@@ -9,17 +9,13 @@
   </div>
 
   <div style="margin-bottom: 20px; padding: 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0;">
-    <h3 style="color: #047857; margin-top: 0; margin-bottom: 10px;">What's New in v1.7.1</h3>
+    <h3 style="color: #047857; margin-top: 0; margin-bottom: 10px;">What's New in v1.8.0</h3>
     <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #065f46;">
-      <li><strong>Security:</strong> quiz scores can no longer be forged, correct answers and locked hotspots are no longer sent to students, hotspot content and report output are sanitised, model files are served only to people who can view the activity, and WebRTC peers must be participants of the session.</li>
-      <li><strong>AI assistant on the Moodle AI subsystem:</strong> providers, models, quotas and the usage policy are managed in Moodle's AI settings; the plugin no longer stores an API key.</li>
-      <li><strong>Collaborative mode is now an admin setting</strong> (off for new installs) with an optional own PeerJS server and random peer ids.</li>
-      <li><strong>Completion rules and group mode:</strong> complete by opening every hotspot and/or earning a minimum of quiz points; leaderboards respect groups.</li>
-      <li><strong>Models:</strong> Draco and Meshopt compressed files, several models per scene, loading progress and a visible error message.</li>
-      <li><strong>AR on iPhone and iPad</strong> through AR Quick Look with an optional USDZ file; the AR and VR buttons now stay enabled in WebXR browsers (they were always disabled before).</li>
-      <li><strong>Grades:</strong> every quiz submission is counted, the best score per hotspot is kept and the total is scaled to the activity grade.</li>
-      <li><strong>Accessibility and performance:</strong> labelled dialogs with focus handling, screen reader announcements, reduced motion support, no rendering or polling in hidden tabs.</li>
-      <li><strong>Quality:</strong> PHPUnit and Behat tests, events, a scheduled cleanup task, course reset, and CI on Moodle 4.5 and 5.0 - 5.3.</li>
+      <li><strong>Accessible dialogs:</strong> the browser pop-ups for deleting a hotspot and for the AI topic are replaced by Moodle dialogs with focus handling.</li>
+      <li><strong>Text alternative for the 3D scene:</strong> a new <em>Scene description</em> setting, a labelled canvas and a hidden hotspot list for screen reader and keyboard users.</li>
+      <li><strong>Chat:</strong> the sender shown for a message comes from the server's session list, not from the message; verified end to end between two browsers.</li>
+      <li><strong>Translations:</strong> remaining English texts in the viewer are language strings now.</li>
+      <li><strong>Included since 1.7.1:</strong> server-side quiz grading and unlocking, AI through Moodle's AI subsystem, completion rules, group mode, Draco/Meshopt models, several models per scene, AR Quick Look for iPhone and iPad.</li>
     </ul>
   </div>
 

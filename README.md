@@ -16,7 +16,7 @@
 | 🥽 **VR Mode** | Immersive WebXR experience with interactive hand controllers |
 | 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video, Teleport) |
 | 💬 **Tooltips** | Hover tooltips with icons, titles, and descriptions for quick context |
-| ♿ **Accessibility** | Keyboard navigation, screen reader labels, and touch/long-press for mobile |
+| ♿ **Accessibility** | Keyboard navigation, screen reader labels, a text alternative and hotspot list for the 3D scene, and touch/long-press for mobile |
 | 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
 | 🧩 **Gamification** | Branching scenarios & escape-room style conditional unlocking |
 | ✨ **AI Assist** | Generate hotspot content and quizzes with the AI providers of Moodle (core AI subsystem) |

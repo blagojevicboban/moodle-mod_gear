@@ -146,5 +146,10 @@ function xmldb_gear_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026101900, 'gear');
     }
 
+    if ($oldversion < 2026102000) {
+        // Nothing to change in the database: version bump for release 1.8.0.
+        upgrade_mod_savepoint(true, 2026102000, 'gear');
+    }
+
     return true;
 }
