@@ -101,7 +101,7 @@ class restore_gear_activity_structure_step extends restore_activity_structure_st
         $data->timecreated = isset($data->timecreated) ? $this->apply_date_offset($data->timecreated) : time();
 
         $newitemid = $DB->insert_record('gear_hotspots', $data);
-        $this->set_mapping('gear_hotspot', $oldid, $newitemid);
+        $this->set_mapping('gear_hotspot', $oldid, $newitemid, true);
     }
 
     /**

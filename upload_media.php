@@ -106,4 +106,3 @@ try {
         'message' => $e->getMessage(),
     ]);
 }
-

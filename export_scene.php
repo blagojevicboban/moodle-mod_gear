@@ -45,4 +45,3 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
 echo json_encode($scenedata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 exit;
-

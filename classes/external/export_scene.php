@@ -130,4 +130,3 @@ class export_scene extends external_api {
         ]);
     }
 }
-

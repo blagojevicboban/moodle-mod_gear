@@ -153,4 +153,3 @@ class import_scene extends external_api {
         ]);
     }
 }
-
