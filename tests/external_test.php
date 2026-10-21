@@ -17,10 +17,12 @@
 namespace mod_gear;
 
 use mod_gear\external\delete_hotspot;
+use mod_gear\external\export_scene;
 use mod_gear\external\get_bank_questions;
 use mod_gear\external\get_hotspots;
 use mod_gear\external\get_leaderboard;
 use mod_gear\external\get_scene_data;
+use mod_gear\external\import_scene;
 use mod_gear\external\save_hotspot;
 use mod_gear\external\save_model_transform;
 use mod_gear\external\save_scene_config;
@@ -37,6 +39,8 @@ use mod_gear\external\track_event;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \mod_gear\external\save_hotspot
  * @covers     \mod_gear\external\delete_hotspot
+ * @covers     \mod_gear\external\export_scene
+ * @covers     \mod_gear\external\import_scene
  * @covers     \mod_gear\external\get_hotspots
  * @covers     \mod_gear\external\get_bank_questions
  * @covers     \mod_gear\external\get_scene_data
@@ -301,5 +305,152 @@ final class external_test extends \advanced_testcase {
         $this->setUser($student);
         $this->expectException(\required_capability_exception::class);
         get_bank_questions::execute($gear->id);
+    }
+
+    /**
+     * Test export_scene and import_scene external functions.
+     */
+    public function test_export_and_import_scene(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        /** @var \mod_gear_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_gear');
+        $gear1 = $generator->create_instance(['course' => $course->id, 'name' => 'Source Scene']);
+        $gear2 = $generator->create_instance(['course' => $course->id, 'name' => 'Target Scene']);
+
+        // Add 2 hotspots to gear1.
+        $this->setUser($teacher);
+        $h1 = save_hotspot::execute(
+            0,
+            $gear1->id,
+            0,
+            'quiz',
+            'Quiz Hotspot',
+            '<p>Quiz question</p>',
+            '{"x":1,"y":2,"z":3}',
+            'question',
+            '{"quizType":"single","options":["A","B"],"correctAnswer":0}'
+        );
+        $h2 = save_hotspot::execute(
+            0,
+            $gear1->id,
+            0,
+            'info',
+            'Dependent Info',
+            '<p>Info content</p>',
+            '{"x":4,"y":5,"z":6}',
+            'info',
+            '{"requires_id":"' . $h1['id'] . '"}'
+        );
+
+        // Student cannot export.
+        $this->setUser($student);
+        try {
+            export_scene::execute($gear1->id);
+            $this->fail('Student should not be able to export scene');
+        } catch (\required_capability_exception $e) {
+            $this->assertInstanceOf(\required_capability_exception::class, $e);
+        }
+
+        // Teacher exports scene.
+        $this->setUser($teacher);
+        $exported = export_scene::execute($gear1->id);
+        $this->assertTrue($exported['success']);
+        $this->assertNotEmpty($exported['json']);
+        $this->assertStringContainsString('Source Scene', $exported['filename']);
+
+        $decoded = json_decode($exported['json'], true);
+        $this->assertSame('1.0', $decoded['gear_export_version']);
+        $this->assertCount(2, $decoded['hotspots']);
+
+        // Student cannot import.
+        $this->setUser($student);
+        try {
+            import_scene::execute($gear2->id, $exported['json'], 'replace');
+            $this->fail('Student should not be able to import scene');
+        } catch (\required_capability_exception $e) {
+            $this->assertInstanceOf(\required_capability_exception::class, $e);
+        }
+
+        // Teacher imports scene into gear2.
+        $this->setUser($teacher);
+        $imported = import_scene::execute($gear2->id, $exported['json'], 'replace');
+        $this->assertTrue($imported['success']);
+        $this->assertSame(2, $imported['count']);
+
+        // Check gear2 hotspots and resolve of requires_id.
+        $gear2hotspots = $DB->get_records('gear_hotspots', ['gearid' => $gear2->id], 'sortorder ASC, id ASC');
+        $this->assertCount(2, $gear2hotspots);
+
+        $hotspotslist = array_values($gear2hotspots);
+        $this->assertSame('Quiz Hotspot', $hotspotslist[0]->title);
+        $this->assertSame('Dependent Info', $hotspotslist[1]->title);
+
+        $h2cfg = json_decode($hotspotslist[1]->config, true);
+        $this->assertSame((string) $hotspotslist[0]->id, $h2cfg['requires_id']);
+    }
+
+    /**
+     * Test saving hotspot with media file from draft area and deleting hotspot.
+     */
+    public function test_save_hotspot_with_media_draft(): void {
+        global $USER;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        /** @var \mod_gear_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_gear');
+        $gear = $generator->create_instance(['course' => $course->id]);
+        $cm = get_coursemodule_from_instance('gear', $gear->id);
+        $context = \context_module::instance($cm->id);
+
+        $this->setUser($teacher);
+
+        // Put a fake audio file into draft area.
+        $fs = get_file_storage();
+        $usercontext = \context_user::instance($USER->id);
+        $draftitemid = file_get_unused_draft_itemid();
+        $filerecord = [
+            'contextid' => $usercontext->id,
+            'component' => 'user',
+            'filearea' => 'draft',
+            'itemid' => $draftitemid,
+            'filepath' => '/',
+            'filename' => 'narration.mp3',
+            'userid' => $USER->id,
+        ];
+        $fs->create_file_from_string($filerecord, 'fake audio content');
+
+        // Save hotspot with draftitemid.
+        $res = save_hotspot::execute(
+            0,
+            $gear->id,
+            0,
+            'audio',
+            'Audio Point',
+            '<p>Listen here</p>',
+            '{"x":0,"y":0,"z":0}',
+            'info',
+            '',
+            $draftitemid
+        );
+        $this->assertTrue($res['success']);
+        $hotspotid = $res['id'];
+
+        // Verify file was moved to hotspot_media area.
+        $files = $fs->get_area_files($context->id, 'mod_gear', 'hotspot_media', $hotspotid, 'id', false);
+        $this->assertCount(1, $files);
+        $file = reset($files);
+        $this->assertSame('narration.mp3', $file->get_filename());
+
+        // Delete hotspot and verify file is cleaned up.
+        delete_hotspot::execute($hotspotid);
+        $filesafter = $fs->get_area_files($context->id, 'mod_gear', 'hotspot_media', $hotspotid, 'id', false);
+        $this->assertCount(0, $filesafter);
     }
 }

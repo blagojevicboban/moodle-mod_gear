@@ -27,6 +27,12 @@ The buttons in the corner of the scene open the hotspot list, the leaderboard, v
 If classmates open the same activity at the same time, you see them as small spheres. You can write in the chat and, if you allow the
 microphone in your browser, talk to them. Your browser connects directly to theirs; nothing you say is recorded in Moodle.
 
+## 3D Tools
+
+- **Snapshot:** Click the camera icon in the toolbar to save a screenshot of the 3D scene to your device.
+- **Cross-section:** Click the cube/cut icon to see inside the model. Pick an axis (X, Y, or Z) and drag the slider to adjust the cutting depth.
+- **Measure distance:** Click the ruler icon, then click two points on the 3D model to see the distance between them. Click Clear or press Escape to finish.
+
 ## Tips
 
 - If the scene stays black, check that your browser supports WebGL and that hardware acceleration is on.

@@ -12,6 +12,11 @@
 | Feature | Description |
 |---------|-------------|
 | 🎮 **3D Viewer** | Display glTF/GLB models with orbit controls |
+| ✂️ **Cross-Section** | Interactive X/Y/Z clipping plane to inspect internal model structures |
+| 📏 **Measurement** | Real-time 3D distance measuring between surface points with metric units |
+| 📸 **Snapshot** | One-click high-resolution PNG screenshot export |
+| 💾 **Scene Transfer** | Export and import `.gear.json` scene layouts across activities |
+| 🎙️ **Direct Media** | Upload audio & video files directly to hotspots in Moodle file storage |
 | 📱 **AR Mode** | View 3D content in augmented reality |
 | 🥽 **VR Mode** | Immersive WebXR experience with interactive hand controllers |
 | 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video, Teleport) |

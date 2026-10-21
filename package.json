@@ -1,6 +1,6 @@
 {
   "name": "moodle-mod_gear",
-  "version": "1.7.1",
+  "version": "1.9.0",
   "description": "GEAR - Immersive AR/VR Learning for Moodle",
   "repository": {
     "type": "git",

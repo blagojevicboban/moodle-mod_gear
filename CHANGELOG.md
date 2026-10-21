@@ -5,6 +5,20 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-10-21
+
+### Added
+- **3D Scene Tools:**
+  - **Snapshot PNG Export:** Teachers and students can download a clean, high-resolution PNG screenshot of the current 3D viewport via the camera button (`gear-[cmid]-[timestamp].png`).
+  - **Cross-Section / Clipping Plane:** Interactive cross-section tool for exploring interior structures of 3D models (machinery, biology, geology) across X, Y, or Z axes with a percentage slider, direction flip, and persistence via *Save as default*.
+  - **3D Measurement Tool:** Measure real distances on model surfaces by raycasting two points; displays 3D markers, connecting line, and floating distance badge formatted in metric units (mm, cm, m), with Escape/Clear cancellation.
+- **File & Scene Management:**
+  - **Direct Hotspot Media Upload:** Teachers can directly upload audio and video files in the hotspot form into the Moodle `hotspot_media` file area without external hosting; served via `gear_pluginfile()` with streaming/inline playback.
+  - **Scene JSON Export and Import:** Teachers can export the entire scene (camera view, clipping plane, hotspots, quizzes, and relative prerequisites) to `.gear.json` and import it into another GEAR activity with automatic ID and dependency remapping.
+- **Testing & Tooling:**
+  - Expanded unit and integration test coverage (`tests/external_test.php`, `tests/backup_restore_test.php`, and `tests/behat/basic.feature`).
+  - Modularized `amd/src/tools.js` class for 3D viewport tools.
+
 ## [1.8.0] - 2026-10-17
 
 ### Added

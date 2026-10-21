@@ -71,4 +71,59 @@ final class backup_restore_test extends \advanced_testcase {
         $unlockedcfg = json_decode($newhotspots[1]->config, true);
         $this->assertEquals($newhotspots[0]->id, $unlockedcfg['requires_id']);
     }
+
+    /**
+     * Test duplicating a GEAR activity restores hotspot_media files.
+     */
+    public function test_duplicate_activity_preserves_hotspot_media(): void {
+        global $DB, $USER;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        /** @var \mod_gear_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_gear');
+
+        $gear = $generator->create_instance(['course' => $course->id, 'name' => 'Audio GEAR']);
+        $cm = get_coursemodule_from_id('gear', $gear->cmid, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+
+        $hotspot = $generator->create_hotspot([
+            'gearid' => $gear->id,
+            'type' => 'audio',
+            'title' => 'Audio Point',
+            'config' => json_encode(['audioUrl' => '']),
+        ]);
+
+        // Attach audio file to hotspot_media.
+        $fs = get_file_storage();
+        $filerecord = [
+            'contextid' => $context->id,
+            'component' => 'mod_gear',
+            'filearea' => 'hotspot_media',
+            'itemid' => $hotspot->id,
+            'filepath' => '/',
+            'filename' => 'narration.mp3',
+            'userid' => $USER->id,
+        ];
+        $fs->create_file_from_string($filerecord, 'audio data content');
+
+        // Duplicate the activity.
+        $newcm = duplicate_module($course, $cm);
+        $this->assertNotEmpty($newcm);
+        $newcontext = \context_module::instance($newcm->id);
+
+        $newhotspots = array_values($DB->get_records('gear_hotspots', ['gearid' => $newcm->instance]));
+        $this->assertCount(1, $newhotspots);
+        $newhotspot = $newhotspots[0];
+
+        $restoredfiles = $fs->get_area_files($newcontext->id, 'mod_gear', 'hotspot_media', $newhotspot->id, 'id', false);
+        $this->assertCount(1, $restoredfiles);
+        $restoredfile = reset($restoredfiles);
+        $this->assertSame('narration.mp3', $restoredfile->get_filename());
+
+        $cfg = json_decode($newhotspot->config, true);
+        $this->assertNotEmpty($cfg['audioUrl']);
+        $this->assertStringContainsString('hotspot_media', $cfg['audioUrl']);
+    }
 }

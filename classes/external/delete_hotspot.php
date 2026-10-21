@@ -64,7 +64,9 @@ class delete_hotspot extends external_api {
         self::validate_context($context);
         require_capability('mod/gear:manage', $context);
 
-        // Delete the hotspot.
+        // Delete the hotspot and its media files.
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id, 'mod_gear', 'hotspot_media', $params['id']);
         $DB->delete_records('gear_hotspots', ['id' => $params['id']]);
 
         $event = \mod_gear\event\hotspot_deleted::create([

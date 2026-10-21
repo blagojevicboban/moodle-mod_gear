@@ -36,3 +36,17 @@ Feature: Basic GEAR activity view and permissions
     Then "a[href*='/mod/gear/report.php']" "css_element" should exist
     When I am on the "Demo GEAR" "gear activity" page logged in as student1
     Then "a[href*='/mod/gear/report.php']" "css_element" should not exist
+
+  Scenario: 3D scene controls and management tool visibility
+    When I am on the "Demo GEAR" "gear activity" page logged in as teacher1
+    Then "button[id^='gear-snapshot-']" "css_element" should exist
+    And "button[id^='gear-clipping-']" "css_element" should exist
+    And "button[id^='gear-measure-']" "css_element" should exist
+    And "button[id^='gear-export-scene-']" "css_element" should exist
+    And "button[id^='gear-import-scene-']" "css_element" should exist
+    When I am on the "Demo GEAR" "gear activity" page logged in as student1
+    Then "button[id^='gear-snapshot-']" "css_element" should exist
+    And "button[id^='gear-clipping-']" "css_element" should exist
+    And "button[id^='gear-measure-']" "css_element" should exist
+    And "button[id^='gear-export-scene-']" "css_element" should not exist
+    And "button[id^='gear-import-scene-']" "css_element" should not exist

@@ -396,8 +396,15 @@ function gear_delete_instance(int $id): bool {
         return false;
     }
 
-    // Remove the grade item, then the related records.
+    // Remove the grade item, then the related records and files.
     gear_grade_item_delete($gear);
+    $cm = get_coursemodule_from_instance('gear', $id);
+    if ($cm) {
+        $context = context_module::instance($cm->id);
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id, 'mod_gear', 'model');
+        $fs->delete_area_files($context->id, 'mod_gear', 'hotspot_media');
+    }
     $DB->delete_records('gear_sessions', ['gearid' => $id]);
     $DB->delete_records('gear_models', ['gearid' => $id]);
     $DB->delete_records('gear_hotspots', ['gearid' => $id]);
@@ -437,7 +444,7 @@ function gear_pluginfile(
     require_login($course, true, $cm);
     require_capability('mod/gear:view', $context);
 
-    if ($filearea !== 'model') {
+    if ($filearea !== 'model' && $filearea !== 'hotspot_media') {
         return false;
     }
 
@@ -450,6 +457,12 @@ function gear_pluginfile(
 
     if (!$file) {
         return false;
+    }
+
+    if ($filearea === 'hotspot_media') {
+        // Media files (audio, video) must be streamable and played inline in browser.
+        send_stored_file($file, 86400, 0, false, $options);
+        return true;
     }
 
     // Models are loaded by the same-origin viewer, no CORS header is needed. Never render uploads inline.

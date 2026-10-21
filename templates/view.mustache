@@ -88,10 +88,26 @@
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-autorotate-{{cmid}}" title="{{#str}}autorotate, mod_gear{{/str}}">
                     <i class="fa fa-sync" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-snapshot-{{cmid}}" title="{{#str}}snapshot, mod_gear{{/str}}" aria-label="{{#str}}snapshot, mod_gear{{/str}}">
+                    <i class="fa fa-camera" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-clipping-{{cmid}}" title="{{#str}}clipping_plane, mod_gear{{/str}}" aria-label="{{#str}}clipping_plane, mod_gear{{/str}}">
+                    <i class="fa fa-cube" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-measure-{{cmid}}" title="{{#str}}measure_tool, mod_gear{{/str}}" aria-label="{{#str}}measure_tool, mod_gear{{/str}}">
+                    <i class="fa fa-ruler" aria-hidden="true"></i>
+                </button>
                 {{#can_manage}}
-                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-saveview-{{cmid}}" title="{{#str}}saveview, mod_gear{{/str}}">
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-saveview-{{cmid}}" title="{{#str}}saveview, mod_gear{{/str}}" aria-label="{{#str}}saveview, mod_gear{{/str}}">
                     <i class="fa fa-save" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-export-scene-{{cmid}}" title="{{#str}}export_scene, mod_gear{{/str}}" aria-label="{{#str}}export_scene, mod_gear{{/str}}">
+                    <i class="fa fa-file-export" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-import-scene-{{cmid}}" title="{{#str}}import_scene, mod_gear{{/str}}" aria-label="{{#str}}import_scene, mod_gear{{/str}}">
+                    <i class="fa fa-file-import" aria-hidden="true"></i>
+                </button>
+                <input type="file" id="gear-import-file-{{cmid}}" class="d-none" accept=".json,.gear.json">
                 <div class="gear-control-slider-container">
                     <div class="gear-color-picker-wrapper">
                         <input type="color" class="gear-hotspot-color-picker" id="gear-hotspot-color-{{cmid}}" value="#6366f1" title="{{#str}}hotspotcolor, mod_gear{{/str}}" aria-label="{{#str}}hotspotcolor, mod_gear{{/str}}">

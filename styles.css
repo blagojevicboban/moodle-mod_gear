@@ -783,3 +783,80 @@
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+/* 3D Tools (Cross-section and Measure) */
+.gear-activity .gear-tools-panel {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    width: 280px;
+    max-width: calc(100% - 40px);
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: rgba(20, 20, 40, 0.92);
+    color: #fff;
+    backdrop-filter: blur(8px);
+    z-index: 1600;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.gear-activity .gear-tools-panel-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+}
+
+.gear-activity .gear-tools-panel .close {
+    background: transparent;
+    border: 0;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.gear-activity .gear-measure-badge {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(99, 102, 241, 0.95);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1600;
+    display: flex;
+    align-items: center;
+}
+
+.gear-activity .gear-measure-toast {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1600;
+    background: rgba(15, 23, 42, 0.85);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.gear-hotspot-form-inner .gear-upload-status {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+}
+
+.gear-hotspot-form-inner .gear-upload-status.text-success {
+    color: #10b981 !important;
+}
+
+.gear-hotspot-form-inner .gear-upload-status.text-danger {
+    color: #ef4444 !important;
+}
+
+

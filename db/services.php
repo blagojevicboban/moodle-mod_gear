@@ -109,4 +109,18 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',
     ],
+    'mod_gear_export_scene' => [
+        'classname'     => 'mod_gear\external\export_scene',
+        'description'   => 'Export scene configuration and hotspots as JSON',
+        'type'          => 'read',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
+    'mod_gear_import_scene' => [
+        'classname'     => 'mod_gear\external\import_scene',
+        'description'   => 'Import scene configuration and hotspots from JSON',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
 ];

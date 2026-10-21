@@ -46,6 +46,7 @@ class save_hotspot extends external_api {
             'position' => new external_value(PARAM_RAW, 'JSON position {x,y,z}'),
             'icon' => new external_value(PARAM_TEXT, 'Icon name', VALUE_DEFAULT, 'info'),
             'config' => new external_value(PARAM_RAW, 'JSON config', VALUE_DEFAULT, ''),
+            'draftitemid' => new external_value(PARAM_INT, 'Draft item ID for media files', VALUE_DEFAULT, 0),
         ]);
     }
 
@@ -61,6 +62,7 @@ class save_hotspot extends external_api {
      * @param string $position JSON position
      * @param string $icon Icon name
      * @param string $config JSON config
+     * @param int $draftitemid Draft item ID for media files
      * @return array
      */
     public static function execute(
@@ -72,7 +74,8 @@ class save_hotspot extends external_api {
         string $content,
         string $position,
         string $icon,
-        string $config = ''
+        string $config = '',
+        int $draftitemid = 0
     ): array {
         global $DB;
 
@@ -86,6 +89,7 @@ class save_hotspot extends external_api {
             'position' => $position,
             'icon' => $icon,
             'config' => $config,
+            'draftitemid' => $draftitemid,
         ]);
 
         // Get the course module.
@@ -149,6 +153,43 @@ class save_hotspot extends external_api {
                 'context' => $context,
             ]);
             $event->trigger();
+        }
+
+        // Save media file from draft area if provided.
+        if (!empty($params['draftitemid'])) {
+            file_save_draft_area_files(
+                $params['draftitemid'],
+                $context->id,
+                'mod_gear',
+                'hotspot_media',
+                $hotspot->id,
+                ['subdirs' => 0, 'maxfiles' => 1]
+            );
+            $fs = get_file_storage();
+            $files = $fs->get_area_files($context->id, 'mod_gear', 'hotspot_media', $hotspot->id, 'id DESC', false);
+            if (!empty($files)) {
+                $file = reset($files);
+                $url = \moodle_url::make_pluginfile_url(
+                    $context->id,
+                    'mod_gear',
+                    'hotspot_media',
+                    $hotspot->id,
+                    $file->get_filepath(),
+                    $file->get_filename()
+                )->out(false);
+
+                $cfg = json_decode($hotspot->config ?: '{}', true);
+                if (!is_array($cfg)) {
+                    $cfg = [];
+                }
+                if ($hotspot->type === 'audio') {
+                    $cfg['audioUrl'] = $url;
+                } else if ($hotspot->type === 'video') {
+                    $cfg['videoUrl'] = $url;
+                }
+                $hotspot->config = json_encode($cfg);
+                $DB->set_field('gear_hotspots', 'config', $hotspot->config, ['id' => $hotspot->id]);
+            }
         }
 
         return [

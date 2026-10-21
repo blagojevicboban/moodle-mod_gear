@@ -143,5 +143,35 @@ class restore_gear_activity_structure_step extends restore_activity_structure_st
         // Add related files.
         $this->add_related_files('mod_gear', 'intro', null);
         $this->add_related_files('mod_gear', 'model', null);
+        $this->add_related_files('mod_gear', 'hotspot_media', 'gear_hotspot');
+
+        // Update media URLs if hotspot_media files exist for restored hotspots.
+        $context = \context_module::instance($this->task->get_moduleid());
+        $fs = get_file_storage();
+        foreach ($DB->get_records('gear_hotspots', ['gearid' => $gearid], '', 'id, type, config') as $hotspot) {
+            $files = $fs->get_area_files($context->id, 'mod_gear', 'hotspot_media', $hotspot->id, 'id DESC', false);
+            if (!empty($files)) {
+                $file = reset($files);
+                $url = \moodle_url::make_pluginfile_url(
+                    $context->id,
+                    'mod_gear',
+                    'hotspot_media',
+                    $hotspot->id,
+                    $file->get_filepath(),
+                    $file->get_filename()
+                )->out(false);
+
+                $config = json_decode($hotspot->config ?? '', true);
+                if (!is_array($config)) {
+                    $config = [];
+                }
+                if ($hotspot->type === 'audio') {
+                    $config['audioUrl'] = $url;
+                } else if ($hotspot->type === 'video') {
+                    $config['videoUrl'] = $url;
+                }
+                $DB->set_field('gear_hotspots', 'config', json_encode($config), ['id' => $hotspot->id]);
+            }
+        }
     }
 }

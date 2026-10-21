@@ -83,6 +83,7 @@ class backup_gear_activity_structure_step extends backup_activity_structure_step
         // Identify file areas.
         $gear->annotate_files('mod_gear', 'intro', null); // Intro files.
         $gear->annotate_files('mod_gear', 'model', null); // Model files (attached to module context, itemid 0).
+        $hotspot->annotate_files('mod_gear', 'hotspot_media', 'id'); // Hotspot audio/video files.
 
         return $this->prepare_activity_structure($gear);
     }

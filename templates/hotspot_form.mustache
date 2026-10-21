@@ -38,7 +38,7 @@
         "content": "This is existing content"
     }
 }}
-<div id="gear-hotspot-form-{{cmid}}" class="gear-hotspot-popup active" data-pos-x="{{posX}}" data-pos-y="{{posY}}" data-pos-z="{{posZ}}" {{#hotspotId}}data-hotspot-id="{{hotspotId}}"{{/hotspotId}}>
+<div id="gear-hotspot-form-{{cmid}}" class="gear-hotspot-popup active" data-pos-x="{{posX}}" data-pos-y="{{posY}}" data-pos-z="{{posZ}}" {{#hotspotId}}data-hotspot-id="{{hotspotId}}"{{/hotspotId}} data-draftitemid="{{draftitemid}}">
     <div class="gear-hotspot-popup-inner gear-hotspot-form-inner">
         <h3 class="gear-hotspot-title">{{#hotspotId}}{{#str}}edithotspot, mod_gear{{/str}}{{/hotspotId}}{{^hotspotId}}{{#str}}addhotspot, mod_gear{{/str}}{{/hotspotId}}</h3>
         
@@ -101,14 +101,28 @@
         <div id="gear-hotspot-audio-fields-{{cmid}}" style="{{^isAudio}}display:none;{{/isAudio}}">
             <div class="gear-form-group">
                 <label for="gear-hotspot-input-audiourl-{{cmid}}">{{#str}}audiourl, mod_gear{{/str}}</label>
-                <input type="text" id="gear-hotspot-input-audiourl-{{cmid}}" class="form-control" placeholder="{{#str}}audiourl_help, mod_gear{{/str}}" value="{{audioUrl}}">
+                <div class="input-group">
+                    <input type="text" id="gear-hotspot-input-audiourl-{{cmid}}" class="form-control" placeholder="{{#str}}audiourl_help, mod_gear{{/str}}" value="{{audioUrl}}">
+                    <button type="button" class="btn btn-outline-secondary gear-upload-trigger-btn" data-target="gear-hotspot-audio-file-{{cmid}}" title="{{#str}}media_upload, mod_gear{{/str}}">
+                        <i class="fa fa-upload"></i>
+                    </button>
+                </div>
+                <input type="file" id="gear-hotspot-audio-file-{{cmid}}" class="d-none" accept="audio/*">
+                <small class="form-text text-muted gear-upload-status" id="gear-hotspot-audio-status-{{cmid}}"></small>
             </div>
         </div>
 
         <div id="gear-hotspot-video-fields-{{cmid}}" style="{{^isVideo}}display:none;{{/isVideo}}">
             <div class="gear-form-group">
                 <label for="gear-hotspot-input-videourl-{{cmid}}">{{#str}}videourl, mod_gear{{/str}}</label>
-                <input type="text" id="gear-hotspot-input-videourl-{{cmid}}" class="form-control" placeholder="{{#str}}videourl_help, mod_gear{{/str}}" value="{{videoUrl}}">
+                <div class="input-group">
+                    <input type="text" id="gear-hotspot-input-videourl-{{cmid}}" class="form-control" placeholder="{{#str}}videourl_help, mod_gear{{/str}}" value="{{videoUrl}}">
+                    <button type="button" class="btn btn-outline-secondary gear-upload-trigger-btn" data-target="gear-hotspot-video-file-{{cmid}}" title="{{#str}}media_upload, mod_gear{{/str}}">
+                        <i class="fa fa-upload"></i>
+                    </button>
+                </div>
+                <input type="file" id="gear-hotspot-video-file-{{cmid}}" class="d-none" accept="video/*">
+                <small class="form-text text-muted gear-upload-status" id="gear-hotspot-video-status-{{cmid}}"></small>
             </div>
         </div>
 

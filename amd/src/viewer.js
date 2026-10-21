@@ -42,6 +42,7 @@ import ModalSaveCancel from 'core/modal_save_cancel';
 import ModalEvents from 'core/modal_events';
 import SyncManager from './sync';
 import SceneExtras from './extras';
+import SceneTools from './tools';
 import {pickQuestion} from './bank';
 import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
 
@@ -103,6 +104,7 @@ const WARN_TRIANGLES = 1000000;
             this.audioListener = null;
             this.modelContainer = new THREE.Group();
             this.extras = new SceneExtras(this);
+            this.tools = new SceneTools(this);
             this.clock = new THREE.Clock();
             this.movingHotspotId = null; // Track hotspot being moved.
             this.tooltipElement = null; // Tooltip element for hover display.
@@ -125,6 +127,7 @@ const WARN_TRIANGLES = 1000000;
                 // Find out what WebXR can do before the AR and VR buttons are wired up.
                 await this.checkWebXRSupport();
                 this.setupEventListeners();
+                await this.tools.init();
 
                 // Wait for overlay UI to be added to DOM before proceeding
                 await this.setupOverlay();
@@ -490,6 +493,70 @@ const WARN_TRIANGLES = 1000000;
                 saveBtn.addEventListener('click', () => this.saveCurrentView());
             }
 
+            // Export scene button.
+            var exportBtn = document.getElementById('gear-export-scene-' + this.cmid);
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    window.location.href = M.cfg.wwwroot + '/mod/gear/export_scene.php?cmid=' + this.cmid;
+                });
+            }
+
+            // Import scene button.
+            var importBtn = document.getElementById('gear-import-scene-' + this.cmid);
+            var importInput = document.getElementById('gear-import-file-' + this.cmid);
+            if (importBtn && importInput) {
+                importBtn.addEventListener('click', () => importInput.click());
+                importInput.addEventListener('change', async() => {
+                    if (!importInput.files || !importInput.files[0]) {
+                        return;
+                    }
+                    const file = importInput.files[0];
+                    try {
+                        await Notification.saveCancelPromise(
+                            await Str.get_string('confirm', 'core'),
+                            await Str.get_string('import_scene_confirm', 'mod_gear'),
+                            await Str.get_string('import_scene', 'mod_gear')
+                        );
+                    } catch {
+                        importInput.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = async(ev) => {
+                        const jsonStr = ev.target.result;
+                        try {
+                            JSON.parse(jsonStr);
+                        } catch {
+                            Notification.alert(
+                                await Str.get_string('error', 'core'),
+                                await Str.get_string('import_scene_invalid', 'mod_gear')
+                            );
+                            importInput.value = '';
+                            return;
+                        }
+                        Ajax.call([{
+                            methodname: 'mod_gear_import_scene',
+                            args: {
+                                gearid: this.gearid,
+                                scenedata: jsonStr,
+                                mode: 'replace'
+                            }
+                        }])[0].then(async(res) => {
+                            importInput.value = '';
+                            if (res.success) {
+                                Notification.addNotification({
+                                    message: await Str.get_string('import_scene_success', 'mod_gear', res.count),
+                                    type: 'success'
+                                });
+                                await this.reloadAllHotspots();
+                            }
+                            return null;
+                        }).catch(Notification.exception);
+                    };
+                    reader.readAsText(file);
+                });
+            }
+
             // Hotspot scale slider.
             var scaleSlider = document.getElementById('gear-hotspot-scale-' + this.cmid);
             if (scaleSlider) {
@@ -625,7 +692,13 @@ const WARN_TRIANGLES = 1000000;
                         position: [camPos.x, camPos.y, camPos.z],
                         target: [targetPos.x, targetPos.y, targetPos.z],
                         hotspotScale: this.hotspotScale,
-                        hotspotColor: this.hotspotColor
+                        hotspotColor: this.hotspotColor,
+                        clipping: {
+                            enabled: this.tools.clippingActive,
+                            axis: this.tools.clippingAxis,
+                            offset: this.tools.clippingOffset,
+                            inverted: this.tools.clippingInverted
+                        }
                     })
                 }
             }])[0];
@@ -850,6 +923,7 @@ const WARN_TRIANGLES = 1000000;
 
                     // Animations, material variants and the guided tour.
                     await this.extras.ready();
+                    this.tools.onModelsLoaded();
                     await this.adaptToModelSize();
 
                     // Mark as loaded.
@@ -1032,6 +1106,7 @@ const WARN_TRIANGLES = 1000000;
             }
             this.renderer.setAnimationLoop(null);
             this.extras.destroy();
+            this.tools.destroy();
             window.removeEventListener('resize', this.resizeHandler);
             document.removeEventListener('visibilitychange', this.visibilityHandler);
             if (this.viewObserver) {
@@ -2317,6 +2392,65 @@ const WARN_TRIANGLES = 1000000;
                 }
             });
 
+            // Media upload triggers and file inputs.
+            form.querySelectorAll('.gear-upload-trigger-btn').forEach((triggerBtn) => {
+                triggerBtn.addEventListener('click', () => {
+                    const targetId = triggerBtn.dataset.target;
+                    const input = form.querySelector('#' + targetId);
+                    if (input) {
+                        input.click();
+                    }
+                });
+            });
+
+            form.querySelectorAll('input[type="file"]').forEach((fileInput) => {
+                fileInput.addEventListener('change', async() => {
+                    if (!fileInput.files || !fileInput.files[0]) {
+                        return;
+                    }
+                    const file = fileInput.files[0];
+                    const isAudio = fileInput.id.indexOf('audio') !== -1;
+                    const statusEl = form.querySelector(isAudio
+                        ? '#gear-hotspot-audio-status-' + this.cmid
+                        : '#gear-hotspot-video-status-' + this.cmid);
+                    const urlInput = form.querySelector(isAudio
+                        ? '#gear-hotspot-input-audiourl-' + this.cmid
+                        : '#gear-hotspot-input-videourl-' + this.cmid);
+
+                    statusEl.className = 'form-text text-muted gear-upload-status';
+                    statusEl.textContent = await Str.get_string('media_uploading', 'mod_gear');
+
+                    const formData = new FormData();
+                    formData.append('cmid', this.cmid);
+                    formData.append('sesskey', M.cfg.sesskey);
+                    formData.append('file', file);
+                    if (form.dataset.draftitemid) {
+                        formData.append('draftitemid', form.dataset.draftitemid);
+                    }
+
+                    try {
+                        const resp = await fetch(M.cfg.wwwroot + '/mod/gear/upload_media.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await resp.json();
+                        if (data.success) {
+                            form.dataset.draftitemid = data.draftitemid;
+                            urlInput.value = data.url;
+                            statusEl.className = 'form-text text-success gear-upload-status';
+                            statusEl.textContent = await Str.get_string('media_upload_success', 'mod_gear') +
+                                ' (' + data.filename + ')';
+                        } else {
+                            statusEl.className = 'form-text text-danger gear-upload-status';
+                            statusEl.textContent = data.message || 'Upload failed';
+                        }
+                    } catch (err) {
+                        statusEl.className = 'form-text text-danger gear-upload-status';
+                        statusEl.textContent = err.message || 'Upload failed';
+                    }
+                });
+            });
+
             // Cancel button.
             form.querySelector('.gear-cancel-btn').addEventListener('click', () => {
                 form.classList.remove('active');
@@ -2419,6 +2553,7 @@ const WARN_TRIANGLES = 1000000;
 
             // Determine whether creating new or editing existing hotspot.
             var hotspotId = form.dataset.hotspotId ? parseInt(form.dataset.hotspotId, 10) : 0;
+            var draftitemId = form.dataset.draftitemid ? parseInt(form.dataset.draftitemid, 10) : 0;
 
             // Save via AJAX.
             Ajax.call([{
@@ -2432,7 +2567,8 @@ const WARN_TRIANGLES = 1000000;
                     content: content,
                     position: JSON.stringify(position),
                     icon: (type === 'quiz') ? 'question' : 'info',
-                    config: JSON.stringify(config)
+                    config: JSON.stringify(config),
+                    draftitemid: draftitemId
                 }
             }])[0].then(async(response) => {
                 // Add hotspot mesh.
@@ -2647,6 +2783,29 @@ const WARN_TRIANGLES = 1000000;
                     }
                 }, 30);
             });
+        }
+
+        /**
+         * Fully clear and reload all hotspots in the scene and navigation menu.
+         */
+        async reloadAllHotspots() {
+            for (var i = 0; i < this.hotspotMeshes.length; i++) {
+                var mesh = this.hotspotMeshes[i];
+                this.scene.remove(mesh);
+                if (mesh.geometry) {
+                    mesh.geometry.dispose();
+                }
+                if (mesh.material) {
+                    mesh.material.dispose();
+                }
+            }
+            this.hotspotMeshes = [];
+            await this.fetchSceneData();
+            if (this.hotspotsEnabled) {
+                this.loadHotspots();
+                this.renderHotspotsNav();
+                this.updateA11yHotspots();
+            }
         }
 
         /**

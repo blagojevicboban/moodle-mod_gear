@@ -76,7 +76,15 @@ Open **Analytics Reports** in the activity. Below the totals, *Student progress*
 - If the model has animations, a panel appears at the bottom left of the viewer: choose a clip, play/pause it and change the speed. Models with material variants also get a *Material variant* selector. Pick what students should see first and press **Save as default**.
 - **Guided tour:** press *Guided tour*, move the camera to the first view and press *Add step from the current view*, then write a title and a text. In the same dialog you can choose a hotspot to open, an animation to play and a material variant to show at that step. Repeat for every step; use the arrows to reorder, the pencil to edit the text and the bin to delete. Students see the same panel with *Previous* and *Next*.
 
-## 3. Results
+## 3. 3D Scene Tools and File Management
+
+- **Snapshot:** Click the camera icon in the left toolbar to instantly download a clean, high-resolution PNG screenshot of the current 3D viewport (`gear-[cmid]-[timestamp].png`).
+- **Cross-section (Clipping plane):** Click the cube/cut icon in the left toolbar to slice through the 3D model. Select the slicing axis (X, Y, or Z), use the slider to position the plane, or toggle flip direction. Save the active clipping plane as default with *Save Current View*.
+- **3D Measurement:** Click the ruler icon in the left toolbar to measure real-world distances between any two points on the 3D model. Click two points on the model surface; a line and a distance badge (in mm, cm, or m) will appear. Press Clear or Escape to cancel.
+- **Direct Media Upload in Hotspots:** When creating an Audio or Video hotspot, you can upload an audio (`.mp3`, `.wav`, `.ogg`) or video (`.mp4`, `.webm`) file directly into Moodle using the upload button next to the URL input. Files are stored securely in Moodle's file system and play inline.
+- **Scene Export and Import:** Teachers can export the entire scene configuration and hotspots to a `.gear.json` file by clicking the export button in the viewer toolbar. To transfer a scene to another GEAR activity, click the import button and choose the `.gear.json` file. All hotspots, views, and unlock dependencies are remapped automatically.
+
+## 4. Results
 
 - **Gradebook:** each quiz hotspot counts once, with the best score of the student; the total is scaled to the activity grade.
 - **Leaderboard:** the trophy button shows the top scores. With **separate groups** a student sees only members of their own groups; teachers with *access all groups* see everyone.
