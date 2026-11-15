@@ -503,8 +503,8 @@ final class external_test extends \advanced_testcase {
         $hotspotid = $saved['id'];
 
         $this->setUser($student);
-        $first = get_hotspots::execute($gear->id);
-        $second = get_hotspots::execute($gear->id);
+        $first = get_hotspots::execute($gear->id)['hotspots'];
+        $second = get_hotspots::execute($gear->id)['hotspots'];
         $this->assertCount(1, $first);
         $this->assertSame($first[0]['content'], $second[0]['content']);
         $this->assertSame($first[0]['config'], $second[0]['config']);
