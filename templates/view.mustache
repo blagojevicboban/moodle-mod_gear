@@ -140,6 +140,17 @@
             <i class="fa fa-info-circle" aria-hidden="true"></i>
             {{#str}}nomodels, mod_gear{{/str}}
         </div>
+        {{#can_manage}}
+        <form method="post" action="{{viewurl}}" class="mt-2">
+            <input type="hidden" name="action" value="loadsample">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <button type="submit" class="btn btn-primary" id="gear-load-sample-{{cmid}}">
+                <i class="fa fa-cube" aria-hidden="true"></i>
+                {{#str}}loadsamplescene, mod_gear{{/str}}
+            </button>
+            <small class="form-text text-muted mt-1">{{#str}}loadsamplescene_help, mod_gear{{/str}}</small>
+        </form>
+        {{/can_manage}}
         {{/has_models}}
     </div>
 </div>

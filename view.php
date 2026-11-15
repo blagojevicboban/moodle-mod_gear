@@ -70,11 +70,26 @@ $PAGE->set_context($context);
 // Load Three.js and addons via bundled AMD module (no longer via CDN).
 // PeerJS (self-hosted in vendorjs/) is loaded by the viewer only when a second participant joins.
 
-// Get models for this activity (with file URLs).
-$models = gear_get_models($gear->id, $context->id);
-
 // Check if user can manage hotspots.
 $canmanage = has_capability('mod/gear:manage', $context);
+
+$action = optional_param('action', '', PARAM_ALPHA);
+if ($action === 'loadsample') {
+    require_sesskey();
+    require_capability('mod/gear:manage', $context);
+    if (gear_load_sample_scene($gear, $context)) {
+        redirect(
+            new moodle_url('/mod/gear/view.php', ['id' => $cm->id]),
+            get_string('samplesceneloaded', 'mod_gear'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
+    }
+    redirect(new moodle_url('/mod/gear/view.php', ['id' => $cm->id]));
+}
+
+// Get models for this activity (with file URLs).
+$models = gear_get_models($gear->id, $context->id);
 $usdzurls = array_filter(array_column($models, 'usdzurl'));
 
 // Prepare JS configuration.
@@ -109,6 +124,8 @@ $templatedata = [
     'cmid' => $cm->id,
     'can_manage' => $canmanage,
     'reporturl' => (new moodle_url('/mod/gear/report.php', ['id' => $cm->id]))->out(),
+    'viewurl' => (new moodle_url('/mod/gear/view.php', ['id' => $cm->id]))->out(false),
+    'sesskey' => sesskey(),
 ];
 
 // Output.

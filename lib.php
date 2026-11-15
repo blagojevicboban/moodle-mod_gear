@@ -946,3 +946,75 @@ function gear_get_visible_userids(stdClass $cm, context_module $context): ?array
     }
     return array_values(array_unique(array_map('intval', $userids)));
 }
+
+/**
+ * Populate an empty GEAR activity with the bundled sample 3D model and starter hotspots.
+ *
+ * @param stdClass $gear GEAR activity record
+ * @param context_module $context Module context
+ * @return bool True if the sample scene was loaded
+ */
+function gear_load_sample_scene(stdClass $gear, context_module $context): bool {
+    global $CFG, $DB, $USER;
+
+    $samplepath = $CFG->dirroot . '/mod/gear/assets/sample_gear.glb';
+    if (!is_readable($samplepath)) {
+        return false;
+    }
+
+    $fs = get_file_storage();
+    $existing = $fs->get_area_files($context->id, 'mod_gear', 'model', 0, 'id', false);
+    if (!empty($existing)) {
+        return false;
+    }
+
+    $filerecord = [
+        'contextid' => $context->id,
+        'component' => 'mod_gear',
+        'filearea' => 'model',
+        'itemid' => 0,
+        'filepath' => '/',
+        'filename' => 'sample_gear.glb',
+        'userid' => $USER->id,
+    ];
+    $fs->create_file_from_pathname($filerecord, $samplepath);
+    gear_sync_model_records((int) $gear->id, (int) $context->id);
+
+    $model = $DB->get_record('gear_models', ['gearid' => $gear->id], '*', IGNORE_MULTIPLE);
+    $modelid = $model ? (int) $model->id : null;
+    $hashotspots = $DB->record_exists('gear_hotspots', ['gearid' => $gear->id]);
+    if (!$hashotspots) {
+        $now = time();
+        $DB->insert_record('gear_hotspots', (object) [
+            'gearid' => $gear->id,
+            'modelid' => $modelid,
+            'type' => 'info',
+            'title' => 'Welcome to GEAR',
+            'content' => '<p>Hold Shift and click anywhere on the 3D model to place new hotspots.</p>',
+            'position' => json_encode(['x' => 0, 'y' => 0.85, 'z' => 0]),
+            'icon' => 'info',
+            'config' => '{}',
+            'sortorder' => 1,
+            'timecreated' => $now,
+        ]);
+        $DB->insert_record('gear_hotspots', (object) [
+            'gearid' => $gear->id,
+            'modelid' => $modelid,
+            'type' => 'quiz',
+            'title' => 'Sample Quiz',
+            'content' => '<p>Which shortcut lets teachers place a new hotspot on the 3D model?</p>',
+            'position' => json_encode(['x' => 0.85, 'y' => 0, 'z' => 0]),
+            'icon' => 'quiz',
+            'config' => json_encode([
+                'quizType' => 'single',
+                'options' => ['Shift + Click', 'Right Click', 'Double Space'],
+                'correctAnswer' => 0,
+                'points' => 10,
+            ]),
+            'sortorder' => 2,
+            'timecreated' => $now,
+        ]);
+    }
+
+    return true;
+}
