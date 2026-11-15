@@ -86,8 +86,9 @@ if (function_exists('finfo_open')) {
     if ($finfo) {
         finfo_close($finfo);
     }
-    if ($mimetype && !preg_match('#^(audio|video)/#', $mimetype)
-        && !in_array($mimetype, ['application/ogg', 'application/mp4'], true)) {
+    $allowedmimes = ['application/ogg', 'application/mp4'];
+    $isvalidmime = !$mimetype || preg_match('#^(audio|video)/#', $mimetype) || in_array($mimetype, $allowedmimes, true);
+    if (!$isvalidmime) {
         echo json_encode([
             'success' => false,
             'message' => get_string('error:unsupportedmediatype', 'gear'),
