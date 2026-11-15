@@ -27,11 +27,23 @@ The buttons in the corner of the scene open the hotspot list, the leaderboard, v
 If classmates open the same activity at the same time, you see them as small spheres. You can write in the chat and, if you allow the
 microphone in your browser, talk to them. Your browser connects directly to theirs; nothing you say is recorded in Moodle.
 
-## 3D Tools
+## 3D Tools & Study Features
 
 - **Snapshot:** Click the camera icon in the toolbar to save a screenshot of the 3D scene to your device.
 - **Cross-section:** Click the cube/cut icon to see inside the model. Pick an axis (X, Y, or Z) and drag the slider to adjust the cutting depth.
-- **Measure distance:** Click the ruler icon, then click two points on the 3D model to see the distance between them. Click Clear or press Escape to finish.
+- **Exploded View & X-Ray:** Separate multi-part models with the Exploded View slider, or toggle X-Ray / Wireframe to inspect internal geometry.
+- **Before / After Split View:** Toggle Split View and drag the divider slider to compare normal rendering against wireframe, X-ray, or exploded views side-by-side.
+- **Measure distance & 3-Point Angle:** Click the ruler icon to measure distances between two surface points, or the angle icon to click 3 points (`A – B – C`) and measure the angle in degrees. Click Clear or press Escape to finish.
+- **Study / Flashcard Mode:** Toggle Study Mode to mask hotspot labels and test yourself step-by-step with **Next** and **Reveal** controls.
+- **Study Sheet Export:** Export a printable HTML/PDF study sheet containing a high-resolution scene snapshot and all unlocked hotspot notes.
+- **Presentation Mode:** Switch to fullscreen Presentation Mode for distraction-free viewing.
+
+## Interactive Quiz Types
+
+- **Multiple Choice & Text:** Answer questions directly inside the 3D popup.
+- **3D Mesh Click:** Click the target part directly on the 3D model.
+- **3D Pin-Drop:** Place a pin on the exact 3D surface location within the target radius.
+- **Sequence & Assembly / Reorder:** Click multiple 3D parts in the exact required order (or snap parts back into place).
 
 ## Tips
 

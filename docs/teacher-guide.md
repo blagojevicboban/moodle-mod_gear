@@ -83,6 +83,11 @@ Open **Analytics Reports** in the activity. Below the totals, *Student progress*
 - **3D Measurement:** Click the ruler icon in the left toolbar to measure real-world distances between any two points on the 3D model. Click two points on the model surface; a line and a distance badge (in mm, cm, or m) will appear. Press Clear or Escape to cancel.
 - **Direct Media Upload in Hotspots:** When creating an Audio or Video hotspot, you can upload an audio (`.mp3`, `.wav`, `.ogg`) or video (`.mp4`, `.webm`) file directly into Moodle using the upload button next to the URL input. Files are stored securely in Moodle's file system and play inline.
 - **Scene Export and Import:** Teachers can export the entire scene configuration and hotspots to a `.gear.json` file by clicking the export button in the viewer toolbar. To transfer a scene to another GEAR activity, click the import button and choose the `.gear.json` file. All hotspots, views, and unlock dependencies are remapped automatically.
+- **Built-in 3D Model Library:** On a new activity without an uploaded model, teachers can one-click load any of 5 built-in multi-part `.glb` models (*Mechanical Gearbox*, *Plant Cell*, *Water Molecule*, *Solar System*, *DC Motor*).
+- **Studio Lighting, Exposure & Model Stats:** Pick studio PMREM lighting presets, fine-tune the **Exposure** slider, and inspect the model's mesh, triangle, and material counts in the tools panel.
+- **Guided Tour & AI Narration:** Capture camera waypoints for a step-by-step Guided Tour and optionally enrich tour step descriptions with Moodle's AI subsystem.
+- **3D Quiz Modes:** In addition to Multiple Choice and Free-Text, teachers can author **3D Mesh Click**, **3D Pin-Drop** (with configurable radius), **Sequence** (ordered mesh clicks), and **Assembly / Reorder** quizzes.
+- **3D Analytics Heatmap & Live Classroom:** Toggle the **Heatmap** overlay to visualize hotspot engagement directly on the 3D model, or use **Live Laser Pointer**, **Follow Camera**, and **3D Surface Ink** during live collaborative sessions.
 
 ## 4. Results
 

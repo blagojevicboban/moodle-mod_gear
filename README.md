@@ -11,28 +11,31 @@
 
 | Feature | Description |
 |---------|-------------|
-| 🎮 **3D Viewer** | Display glTF/GLB models with orbit controls |
+| 🎮 **3D Viewer** | Display glTF/GLB models with orbit controls, Exploded View, X-Ray, and Before/After Split View |
+| 📚 **Model Library** | 5 built-in multi-part `.glb` models (Mechanical Gearbox, Plant Cell, Water Molecule, Solar System, DC Motor) |
 | ✂️ **Cross-Section** | Interactive X/Y/Z clipping plane to inspect internal model structures |
-| 📏 **Measurement** | Real-time 3D distance measuring between surface points with metric units |
-| 📸 **Snapshot** | One-click high-resolution PNG screenshot export |
+| 📏 **Measurement & Angle** | Real-time 3D distance and 3-point angle measurement between surface points |
+| 💡 **Studio & Presentation** | PMREM studio lighting presets with Exposure slider, Model Stats breakdown, and Fullscreen Presentation Mode |
+| 📸 **Snapshot & Study Sheet** | One-click PNG screenshot export and printable HTML/PDF Study Sheet export |
+| 🃏 **Study Mode** | Flashcard self-test mode masking hotspot labels with Next/Reveal controls |
 | 💾 **Scene Transfer** | Export and import `.gear.json` scene layouts across activities |
 | 🎙️ **Direct Media** | Upload audio & video files directly to hotspots in Moodle file storage |
 | 📱 **AR Mode** | View 3D content in augmented reality |
 | 🥽 **VR Mode** | Immersive WebXR experience with interactive hand controllers |
-| 📍 **Hotspots** | Interactive information points (Info, Quiz, Audio, Video, Teleport) |
+| 📍 **Hotspots & Tours** | Interactive points (Info, Quiz, Audio, Video, Teleport) plus Guided Tour Capture & AI Tour Narration |
 | 💬 **Tooltips** | Hover tooltips with icons, titles, and descriptions for quick context |
 | ♿ **Accessibility** | Keyboard navigation, screen reader labels, a text alternative and hotspot list for the 3D scene, and touch/long-press for mobile |
 | 🎞️ **Video** | Embed MP4s, YouTube, or Vimeo directly in 3D scenes |
 | 🧩 **Gamification** | Branching scenarios & escape-room style conditional unlocking |
-| ✨ **AI Assist** | Generate hotspot content and quizzes with the AI providers of Moodle (core AI subsystem) |
+| ✨ **AI Assist** | Generate hotspot content, quizzes, auto-annotations, and tour narration with Moodle core AI |
 | 🗣️ **Text-to-Speech**| Native auto-narration of informational hotspots |
-| 📝 **Quizzes** | In-world multiple choice questions with grading |
-| 👥 **Collaborative** | Real-time multi-user sessions with avatars |
+| 📝 **Quizzes** | Multiple choice, free-text, 3D Mesh Click, Pin-Drop, Sequence, and Assembly / Reorder quizzes |
+| 👥 **Collaborative** | Real-time multi-user sessions with avatars, Live Laser Pointer, Follow Camera, and 3D Surface Ink |
 | 💬 **P2P Chat** | Real-time Peer-to-Peer WebRTC spatial voice and text chat |
 | 🏆 **Leaderboards** | Gamification with top score display, group-aware |
 | ✅ **Completion** | Complete by opening every hotspot and/or earning a minimum of quiz points |
 | 🔊 **Spatial Audio** | Positional audio guides that react to distance |
-| 📊 **Analytics** | Teacher dashboard displaying hotspot click charts and event tracking |
+| 📊 **Analytics & Heatmap** | Teacher dashboard, event tracking, and in-scene 3D Analytics Heatmap |
 | 🌐 **WebXR** | No app installation required |
 | ⚡ **Performance** | Optimized WebGL & WebXR scaling for mobile devices |
 | 🔒 **Privacy** | Implements Moodle Privacy API (metadata, export, deletion) |
