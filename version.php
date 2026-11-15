@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_gear';
-$plugin->version = 2026102100;
+$plugin->version = 2026111500;
 $plugin->requires = 2024100700; // Moodle 4.5 LTS+.
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.9.0';
+$plugin->release = '1.9.1';
 $plugin->supported = [405, 503]; // Moodle 4.5 to 5.3.

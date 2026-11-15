@@ -71,7 +71,7 @@ class mod_gear_mod_form extends moodleform_mod {
                 'subdirs' => 1,
                 'maxbytes' => $maxbytes,
                 'maxfiles' => 20,
-                'accepted_types' => ['.glb', '.gltf', '.bin', '.usdz', 'image'],
+                'accepted_types' => '*',
             ]
         );
         $mform->addHelpButton('modelfiles', 'modelfiles', 'gear');
@@ -203,12 +203,32 @@ class mod_gear_mod_form extends moodleform_mod {
      * @return array Validation errors
      */
     public function validation($data, $files): array {
+        global $USER;
+
         $errors = parent::validation($data, $files);
 
         // Validate background color format.
         if (!empty($data['background_color'])) {
             if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $data['background_color'])) {
                 $errors['background_color'] = get_string('invalidcolor', 'gear');
+            }
+        }
+
+        // Validate uploaded 3D model and texture extensions (Moodle core does not register glb/gltf/usdz by default).
+        if (!empty($data['modelfiles'])) {
+            $fs = get_file_storage();
+            $usercontext = context_user::instance($USER->id);
+            $draftfiles = $fs->get_area_files($usercontext->id, 'user', 'draft', (int) $data['modelfiles'], 'id', false);
+            $allowedexts = ['glb', 'gltf', 'bin', 'usdz', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ktx2'];
+            $invalidfiles = [];
+            foreach ($draftfiles as $file) {
+                $ext = strtolower(pathinfo($file->get_filename(), PATHINFO_EXTENSION));
+                if (!in_array($ext, $allowedexts, true)) {
+                    $invalidfiles[] = $file->get_filename();
+                }
+            }
+            if (!empty($invalidfiles)) {
+                $errors['modelfiles'] = get_string('invalidmodelfiletype', 'gear', implode(', ', $invalidfiles));
             }
         }
 

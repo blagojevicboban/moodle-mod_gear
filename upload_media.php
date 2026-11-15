@@ -43,7 +43,7 @@ header('Content-Type: application/json; charset=utf-8');
 if (empty($_FILES['file']) || !is_uploaded_file($_FILES['file']['tmp_name'])) {
     echo json_encode([
         'success' => false,
-        'message' => 'No file uploaded',
+        'message' => get_string('error:nomediauploaded', 'gear'),
     ]);
     exit;
 }
@@ -52,7 +52,17 @@ $fileinfo = $_FILES['file'];
 if ($fileinfo['error'] !== UPLOAD_ERR_OK) {
     echo json_encode([
         'success' => false,
-        'message' => 'Upload error: ' . $fileinfo['error'],
+        'message' => get_string('error:mediauploadfailed', 'gear', $fileinfo['error']),
+    ]);
+    exit;
+}
+
+// Validate file size against site and course upload limits.
+$maxbytes = get_max_upload_file_size($CFG->maxbytes, $course->maxbytes);
+if ($maxbytes > 0 && $fileinfo['size'] > $maxbytes) {
+    echo json_encode([
+        'success' => false,
+        'message' => get_string('error:mediafiletoolarge', 'gear', display_size($maxbytes)),
     ]);
     exit;
 }
@@ -64,9 +74,26 @@ $allowed = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'mp4', 'webm', 'ogv'];
 if (!in_array($ext, $allowed, true)) {
     echo json_encode([
         'success' => false,
-        'message' => 'Unsupported media file type',
+        'message' => get_string('error:unsupportedmediatype', 'gear'),
     ]);
     exit;
+}
+
+// Validate MIME type of the uploaded content.
+if (function_exists('finfo_open')) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimetype = $finfo ? finfo_file($finfo, $fileinfo['tmp_name']) : false;
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+    if ($mimetype && !preg_match('#^(audio|video)/#', $mimetype)
+        && !in_array($mimetype, ['application/ogg', 'application/mp4'], true)) {
+        echo json_encode([
+            'success' => false,
+            'message' => get_string('error:unsupportedmediatype', 'gear'),
+        ]);
+        exit;
+    }
 }
 
 if ($draftitemid == 0) {
@@ -103,6 +130,6 @@ try {
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage(),
+        'message' => get_string('error:mediauploadfailed', 'gear', $e->getMessage()),
     ]);
 }

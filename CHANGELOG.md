@@ -5,6 +5,15 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-11-15
+
+### Fixed
+- **3D model upload regression (#14):** Reverted `accepted_types` in `mod_form.php` to `'*'` so `.glb`, `.gltf`, `.bin`, and `.usdz` files are accepted on standard Moodle sites without manually registering custom MIME types, and added server-side extension validation in `mod_gear_mod_form::validation()`.
+
+### Security & Hardening
+- **`upload_media.php`:** Added course/site upload size enforcement (`get_max_upload_file_size`), MIME type verification via `finfo`, and localized error messages (`lang/en/gear.php`, `lang/sr/gear.php`).
+- **`composer.json` & Marketplace description:** Aligned PHP requirement to `^8.2` and updated `description.html` with v1.9 highlights.
+
 ## [1.9.0] - 2026-10-21
 
 ### Added
