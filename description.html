@@ -1,84 +1,56 @@
-<div class="mod-gear-description" style="line-height: 1.6; color: #333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <h1 style="color: #007bff; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px;">GEAR: Immersive 3D, AR and VR Learning</h1>
-  <p style="font-size: 1.2em; font-style: italic; color: #555;">Upload a 3D model, place interactive hotspots on it and let students explore, answer quizzes and learn together, right inside Moodle.</p>
-  <div style="margin-bottom: 20px;">
-    <a href="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml/badge.svg" alt="Moodle Plugin CI"></a>
-    <a href="https://moodle.org" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://img.shields.io/badge/Moodle-4.5%20to%205.3-orange.svg" alt="Moodle 4.5 to 5.3"></a>
-    <a href="https://php.net" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://img.shields.io/badge/PHP-8.2%2B-purple.svg" alt="PHP 8.2+"></a>
-    <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank" rel="noreferrer noopener"><img class="img-fluid" src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License GPL v3"></a>
-  </div>
+<div>
+  <p><strong>GEAR: Immersive 3D, AR and VR Learning</strong></p>
+  <p><em>Upload a 3D model, place interactive hotspots on it and let students explore, answer quizzes and learn together, right inside Moodle.</em></p>
+  <p>
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml" target="_blank" rel="noreferrer noopener"><img src="https://github.com/blagojevicboban/moodle-mod_gear/actions/workflows/ci.yml/badge.svg" alt="Moodle Plugin CI"></a>
+    <a href="https://moodle.org" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/Moodle-4.5%20to%205.3-orange.svg" alt="Moodle 4.5 to 5.3"></a>
+    <a href="https://php.net" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/PHP-8.2%2B-purple.svg" alt="PHP 8.2+"></a>
+    <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License GPL v3"></a>
+  </p>
 
-  <div style="margin-bottom: 20px; padding: 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0;">
-    <h3 style="color: #047857; margin-top: 0; margin-bottom: 10px;">What's New in v4.0.0</h3>
-    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em; color: #065f46;">
-      <li><strong>3D Pin-Drop, Assembly &amp; Sequence Quizzes:</strong> let students click a 3D surface point graded by tolerance radius, click multiple parts in exact order, or reassemble an exploded 3D model step by step, plus measure 3-point vertex angles (A&ndash;B&ndash;C) in degrees.</li>
-      <li><strong>3D Analytics Heatmap:</strong> managers can toggle color-coded 3D halos and error-rate summaries directly on the model to spot where students struggle.</li>
-      <li><strong>Student Study / Flashcard Mode:</strong> blur hotspot labels so students can self-test and track revealed parts without affecting Gradebook scores.</li>
-      <li><strong>Tour View Capture &amp; 3D Surface Ink:</strong> capture camera + explode views in one click, auto-generate tours from hotspots, and draw live 3D ink strokes over PeerJS in classroom sessions.</li>
-      <li><strong>3D Model Library, Split View &amp; Study Sheet Export:</strong> start with 5 built-in multi-part models, compare solid vs. wireframe with the Before/After Split View, inspect mesh/triangle stats, and export printable PDF/HTML study sheets.</li>
-    </ul>
-  </div>
-
-  <h2 style="color: #2c3e50; border-left: 4px solid #007bff; padding-left: 10px;">Overview</h2>
-  <p><strong>GEAR</strong> (Geospatial Educational Augmented Reality) is a Moodle activity module that bridges the gap between traditional e-learning and immersive 3D technology. Educators upload 3D models, annotate them with hotspots and assessment points, and students explore, collaborate and are graded inside Moodle.</p>
-
-  <h2 style="color: #2c3e50; border-left: 4px solid #28a745; padding-left: 10px;">Core features</h2>
-  <div style="margin-bottom: 25px;">
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #007bff;">3D viewer and interaction</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">glTF / GLB models (also Draco, Meshopt and KTX2 compressed, several per scene) with orbit, pan and zoom, adjustable lighting and background, glTF animations (clip, speed, autoplay) and material variants.</p>
-    </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #28a745;">Interactive hotspots</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Information, quiz, audio, video (MP4, YouTube, Vimeo) and teleport points placed directly on the model, with visual X/Y/Z gizmos for precise placement.</p>
-    </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #d39e00;">Spatial quizzes and completion</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Questions in the scene with one correct answer, several correct answers or a typed answer (with wildcards), written by hand or copied from the course question bank. Checked on the server and synced with the <strong>Moodle gradebook</strong>. Completion rules: open every hotspot and/or earn a minimum of quiz points.</p>
-    </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #fd7e14;">Guided tours and escape-room style unlocking</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Step by step tours: the camera flies to each view, and a step can open a hotspot, play an animation or switch the material. Branching scenarios: a hotspot stays hidden until the student solves the required quiz. Teleport waypoints guide the camera.</p>
-    </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #17a2b8;">Optional AI assistant and text-to-speech</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Generate hotspot texts and quiz questions with the AI providers of Moodle (off by default). Information hotspots can be read aloud.</p>
-    </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #6610f2;">Optional collaborative mode</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Shared sessions with 3D avatars and peer-to-peer voice and text chat, group aware. Off by default for new installs.</p>
-    </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #6c757d;">Student progress, analytics and leaderboard</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Progress of every student (hotspots opened, quizzes solved, points, grade, last activity) with a details page and download as CSV or Excel, a Report Builder source for custom reports, hotspot statistics, a leaderboard, and positional audio that reacts to the student's distance.</p>
-    </div>
-    <div style="padding: 15px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;"><strong style="color: #20c997;">Accessible and fast</strong>
-      <p style="font-size: 0.95em; margin-top: 5px;">Keyboard navigation, screen reader announcements, a text alternative for the scene, labelled dialogs and reduced motion support (checked with axe); lower render resolution for heavy models, phones and VR headsets.</p>
-    </div>
-  </div>
-
-  <h2 style="color: #2c3e50; border-left: 4px solid #ffc107; padding-left: 10px;">AR/VR and mobile</h2>
-  <ul style="list-style-type: none; padding-left: 0;">
-    <li style="margin-bottom: 10px; padding: 10px; background: #fffbe6; border-radius: 6px;"><strong>WebXR ready:</strong> one-click VR, and AR where the device supports it, without installing an app.</li>
-    <li style="margin-bottom: 10px; padding: 10px; background: #fff3e0; border-radius: 6px;"><strong>iPhone and iPad:</strong> the 3D viewer works; for AR upload a <code>.usdz</code> file with the same name as the model and it opens in AR Quick Look.</li>
-    <li style="margin-bottom: 10px; padding: 10px; background: #e6f7ff; border-radius: 6px;"><strong>Moodle app:</strong> shows the description and the student's progress, and opens the 3D scene in the browser with automatic login (the 3D viewer itself needs a browser).</li>
+  <p><strong>What's New in v4.0.0</strong></p>
+  <ul>
+    <li><strong>3D Pin-Drop, Assembly and Sequence Quizzes:</strong> students click a 3D surface point graded by tolerance radius, click parts in exact order, or reassemble an exploded 3D model step by step, plus measure 3-point vertex angles in degrees.</li>
+    <li><strong>3D Analytics Heatmap:</strong> managers toggle color-coded 3D halos and error-rate summaries directly on the model.</li>
+    <li><strong>Student Study / Flashcard Mode:</strong> blur hotspot labels so students can self-test and track revealed parts without affecting Gradebook scores.</li>
+    <li><strong>Tour View Capture and 3D Surface Ink:</strong> capture camera and explode views in one click, auto-generate tours from hotspots, and draw live 3D ink strokes over PeerJS.</li>
+    <li><strong>3D Model Library, Split View and Study Sheet Export:</strong> start with 5 built-in multi-part models, compare solid vs. wireframe with Before/After Split View, inspect mesh/triangle stats, and export printable PDF/HTML study sheets.</li>
   </ul>
 
-  <h2 style="color: #2c3e50; border-left: 4px solid #17a2b8; padding-left: 10px;">Requirements</h2>
-  <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.9em;">
-    <ul style="margin: 0; padding-left: 20px;">
-      <li><strong>Moodle:</strong> 4.5 LTS to 5.3 (for Moodle 4.1 to 4.4 use version 1.7.0)</li>
-      <li><strong>PHP:</strong> 8.2 or later</li>
-      <li><strong>Browser:</strong> modern browser with WebGL (Chrome, Edge, Firefox, Safari); VR and AR need a WebXR-capable browser and device</li>
-      <li><strong>AI assistant (optional):</strong> an AI provider with text generation configured in Moodle's AI settings</li>
-    </ul>
-  </div>
+  <p><strong>Overview</strong></p>
+  <p><strong>GEAR</strong> (Geospatial Educational Augmented Reality) bridges traditional e-learning and immersive 3D technology. Educators upload 3D models, annotate them with hotspots and assessment points, and students explore, collaborate and are graded inside Moodle.</p>
 
-  <h2 style="color: #2c3e50; border-left: 4px solid #dc3545; padding-left: 10px;">Privacy</h2>
-  <p>Models, hotspots, grades and analytics stay on your site and are covered by the Moodle Privacy API. Only two optional features contact outside services: the AI assistant sends the text a teacher types to the AI provider the administrator set up in Moodle's AI settings, and collaborative mode connects participants through a PeerJS broker (the public PeerJS cloud or your own server) while chat and audio travel directly between their browsers.</p>
+  <p><strong>Features</strong></p>
+  <ul>
+    <li><strong>3D viewer and inspection:</strong> glTF and GLB models (including Draco, Meshopt and KTX2 compression, several per scene) with orbit, pan and zoom, exploded view, X-ray, cross-section clipping, 2-point distance and 3-point angle measurement, studio PMREM lighting with exposure control, glTF animations and material variants.</li>
+    <li><strong>Interactive hotspots:</strong> information, quiz, audio, video (MP4, YouTube, Vimeo) and teleport points placed on the model with visual X/Y/Z gizmos.</li>
+    <li><strong>Spatial quizzes and completion:</strong> single-choice, multi-choice, free-text with wildcards, 3D mesh click, pin-drop, sequence, assembly and question-bank rotation, all graded server-side and synced with the <strong>Moodle gradebook</strong>.</li>
+    <li><strong>Guided tours and branching:</strong> step-by-step camera tours with AI narration, plus escape-room style unlocking when prerequisite quizzes are solved.</li>
+    <li><strong>Optional AI assistant and text-to-speech:</strong> generate hotspot texts, quizzes, auto-annotations and tour narration with Moodle core AI (off by default), plus read-aloud for info hotspots.</li>
+    <li><strong>Optional collaborative mode:</strong> shared sessions with 3D avatars, live laser pointer, follow-presenter camera, 3D surface ink and peer-to-peer WebRTC voice and text chat, group aware (off by default).</li>
+    <li><strong>Progress, analytics and accessibility:</strong> detailed student reports (CSV/Excel, Report Builder), leaderboard, keyboard navigation, screen reader scene descriptions, reduced motion support and lower render resolution for mobile/VR.</li>
+  </ul>
 
-  <h2 style="color: #2c3e50; border-left: 4px solid #6c757d; padding-left: 10px;">How it works</h2>
-  <ol style="padding-left: 20px;">
-    <li><strong>Upload:</strong> add your .glb or .gltf models (optionally a .usdz for iPhone AR).</li>
-    <li><strong>Annotate:</strong> Shift + click on the model to place hotspots and assessment points.</li>
-    <li><strong>Engage:</strong> students explore, collaborate and complete the integrated activities.</li>
-  </ol>
+  <p><strong>AR/VR and mobile</strong></p>
+  <ul>
+    <li><strong>WebXR ready:</strong> one-click VR, and AR where supported, without installing an app.</li>
+    <li><strong>iPhone and iPad:</strong> the 3D viewer works; for AR upload a <code>.usdz</code> file with the same name as the model to open in AR Quick Look.</li>
+    <li><strong>Moodle app:</strong> displays the description, student progress and in-app view.</li>
+  </ul>
 
-  <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-  <p style="font-size: 0.85em; text-align: center; color: #777;">Developed by <strong>Boban Blagojevi&#263;</strong><br>
+  <p><strong>Requirements</strong></p>
+  <ul>
+    <li><strong>Moodle:</strong> 4.5 LTS to 5.3 (for Moodle 4.1 to 4.4 use version 1.7.0)</li>
+    <li><strong>PHP:</strong> 8.2 or later</li>
+    <li><strong>Browser:</strong> modern browser with WebGL (Chrome, Edge, Firefox, Safari); VR/AR need a WebXR-capable browser and device</li>
+    <li><strong>AI assistant (optional):</strong> an AI provider with text generation configured in Moodle's AI settings</li>
+  </ul>
+
+  <p><strong>Privacy</strong></p>
+  <p>Models, hotspots, grades and analytics stay on your site and are covered by the Moodle Privacy API. Only two optional features contact outside services: the AI assistant sends the text a teacher types to the configured Moodle AI provider, and collaborative mode connects participants through a PeerJS broker while chat and audio travel directly between browsers.</p>
+
+  <hr>
+  <p>Developed by <strong>Boban Blagojevi&#263;</strong><br>
     Languages: English and Serbian. Source, documentation and issue tracker:
     <a href="https://github.com/blagojevicboban/moodle-mod_gear" target="_blank" rel="noreferrer noopener">github.com/blagojevicboban/moodle-mod_gear</a><br>
     Video: <a href="https://youtu.be/idQx3iFJHNA" target="_blank" rel="noreferrer noopener">https://youtu.be/idQx3iFJHNA</a><br>
