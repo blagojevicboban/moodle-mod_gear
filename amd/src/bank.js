@@ -29,6 +29,16 @@ import ModalEvents from 'core/modal_events';
 import {escapeHtml} from './dom';
 
 /**
+ * Fetch question bank categories of the course that contain supported quiz questions.
+ *
+ * @param {number} gearid GEAR activity ID
+ * @returns {Promise<Array<{id: number, name: string, questioncount: number}>>}
+ */
+export const getBankCategories = (gearid) => {
+    return Ajax.call([{methodname: 'mod_gear_get_bank_categories', args: {gearid}}])[0];
+};
+
+/**
  * Let the teacher choose a question of the course question banks.
  *
  * @param {number} gearid GEAR activity ID

@@ -96,12 +96,56 @@ class get_bank_questions extends external_api {
     }
 
     /**
+     * Load and convert all ready supported questions from a specific category of the course.
+     *
+     * @param int $courseid Course ID
+     * @param int $categoryid Question category ID
+     * @return array Converted question items
+     */
+    public static function get_questions_for_category(int $courseid, int $categoryid): array {
+        global $DB;
+
+        if ($categoryid <= 0) {
+            return [];
+        }
+
+        $coursecontext = context_course::instance($courseid);
+        $sql = "SELECT q.id, q.name, q.questiontext, q.questiontextformat, q.qtype
+                  FROM {question} q
+                  JOIN {question_versions} qv ON qv.questionid = q.id
+                  JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
+                  JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
+                  JOIN {context} ctx ON ctx.id = qc.contextid
+                 WHERE qc.id = :categoryid
+                       AND q.qtype IN ('multichoice', 'truefalse', 'shortanswer') AND q.parent = 0 AND qv.status = 'ready'
+                       AND qv.version = (SELECT MAX(v.version)
+                                           FROM {question_versions} v
+                                          WHERE v.questionbankentryid = qbe.id AND v.status = 'ready')
+                       AND (ctx.id = :courseid OR " . $DB->sql_like('ctx.path', ':path') . ")
+              ORDER BY q.id";
+        $questions = $DB->get_records_sql($sql, [
+            'categoryid' => $categoryid,
+            'courseid' => $coursecontext->id,
+            'path' => $DB->sql_like_escape($coursecontext->path) . '/%',
+        ], 0, self::LIMIT);
+
+        $result = [];
+        foreach ($questions as $question) {
+            $item = self::convert($question);
+            if ($item !== null) {
+                $result[] = $item;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Convert a question to the data of a quiz hotspot.
      *
      * @param \stdClass $question Row of the question table
      * @return array|null Null when the question cannot be used (no correct answer)
      */
-    protected static function convert(\stdClass $question): ?array {
+    public static function convert(\stdClass $question): ?array {
         global $DB;
 
         $answers = $DB->get_records('question_answers', ['question' => $question->id], 'id');

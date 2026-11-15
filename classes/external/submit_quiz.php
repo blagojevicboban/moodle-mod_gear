@@ -88,7 +88,8 @@ class submit_quiz extends external_api {
             throw new \moodle_exception('nopermissions', 'error', '', get_string('hotspot', 'mod_gear'));
         }
 
-        $config = json_decode($hotspot->config, true);
+        $resolved = gear_resolve_hotspot_quiz($hotspot, (int) $USER->id, false, (int) $gear->course);
+        $config = json_decode($resolved['config'], true);
         $correct = false;
         $score = 0;
         $feedback = '';

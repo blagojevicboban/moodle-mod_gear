@@ -109,6 +109,13 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',
     ],
+    'mod_gear_get_bank_categories' => [
+        'classname'     => 'mod_gear\external\get_bank_categories',
+        'description'   => 'List question bank categories of the course with supported quiz questions',
+        'type'          => 'read',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
     'mod_gear_export_scene' => [
         'classname'     => 'mod_gear\external\export_scene',
         'description'   => 'Export scene configuration and hotspots as JSON',

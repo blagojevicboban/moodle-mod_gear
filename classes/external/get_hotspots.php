@@ -78,15 +78,16 @@ class get_hotspots extends external_api {
             if (!gear_hotspot_is_unlocked($hotspot, $solved, $canmanage)) {
                 continue;
             }
+            $resolved = gear_resolve_hotspot_quiz($hotspot, (int) $USER->id, $canmanage, (int) $gear->course);
             $result[] = [
                 'id' => $hotspot->id,
                 'modelid' => $hotspot->modelid ?? 0,
                 'type' => $hotspot->type ?? 'info',
                 'title' => $hotspot->title ?? '',
-                'content' => clean_text($hotspot->content ?? '', FORMAT_HTML),
+                'content' => clean_text($resolved['content'], FORMAT_HTML),
                 'position' => $hotspot->position ?? '{"x":0,"y":0,"z":0}',
                 'icon' => $hotspot->icon ?? 'info',
-                'config' => gear_filter_hotspot_config($hotspot->config, $canmanage),
+                'config' => gear_filter_hotspot_config($resolved['config'], $canmanage),
                 'sortorder' => $hotspot->sortorder,
             ];
         }

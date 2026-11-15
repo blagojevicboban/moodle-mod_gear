@@ -535,6 +535,64 @@ function gear_filter_hotspot_config(?string $config, bool $canmanage): string {
 }
 
 /**
+ * Resolve dynamic question-bank-category quiz content and config for a student.
+ *
+ * When a quiz hotspot has a positive bankCategoryId and the viewer is not managing the activity,
+ * deterministically picks one question from that category for (gearid, hotspotid, userid) so
+ * the question stays pinned to the hotspot's 3D position for that student across reloads.
+ *
+ * @param stdClass $hotspot Hotspot record
+ * @param int $userid User ID
+ * @param bool $canmanage Whether the user can manage the activity
+ * @param int $courseid Course ID
+ * @return array{content: string, config: string}
+ */
+function gear_resolve_hotspot_quiz(stdClass $hotspot, int $userid, bool $canmanage, int $courseid): array {
+    $content = $hotspot->content ?? '';
+    $config = $hotspot->config ?? '';
+
+    if (($hotspot->type ?? '') !== 'quiz' || $canmanage) {
+        return ['content' => $content, 'config' => $config];
+    }
+
+    $decoded = json_decode($config, true);
+    if (!is_array($decoded) || empty($decoded['bankCategoryId'])) {
+        return ['content' => $content, 'config' => $config];
+    }
+
+    $categoryid = (int) $decoded['bankCategoryId'];
+    $questions = \mod_gear\external\get_bank_questions::get_questions_for_category($courseid, $categoryid);
+    if (empty($questions)) {
+        return ['content' => $content, 'config' => $config];
+    }
+
+    $seed = sprintf('%d:%d:%d', (int) $hotspot->gearid, (int) $hotspot->id, $userid);
+    $index = abs(crc32($seed)) % count($questions);
+    $picked = $questions[$index];
+
+    $resolved = [
+        'quizType' => $picked['quiztype'],
+        'points' => isset($decoded['points']) ? (int) $decoded['points'] : 10,
+        'bankCategoryId' => $categoryid,
+    ];
+    if ($picked['quiztype'] === 'text') {
+        $resolved['acceptedAnswers'] = $picked['accepted'];
+        $resolved['caseSensitive'] = $picked['casesensitive'];
+    } else if ($picked['quiztype'] === 'multi') {
+        $resolved['options'] = $picked['options'];
+        $resolved['correctAnswers'] = $picked['corrects'];
+    } else {
+        $resolved['options'] = $picked['options'];
+        $resolved['correctAnswer'] = $picked['correct'];
+    }
+
+    return [
+        'content' => '<p>' . s($picked['text']) . '</p>',
+        'config' => json_encode($resolved),
+    ];
+}
+
+/**
  * Check the answer to a quiz hotspot.
  *
  * Quiz types (config quizType): "single" (default, correctAnswer is the index of the right option), "multi" (correctAnswers

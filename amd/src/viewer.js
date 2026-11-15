@@ -43,7 +43,7 @@ import ModalEvents from 'core/modal_events';
 import SyncManager from './sync';
 import SceneExtras from './extras';
 import SceneTools from './tools';
-import {pickQuestion} from './bank';
+import {pickQuestion, getBankCategories} from './bank';
 import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
 
 // Above this many triangles the scene is rendered at pixel ratio 1; above the second limit the teacher is warned.
@@ -2255,7 +2255,10 @@ const WARN_TRIANGLES = 1000000;
          */
         quizFormContext(config) {
             const quizType = config.quizType || 'single';
+            const bankCategoryId = parseInt(config.bankCategoryId || 0, 10) || 0;
             return {
+                bankCategoryId,
+                isCategoryQuiz: bankCategoryId > 0,
                 isSingle: quizType === 'single',
                 isMulti: quizType === 'multi',
                 isText: quizType === 'text',
@@ -2329,6 +2332,30 @@ const WARN_TRIANGLES = 1000000;
             const quizType = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid);
             if (quizType) {
                 quizType.addEventListener('change', () => this.showQuizTypeFields(form));
+            }
+            const bankCategorySelect = form.querySelector('#gear-hotspot-input-bankcategory-' + this.cmid);
+            const manualFields = form.querySelector('.gear-quiz-manual-fields');
+            if (bankCategorySelect) {
+                const toggleCategoryMode = () => {
+                    if (manualFields) {
+                        manualFields.hidden = parseInt(bankCategorySelect.value, 10) > 0;
+                    }
+                };
+                bankCategorySelect.addEventListener('change', toggleCategoryMode);
+                getBankCategories(this.gearid).then((categories) => {
+                    const selected = String(bankCategorySelect.dataset.selected || '0');
+                    categories.forEach((cat) => {
+                        const opt = document.createElement('option');
+                        opt.value = String(cat.id);
+                        opt.textContent = cat.name + ' (' + cat.questioncount + ')';
+                        if (opt.value === selected) {
+                            opt.selected = true;
+                        }
+                        bankCategorySelect.appendChild(opt);
+                    });
+                    toggleCategoryMode();
+                    return null;
+                }).catch(() => null);
             }
             const importButton = form.querySelector('.gear-import-question');
             if (importButton) {
@@ -2488,10 +2515,21 @@ const WARN_TRIANGLES = 1000000;
             }
 
             if (type === 'quiz') {
-                var optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
-                var correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
                 var points = form.querySelector('#gear-hotspot-input-points-' + this.cmid).value;
-                const quizType = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid).value;
+                const catSelect = form.querySelector('#gear-hotspot-input-bankcategory-' + this.cmid);
+                const bankCategoryId = catSelect ? (parseInt(catSelect.value, 10) || 0) : 0;
+                if (bankCategoryId > 0) {
+                    config.bankCategoryId = bankCategoryId;
+                    config.points = parseInt(points, 10) || 10;
+                    delete config.options;
+                    delete config.correctAnswer;
+                    delete config.correctAnswers;
+                    delete config.acceptedAnswers;
+                } else {
+                    delete config.bankCategoryId;
+                    var optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
+                    var correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
+                    const quizType = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid).value;
 
                 // Options copied from the question bank may contain commas, so they are kept as a list.
                 config.options = form.dataset.importedJoined === optionsStr && form.dataset.importedOptions
@@ -2534,6 +2572,7 @@ const WARN_TRIANGLES = 1000000;
                         await Str.get_string('quiz_minoptions', 'mod_gear')
                     );
                     return;
+                }
                 }
             } else if (type === 'audio') {
                 var audioUrl = form.querySelector('#gear-hotspot-input-audiourl-' + this.cmid).value.trim();
@@ -2666,6 +2705,14 @@ const WARN_TRIANGLES = 1000000;
             var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
 
             const quizType = (config && config.quizType) || 'single';
+            if (config && config.bankCategoryId > 0 && !config.options && quizType !== 'text') {
+                Str.get_string('quizbankcategory_preview', 'mod_gear').then((msg) => {
+                    const note = Object.assign(document.createElement('p'), {className: 'text-info', textContent: msg});
+                    contentDiv.appendChild(note);
+                    return null;
+                }).catch(Notification.exception);
+                return;
+            }
             if (!config || (quizType !== 'text' && !config.options)) {
                 Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
                     const note = Object.assign(document.createElement('p'), {className: 'text-danger', textContent: msg});

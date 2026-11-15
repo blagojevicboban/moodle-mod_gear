@@ -63,6 +63,14 @@
 
         <div id="gear-hotspot-quiz-fields-{{cmid}}" style="{{^isQuiz}}display:none;{{/isQuiz}}">
             <div class="gear-form-group">
+                <label for="gear-hotspot-input-bankcategory-{{cmid}}">{{#str}}quizbankcategory, mod_gear{{/str}}</label>
+                <select id="gear-hotspot-input-bankcategory-{{cmid}}" class="form-control custom-select" data-selected="{{bankCategoryId}}" aria-describedby="gear-hotspot-bankcategory-help-{{cmid}}">
+                    <option value="0">{{#str}}quizbankcategory_fixed, mod_gear{{/str}}</option>
+                </select>
+                <small class="form-text text-muted" id="gear-hotspot-bankcategory-help-{{cmid}}">{{#str}}quizbankcategory_help, mod_gear{{/str}}</small>
+            </div>
+            <div class="gear-quiz-manual-fields"{{#isCategoryQuiz}} hidden{{/isCategoryQuiz}}>
+            <div class="gear-form-group">
                 <button type="button" class="btn btn-outline-secondary btn-sm gear-import-question">{{#str}}importquestion, mod_gear{{/str}}</button>
             </div>
             <div class="gear-form-group">
@@ -91,6 +99,7 @@
                     <input type="checkbox" class="form-check-input" id="gear-hotspot-input-casesensitive-{{cmid}}" {{#caseSensitive}}checked{{/caseSensitive}}>
                     <label class="form-check-label" for="gear-hotspot-input-casesensitive-{{cmid}}">{{#str}}quizcasesensitive, mod_gear{{/str}}</label>
                 </div>
+            </div>
             </div>
             <div class="gear-form-group">
                 <label for="gear-hotspot-input-points-{{cmid}}">{{#str}}quizpoints, mod_gear{{/str}}</label>
