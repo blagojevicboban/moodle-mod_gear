@@ -44,6 +44,8 @@ import SyncManager from './sync';
 import SceneExtras from './extras';
 import SceneTools from './tools';
 import {pickQuestion, getBankCategories} from './bank';
+import {quizFormContext, showQuizTypeFields, renderQuizInPopup, submitQuizAnswer} from './quiz';
+import {showHelpModal, showLeaderboardModal} from './modals';
 import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
 
 // Above this many triangles the scene is rendered at pixel ratio 1; above the second limit the teacher is warned.
@@ -727,108 +729,18 @@ const WARN_TRIANGLES = 1000000;
         /**
          * Show Help modal.
          */
+        /**
+         * Show Help modal.
+         */
         showHelp() {
-            var modal = document.getElementById('gear-help-modal-' + this.cmid);
-            if (!modal) {
-                Templates.render('mod_gear/help_modal', {
-                    cmid: this.cmid,
-                    canManage: this.canManage
-                }).then((html, js) => {
-                    Templates.appendNodeContents(this.container, html, js);
-                    modal = document.getElementById('gear-help-modal-' + this.cmid);
-
-                    // Close logic.
-                    modal.querySelector('.close').addEventListener('click', () => closeDialog(modal));
-
-                    openDialog(modal);
-                    return null;
-                }).catch(Notification.exception);
-            } else {
-                openDialog(modal);
-            }
+            showHelpModal(this);
         }
-
 
         /**
          * Show Leaderboard modal.
          */
         showLeaderboard() {
-            var modal = document.getElementById('gear-leaderboard-modal-' + this.cmid);
-            if (!modal) {
-                Templates.render('mod_gear/leaderboard_modal', {
-                    cmid: this.cmid
-                }).then((html, js) => {
-                    Templates.appendNodeContents(this.container, html, js);
-                    modal = document.getElementById('gear-leaderboard-modal-' + this.cmid);
-
-                    // Close logic.
-                    modal.querySelector('.close').addEventListener('click', () => closeDialog(modal));
-
-                    this.fetchAndRenderLeaderboard(modal);
-                    return null;
-                }).catch(Notification.exception);
-            } else {
-                this.fetchAndRenderLeaderboard(modal);
-            }
-        }
-
-        /**
-         * Fetch data and render leaderboard content.
-         *
-         * @param {HTMLElement} modal
-         */
-        async fetchAndRenderLeaderboard(modal) {
-            openDialog(modal);
-            var content = modal.querySelector('.gear-leaderboard-content');
-            var loadingText = await Str.get_string('loading', 'mod_gear');
-            content.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> ' + loadingText + '</div>';
-
-            // Fetch data.
-            Ajax.call([{
-                methodname: 'mod_gear_get_leaderboard',
-                args: {
-                    gearid: this.gearid,
-                    limit: 10
-                }
-            }])[0].then((scores) => {
-                this.renderLeaderboardTable(content, scores);
-                return null;
-            }).catch(Notification.exception);
-        }
-
-
-        /**
-         * Render leaderboard table using mustache.
-         *
-         * @param {HTMLElement} container
-         * @param {Array} scores
-         */
-        renderLeaderboardTable(container, scores) {
-            var context = {
-                has_scores: scores.length > 0, // eslint-disable-line camelcase
-                scores: scores.map((entry, index) => {
-                    var badge = '';
-                    if (index === 0) {
-                        badge = '🥇';
-                    } else if (index === 1) {
-                        badge = '🥈';
-                    } else if (index === 2) {
-                        badge = '🥉';
-                    }
-
-                    return {
-                        rank: index + 1,
-                        badge: badge,
-                        fullname: entry.fullname,
-                        score: entry.score
-                    };
-                })
-            };
-
-            Templates.render('mod_gear/leaderboard_table', context).then((html, js) => {
-                Templates.replaceNodeContents(container, html, js);
-                return null;
-            }).catch(Notification.exception);
+            showLeaderboardModal(this);
         }
 
         /**
@@ -2254,20 +2166,7 @@ const WARN_TRIANGLES = 1000000;
          * @returns {Object} Template context values
          */
         quizFormContext(config) {
-            const quizType = config.quizType || 'single';
-            const bankCategoryId = parseInt(config.bankCategoryId || 0, 10) || 0;
-            return {
-                bankCategoryId,
-                isCategoryQuiz: bankCategoryId > 0,
-                isSingle: quizType === 'single',
-                isMulti: quizType === 'multi',
-                isText: quizType === 'text',
-                options: config.options ? config.options.join(', ') : '',
-                correctAnswer: quizType === 'multi' ? (config.correctAnswers || []).join(', ') : (config.correctAnswer || 0),
-                accepted: (config.acceptedAnswers || []).join('\n'),
-                caseSensitive: !!config.caseSensitive,
-                points: config.points || 10,
-            };
+            return quizFormContext(config);
         }
 
         /**
@@ -2276,13 +2175,7 @@ const WARN_TRIANGLES = 1000000;
          * @param {HTMLElement} form The hotspot form
          */
         showQuizTypeFields(form) {
-            const text = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid).value === 'text';
-            form.querySelectorAll('.gear-quiz-choice-fields').forEach((el) => {
-                el.hidden = text;
-            });
-            form.querySelectorAll('.gear-quiz-text-fields').forEach((el) => {
-                el.hidden = !text;
-            });
+            showQuizTypeFields(form, this.cmid);
         }
 
         /**
@@ -2701,60 +2594,7 @@ const WARN_TRIANGLES = 1000000;
          * @param {Object} hotspot
          */
         renderQuizInPopup(popup, hotspot) {
-            var contentDiv = popup.querySelector('.gear-hotspot-content');
-            var config = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
-
-            const quizType = (config && config.quizType) || 'single';
-            if (config && config.bankCategoryId > 0 && !config.options && quizType !== 'text') {
-                Str.get_string('quizbankcategory_preview', 'mod_gear').then((msg) => {
-                    const note = Object.assign(document.createElement('p'), {className: 'text-info', textContent: msg});
-                    contentDiv.appendChild(note);
-                    return null;
-                }).catch(Notification.exception);
-                return;
-            }
-            if (!config || (quizType !== 'text' && !config.options)) {
-                Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
-                    const note = Object.assign(document.createElement('p'), {className: 'text-danger', textContent: msg});
-                    contentDiv.appendChild(note);
-                    return null;
-                }).catch(Notification.exception);
-                return;
-            }
-
-            var context = {
-                id: hotspot.id,
-                multi: quizType === 'multi',
-                text: quizType === 'text',
-                options: (config.options || []).map((opt, index) => ({
-                    index: index,
-                    text: opt
-                }))
-            };
-
-            Templates.render('mod_gear/quiz', context).then((html, js) => {
-                Templates.appendNodeContents(contentDiv, html, js);
-
-                var submitBtn = popup.querySelector('.gear-quiz-submit');
-                submitBtn.addEventListener('click', async() => {
-                    let answer;
-                    if (quizType === 'text') {
-                        answer = popup.querySelector('.gear-quiz-text').value.trim();
-                    } else {
-                        const selected = popup.querySelectorAll('input[name="gear-quiz-option"]:checked');
-                        answer = Array.from(selected).map((input) => input.value).join(',');
-                    }
-                    if (!answer) {
-                        Notification.alert(
-                            await Str.get_string('warning', 'core'),
-                            await Str.get_string(quizType === 'text' ? 'quiz_typeanswer' : 'quiz_selectanswer', 'mod_gear')
-                        );
-                        return;
-                    }
-                    this.submitQuizAnswer(hotspot, answer, popup);
-                });
-                return null;
-            }).catch(Notification.exception);
+            renderQuizInPopup(this, popup, hotspot);
         }
 
         /**
@@ -2765,37 +2605,7 @@ const WARN_TRIANGLES = 1000000;
          * @param {HTMLElement} popup
          */
         submitQuizAnswer(hotspot, answer, popup) {
-            Ajax.call([{
-                methodname: 'mod_gear_submit_quiz',
-                args: {
-                    gearid: this.gearid,
-                    hotspotid: hotspot.id,
-                    answer: answer
-                }
-            }])[0].then(async(response) => {
-                var feedbackDiv = popup.querySelector('.gear-quiz-feedback');
-                var submitBtn = popup.querySelector('.gear-quiz-submit');
-
-                if (response.correct) {
-                    const msg = await Str.get_string('quiz_correct', 'mod_gear');
-                    feedbackDiv.textContent = '';
-                    var okBadge = document.createElement('span');
-                    okBadge.className = 'badge badge-success bg-success';
-                    okBadge.textContent = msg;
-                    feedbackDiv.append(okBadge, ' ' + await Str.get_string('quizpointsawarded', 'mod_gear', response.score));
-                    await this.refreshHotspots();
-                } else {
-                    const msg = await Str.get_string('quiz_incorrect', 'mod_gear');
-                    feedbackDiv.textContent = '';
-                    var badBadge = document.createElement('span');
-                    badBadge.className = 'badge badge-danger bg-danger';
-                    badBadge.textContent = msg;
-                    feedbackDiv.append(badBadge);
-                }
-
-                submitBtn.disabled = true;
-                return null;
-            }).catch(Notification.exception);
+            submitQuizAnswer(this, hotspot, answer, popup);
         }
 
         /**
