@@ -198,4 +198,30 @@ final class lib_test extends \advanced_testcase {
         $filtered = json_decode(gear_filter_hotspot_config(json_encode($text + $multi + ['caseSensitive' => true]), false), true);
         $this->assertSame(['quizType', 'options'], array_keys($filtered));
     }
+
+    /**
+     * Test loading the bundled sample 3D scene into an empty activity.
+     */
+    public function test_load_sample_scene(): void {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/gear/lib.php');
+
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $this->setUser($teacher);
+
+        /** @var \mod_gear_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_gear');
+        $gear = $generator->create_instance(['course' => $course->id]);
+        $cm = get_coursemodule_from_instance('gear', $gear->id);
+        $context = \context_module::instance($cm->id);
+
+        $this->assertTrue(gear_load_sample_scene($gear, $context));
+        $this->assertSame(1, $DB->count_records('gear_models', ['gearid' => $gear->id]));
+        $this->assertSame(2, $DB->count_records('gear_hotspots', ['gearid' => $gear->id]));
+
+        // Calling again when a model already exists is a no-op.
+        $this->assertFalse(gear_load_sample_scene($gear, $context));
+    }
 }

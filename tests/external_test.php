@@ -18,6 +18,7 @@ namespace mod_gear;
 
 use mod_gear\external\delete_hotspot;
 use mod_gear\external\export_scene;
+use mod_gear\external\get_bank_categories;
 use mod_gear\external\get_bank_questions;
 use mod_gear\external\get_hotspots;
 use mod_gear\external\get_leaderboard;
@@ -42,6 +43,7 @@ use mod_gear\external\track_event;
  * @covers     \mod_gear\external\export_scene
  * @covers     \mod_gear\external\import_scene
  * @covers     \mod_gear\external\get_hotspots
+ * @covers     \mod_gear\external\get_bank_categories
  * @covers     \mod_gear\external\get_bank_questions
  * @covers     \mod_gear\external\get_scene_data
  * @covers     \mod_gear\external\track_event
@@ -452,5 +454,83 @@ final class external_test extends \advanced_testcase {
         delete_hotspot::execute($hotspotid);
         $filesafter = $fs->get_area_files($context->id, 'mod_gear', 'hotspot_media', $hotspotid, 'id', false);
         $this->assertCount(0, $filesafter);
+    }
+
+    /**
+     * Test per-hotspot question bank category rotation and server-side grading.
+     */
+    public function test_bank_category_rotation(): void {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/gear/lib.php');
+
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        /** @var \mod_gear_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_gear');
+        $gear = $generator->create_instance(['course' => $course->id]);
+
+        /** @var \core_question_generator $questiongenerator */
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $category = $questiongenerator->create_question_category([
+            'contextid' => \context_course::instance($course->id)->id,
+            'name' => 'Rotating Pool',
+        ]);
+        $catid = (int) $category->id;
+        $questiongenerator->create_question('multichoice', 'one_of_four', ['category' => $catid, 'name' => 'Q1']);
+        $questiongenerator->create_question('shortanswer', null, ['category' => $catid, 'name' => 'Q2']);
+        $questiongenerator->create_question('truefalse', null, ['category' => $catid, 'name' => 'Q3']);
+
+        $this->setUser($teacher);
+        $categories = get_bank_categories::execute($gear->id);
+        $this->assertCount(1, $categories);
+        $this->assertSame($catid, $categories[0]['id']);
+        $this->assertSame(3, $categories[0]['questioncount']);
+
+        $saved = save_hotspot::execute(
+            0,
+            $gear->id,
+            0,
+            'quiz',
+            'Rotating Hotspot',
+            '<p>Placeholder</p>',
+            '{"x":1,"y":2,"z":3}',
+            'quiz',
+            json_encode(['bankCategoryId' => $catid, 'points' => 15])
+        );
+        $hotspotid = $saved['id'];
+
+        $this->setUser($student);
+        $first = get_hotspots::execute($gear->id);
+        $second = get_hotspots::execute($gear->id);
+        $this->assertCount(1, $first);
+        $this->assertSame($first[0]['content'], $second[0]['content']);
+        $this->assertSame($first[0]['config'], $second[0]['config']);
+
+        $studentcfg = json_decode($first[0]['config'], true);
+        $this->assertArrayNotHasKey('correctAnswer', $studentcfg);
+        $this->assertArrayNotHasKey('correctAnswers', $studentcfg);
+        $this->assertArrayNotHasKey('acceptedAnswers', $studentcfg);
+
+        // Determine the expected answer server-side and verify submit_quiz grades against it.
+        $hotspotrecord = $DB->get_record('gear_hotspots', ['id' => $hotspotid], '*', MUST_EXIST);
+        $resolved = gear_resolve_hotspot_quiz($hotspotrecord, (int) $student->id, false, (int) $course->id);
+        $resolvedcfg = json_decode($resolved['config'], true);
+        if (($resolvedcfg['quizType'] ?? 'single') === 'text') {
+            $rightanswer = $resolvedcfg['acceptedAnswers'][0];
+        } else if (($resolvedcfg['quizType'] ?? 'single') === 'multi') {
+            $rightanswer = implode(',', $resolvedcfg['correctAnswers']);
+        } else {
+            $rightanswer = (string) $resolvedcfg['correctAnswer'];
+        }
+
+        $submission = submit_quiz::execute($gear->id, $hotspotid, $rightanswer);
+        $this->assertTrue($submission['correct']);
+        $this->assertSame(15, $submission['score']);
+
+        $this->expectException(\required_capability_exception::class);
+        get_bank_categories::execute($gear->id);
     }
 }
