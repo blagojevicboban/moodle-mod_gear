@@ -1,0 +1,100 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @copyright  2026 Boban Blagojevic
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    @template mod_gear/study_sheet
+
+    Printable HTML / PDF Study Sheet generated from the current 3D scene and hotspots.
+
+    Example context (json):
+    {
+        "title": "Mechanical Gearbox",
+        "generated": "2026-11-15",
+        "snapshot": "",
+        "has_hotspots": true,
+        "hotspots": [
+            {
+                "num": 1,
+                "title": "Drive Gear",
+                "type": "info",
+                "text": "Transfers torque from the input shaft.",
+                "options": []
+            }
+        ]
+    }
+}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{title}} - {{#str}}studysheet_title, mod_gear{{/str}}</title>
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1e293b; max-width: 860px; margin: 24px auto; padding: 0 20px; line-height: 1.5; }
+    header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; margin-bottom: 18px; }
+    h1 { font-size: 1.5rem; margin: 0; color: #0f172a; }
+    .meta { font-size: 0.85rem; color: #64748b; }
+    .actions { margin-bottom: 16px; display: flex; gap: 8px; }
+    .btn { padding: 7px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+    .btn-primary { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+    .snapshot { width: 100%; max-height: 420px; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; background: #0f172a; margin-bottom: 20px; }
+    .item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; page-break-inside: avoid; }
+    .item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #4f46e5; color: #fff; font-size: 0.8rem; font-weight: 700; }
+    .badge { font-size: 0.72rem; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; background: #e0e7ff; color: #3730a3; font-weight: 600; }
+    ul.opts { margin: 6px 0 0 20px; padding: 0; }
+    @media print { .actions { display: none; } body { margin: 0; } }
+</style>
+</head>
+<body>
+    <div class="actions">
+        <button type="button" class="btn btn-primary" onclick="window.print()">{{#str}}studysheet_print, mod_gear{{/str}}</button>
+    </div>
+    <header>
+        <h1>{{title}}</h1>
+        <span class="meta">{{#str}}studysheet_title, mod_gear{{/str}} &bull; {{generated}}</span>
+    </header>
+    {{#snapshot}}
+    <img class="snapshot" src="{{snapshot}}" alt="{{title}}">
+    {{/snapshot}}
+    {{#has_hotspots}}
+    <section>
+        {{#hotspots}}
+        <article class="item">
+            <div class="item-head">
+                <span class="num">{{num}}</span>
+                <strong>{{title}}</strong>
+                <span class="badge">{{type}}</span>
+            </div>
+            <div>{{text}}</div>
+            {{#has_options}}
+            <ul class="opts">
+                {{#options}}
+                <li>&#9744; {{.}}</li>
+                {{/options}}
+            </ul>
+            {{/has_options}}
+        </article>
+        {{/hotspots}}
+    </section>
+    {{/has_hotspots}}
+    {{^has_hotspots}}
+    <p>{{#str}}studysheet_empty, mod_gear{{/str}}</p>
+    {{/has_hotspots}}
+</body>
+</html>

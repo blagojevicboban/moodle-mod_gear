@@ -43,7 +43,35 @@
             <input type="hidden" class="gear-quiz-mesh-answer" value="">
         </div>
         {{/mesh}}
+        {{#pin}}
+        <p class="small text-muted mb-2">{{#str}}quiz_pin_hint, mod_gear{{/str}}</p>
+        <div class="mb-2">
+            <button type="button" class="btn btn-outline-info btn-sm gear-quiz-pin-pick">
+                <i class="fa fa-map-pin" aria-hidden="true"></i> {{#str}}quiz_pickpin, mod_gear{{/str}}
+            </button>
+            <span class="badge badge-secondary ml-2 gear-quiz-pin-badge d-none"></span>
+            <input type="hidden" class="gear-quiz-pin-answer" value="">
+        </div>
+        {{/pin}}
+        {{#sequence}}
+        <p class="small text-muted mb-2">
+            {{#assembly}}{{#str}}quiz_assembly_hint, mod_gear{{/str}}{{/assembly}}
+            {{^assembly}}{{#str}}quiz_sequence_hint, mod_gear{{/str}}{{/assembly}}
+        </p>
+        <div class="mb-2 d-flex flex-wrap align-items-center gap-1">
+            <button type="button" class="btn btn-outline-info btn-sm gear-quiz-seq-pick mr-1">
+                <i class="fa fa-cubes" aria-hidden="true"></i> {{#str}}quiz_pickseq, mod_gear{{/str}}
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm gear-quiz-seq-clear">
+                <i class="fa fa-undo" aria-hidden="true"></i> {{#str}}study_reset, mod_gear{{/str}}
+            </button>
+        </div>
+        <div class="small mb-2 gear-quiz-seq-list text-muted"></div>
+        <input type="hidden" class="gear-quiz-seq-answer" value="">
+        {{/sequence}}
         {{^mesh}}
+        {{^pin}}
+        {{^sequence}}
         {{#text}}
         <label class="sr-only visually-hidden" for="gear-quiz-text-{{id}}">{{#str}}quiz_youranswer, mod_gear{{/str}}</label>
         <input type="text" class="form-control gear-quiz-text" id="gear-quiz-text-{{id}}" maxlength="255" autocomplete="off"
@@ -58,6 +86,8 @@
         </div>
         {{/options}}
         {{/text}}
+        {{/sequence}}
+        {{/pin}}
         {{/mesh}}
         
         <button type="button" class="btn btn-primary btn-sm mt-2 gear-quiz-submit">{{#str}}submit, core{{/str}}</button>

@@ -80,13 +80,16 @@
                     <option value="multi" {{#isMulti}}selected{{/isMulti}}>{{#str}}quiztype_multi, mod_gear{{/str}}</option>
                     <option value="text" {{#isText}}selected{{/isText}}>{{#str}}quiztype_text, mod_gear{{/str}}</option>
                     <option value="mesh" {{#isMesh}}selected{{/isMesh}}>{{#str}}quiztype_mesh, mod_gear{{/str}}</option>
+                    <option value="pin" {{#isPin}}selected{{/isPin}}>{{#str}}quiztype_pin, mod_gear{{/str}}</option>
+                    <option value="sequence" {{#isSequence}}selected{{/isSequence}}>{{#str}}quiztype_sequence, mod_gear{{/str}}</option>
+                    <option value="assembly" {{#isAssembly}}selected{{/isAssembly}}>{{#str}}quiztype_assembly, mod_gear{{/str}}</option>
                 </select>
             </div>
-            <div class="gear-form-group gear-quiz-choice-fields"{{#isText}} hidden{{/isText}}{{#isMesh}} hidden{{/isMesh}}>
+            <div class="gear-form-group gear-quiz-choice-fields"{{#isText}} hidden{{/isText}}{{#isMesh}} hidden{{/isMesh}}{{#isPin}} hidden{{/isPin}}{{#isSequence}} hidden{{/isSequence}}{{#isAssembly}} hidden{{/isAssembly}}>
                 <label for="gear-hotspot-input-options-{{cmid}}">{{#str}}quizoptions, mod_gear{{/str}}</label>
                 <input type="text" id="gear-hotspot-input-options-{{cmid}}" class="form-control" placeholder="{{#str}}quizoptions_help, mod_gear{{/str}}" value="{{options}}">
             </div>
-            <div class="gear-form-group gear-quiz-choice-fields"{{#isText}} hidden{{/isText}}{{#isMesh}} hidden{{/isMesh}}>
+            <div class="gear-form-group gear-quiz-choice-fields"{{#isText}} hidden{{/isText}}{{#isMesh}} hidden{{/isMesh}}{{#isPin}} hidden{{/isPin}}{{#isSequence}} hidden{{/isSequence}}{{#isAssembly}} hidden{{/isAssembly}}>
                 <label for="gear-hotspot-input-correct-{{cmid}}">{{#str}}quizcorrect, mod_gear{{/str}}</label>
                 <input type="text" id="gear-hotspot-input-correct-{{cmid}}" class="form-control" value="{{correctAnswer}}" inputmode="numeric"
                     aria-describedby="gear-hotspot-correct-help-{{cmid}}">
@@ -109,6 +112,21 @@
                         <i class="fa fa-crosshairs" aria-hidden="true"></i> {{#str}}quiz_pickmesh, mod_gear{{/str}}
                     </button>
                 </div>
+            </div>
+            <div class="gear-form-group gear-quiz-pin-fields"{{^isPin}} hidden{{/isPin}}>
+                <label for="gear-hotspot-input-pinradius-{{cmid}}">{{#str}}quiz_pinradius, mod_gear{{/str}}</label>
+                <input type="number" id="gear-hotspot-input-pinradius-{{cmid}}" class="form-control" value="{{pinRadius}}" min="0.05" step="0.05">
+                <small class="form-text text-muted">{{#str}}quiz_pinradius_help, mod_gear{{/str}}</small>
+            </div>
+            <div class="gear-form-group gear-quiz-sequence-fields"{{^isSequenceOrAssembly}} hidden{{/isSequenceOrAssembly}}>
+                <label for="gear-hotspot-input-targetseq-{{cmid}}">{{#str}}quiz_targetsequence, mod_gear{{/str}}</label>
+                <div class="input-group">
+                    <input type="text" id="gear-hotspot-input-targetseq-{{cmid}}" class="form-control" value="{{targetSequence}}" placeholder="Part_1, Part_2, Part_3">
+                    <button type="button" class="btn btn-outline-primary" id="gear-hotspot-pickseq-{{cmid}}">
+                        <i class="fa fa-plus" aria-hidden="true"></i> {{#str}}quiz_addpart, mod_gear{{/str}}
+                    </button>
+                </div>
+                <small class="form-text text-muted">{{#str}}quiz_targetsequence_help, mod_gear{{/str}}</small>
             </div>
             </div>
             <div class="gear-form-group">

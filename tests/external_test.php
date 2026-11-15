@@ -22,6 +22,7 @@ use mod_gear\external\get_bank_categories;
 use mod_gear\external\get_bank_questions;
 use mod_gear\external\get_hotspots;
 use mod_gear\external\get_leaderboard;
+use mod_gear\external\get_heatmap_data;
 use mod_gear\external\get_scene_data;
 use mod_gear\external\import_scene;
 use mod_gear\external\save_hotspot;
@@ -45,6 +46,7 @@ use mod_gear\external\track_event;
  * @covers     \mod_gear\external\get_hotspots
  * @covers     \mod_gear\external\get_bank_categories
  * @covers     \mod_gear\external\get_bank_questions
+ * @covers     \mod_gear\external\get_heatmap_data
  * @covers     \mod_gear\external\get_scene_data
  * @covers     \mod_gear\external\track_event
  * @covers     \mod_gear\external\submit_quiz
@@ -532,5 +534,178 @@ final class external_test extends \advanced_testcase {
 
         $this->expectException(\required_capability_exception::class);
         get_bank_categories::execute($gear->id);
+    }
+
+    /**
+     * Test 3D Pin-Drop quiz evaluation, answer stripping, and heatmap analytics.
+     */
+    public function test_pin_quiz_and_heatmap_data(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $gear = $this->getDataGenerator()->create_module('gear', ['course' => $course->id]);
+
+        $this->setUser($teacher);
+        $pos = '{"x":1,"y":2,"z":3}';
+        $pincfg = json_encode([
+            'quizType' => 'pin',
+            'targetPoint' => ['x' => 1.0, 'y' => 2.0, 'z' => 3.0],
+            'pinRadius' => 0.5,
+            'points' => 25,
+        ]);
+        $pin = save_hotspot::execute(0, $gear->id, 0, 'quiz', 'Find Valve', 'Click the valve', $pos, 'quiz', $pincfg);
+
+        // Student does not receive targetPoint or pinRadius.
+        $this->setUser($student);
+        $list = get_hotspots::execute($gear->id)['hotspots'];
+        $this->assertCount(1, $list);
+        $decoded = json_decode($list[0]['config'], true);
+        $this->assertArrayNotHasKey('targetPoint', $decoded);
+        $this->assertArrayNotHasKey('pinRadius', $decoded);
+
+        // Track a view, submit an out-of-radius miss, then an in-radius hit.
+        track_event::execute($gear->id, 'hotspot_click', json_encode(['hotspotId' => $pin['id']]));
+        $miss = submit_quiz::execute($gear->id, $pin['id'], '{"x":5,"y":2,"z":3}');
+        $this->assertFalse($miss['correct']);
+        $this->assertSame(0, $miss['score']);
+
+        $hit = submit_quiz::execute($gear->id, $pin['id'], '{"x":1.2,"y":2.1,"z":3.0}');
+        $this->assertTrue($hit['correct']);
+        $this->assertSame(25, $hit['score']);
+
+        // Teacher queries heatmap data: 1 view, 2 attempts, 1 correct, 50% error rate.
+        $this->setUser($teacher);
+        $heatmap = get_heatmap_data::execute($gear->id);
+        $this->assertCount(1, $heatmap['hotspots']);
+        $row = $heatmap['hotspots'][0];
+        $this->assertSame(1, $row['views']);
+        $this->assertSame(2, $row['attempts']);
+        $this->assertSame(1, $row['correct']);
+        $this->assertSame(50, $row['errorrate']);
+
+        // Student cannot access heatmap data.
+        $this->setUser($student);
+        $this->expectException(\required_capability_exception::class);
+        get_heatmap_data::execute($gear->id);
+    }
+
+    /**
+     * Test the built-in 3D Model Library catalog and loading into an empty activity.
+     */
+    public function test_model_library_catalog_and_load(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+
+        $catalog = gear_get_model_library();
+        $this->assertCount(5, $catalog);
+        foreach ($catalog as $entry) {
+            $path = $CFG->dirroot . '/mod/gear/assets/library/' . $entry['filename'];
+            $this->assertFileExists($path);
+            $this->assertSame('glTF', substr(file_get_contents($path, false, null, 0, 4), 0, 4));
+        }
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $gear = $this->getDataGenerator()->create_module('gear', ['course' => $course->id]);
+        $cm = get_coursemodule_from_instance('gear', $gear->id, $course->id, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+
+        $this->setUser($teacher);
+        $this->assertFalse(gear_load_library_model($gear, $context, 'nonexistent'));
+        $this->assertTrue(gear_load_library_model($gear, $context, 'gearbox'));
+
+        $this->assertCount(1, gear_get_models($gear->id, $context->id));
+        $this->assertCount(2, $DB->get_records('gear_hotspots', ['gearid' => $gear->id]));
+
+        // Loading a second time into a non-empty activity is a no-op.
+        $this->assertFalse(gear_load_library_model($gear, $context, 'plantcell'));
+    }
+
+    /**
+     * Test Sequence Mesh and 3D Assembly quiz evaluation and answer stripping.
+     */
+    public function test_sequence_and_assembly_quiz(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $gear = $this->getDataGenerator()->create_module('gear', ['course' => $course->id]);
+
+        $this->setUser($teacher);
+        $pos = '{"x":0,"y":0,"z":0}';
+        $seqcfg = json_encode([
+            'quizType' => 'assembly',
+            'targetSequence' => ['Housing_Base', 'Input_Shaft', 'Drive_Gear'],
+            'points' => 30,
+        ]);
+        $hs = save_hotspot::execute(0, $gear->id, 0, 'quiz', 'Assemble Gearbox', 'Snap parts in order', $pos, 'quiz', $seqcfg);
+
+        // Student does not receive targetSequence.
+        $this->setUser($student);
+        $list = get_hotspots::execute($gear->id)['hotspots'];
+        $this->assertCount(1, $list);
+        $decoded = json_decode($list[0]['config'], true);
+        $this->assertArrayNotHasKey('targetSequence', $decoded);
+
+        // Wrong order fails.
+        $wrong = submit_quiz::execute($gear->id, $hs['id'], 'Drive_Gear, Input_Shaft, Housing_Base');
+        $this->assertFalse($wrong['correct']);
+        $this->assertSame(0, $wrong['score']);
+
+        // Exact order (case-insensitive) passes.
+        $right = submit_quiz::execute($gear->id, $hs['id'], 'housing_base, Input_Shaft, Drive_Gear');
+        $this->assertTrue($right['correct']);
+        $this->assertSame(30, $right['score']);
+    }
+
+    /**
+     * Test Click-the-Part mesh quiz evaluation, answer stripping, and v3/v4 scene_config persistence.
+     */
+    public function test_mesh_quiz_and_v3_scene_config(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $gear = $this->getDataGenerator()->create_module('gear', ['course' => $course->id]);
+
+        $this->setUser($teacher);
+        $pos = '{"x":0,"y":0,"z":0}';
+        $meshcfg = json_encode([
+            'quizType' => 'mesh',
+            'targetMesh' => 'Drive_Gear',
+            'points' => 20,
+        ]);
+        $hs = save_hotspot::execute(0, $gear->id, 0, 'quiz', 'Find Drive Gear', 'Click the gear', $pos, 'quiz', $meshcfg);
+
+        $scenecfg = json_encode([
+            'position' => [0, 1, 3],
+            'target' => [0, 0, 0],
+            'explodeFactor' => 45,
+            'envPreset' => 'studio',
+        ]);
+        $saved = save_scene_config::execute($gear->id, $scenecfg);
+        $this->assertTrue($saved['success']);
+
+        $this->setUser($student);
+        $rawscene = $DB->get_field('gear', 'scene_config', ['id' => $gear->id], MUST_EXIST);
+        $decodedscene = json_decode($rawscene, true);
+        $this->assertSame(45, $decodedscene['camera']['explodeFactor']);
+        $this->assertSame('studio', $decodedscene['camera']['envPreset']);
+
+        $list = get_hotspots::execute($gear->id)['hotspots'];
+        $decoded = json_decode($list[0]['config'], true);
+        $this->assertArrayNotHasKey('targetMesh', $decoded);
+
+        $wrong = submit_quiz::execute($gear->id, $hs['id'], 'Driven_Gear');
+        $this->assertFalse($wrong['correct']);
+
+        $right = submit_quiz::execute($gear->id, $hs['id'], 'drive_gear');
+        $this->assertTrue($right['correct']);
+        $this->assertSame(20, $right['score']);
     }
 }

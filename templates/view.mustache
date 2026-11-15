@@ -97,11 +97,17 @@
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-measure-{{cmid}}" title="{{#str}}measure_tool, mod_gear{{/str}}" aria-label="{{#str}}measure_tool, mod_gear{{/str}}">
                     <i class="fa fa-ruler" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-angle-{{cmid}}" title="{{#str}}angle_tool, mod_gear{{/str}}" aria-label="{{#str}}angle_tool, mod_gear{{/str}}">
+                    <i class="fa fa-drafting-compass" aria-hidden="true"></i>
+                </button>
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-explode-{{cmid}}" title="{{#str}}explode_view, mod_gear{{/str}}" aria-label="{{#str}}explode_view, mod_gear{{/str}}">
                     <i class="fa fa-cubes" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-parts-{{cmid}}" title="{{#str}}parts_inspector, mod_gear{{/str}}" aria-label="{{#str}}parts_inspector, mod_gear{{/str}}">
                     <i class="fa fa-layer-group" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-split-{{cmid}}" title="{{#str}}split_view, mod_gear{{/str}}" aria-label="{{#str}}split_view, mod_gear{{/str}}">
+                    <i class="fa fa-columns" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-env-{{cmid}}" title="{{#str}}env_lighting, mod_gear{{/str}}" aria-label="{{#str}}env_lighting, mod_gear{{/str}}">
                     <i class="fa fa-sun" aria-hidden="true"></i>
@@ -112,7 +118,16 @@
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-timetrial-{{cmid}}" title="{{#str}}timetrial_mode, mod_gear{{/str}}" aria-label="{{#str}}timetrial_mode, mod_gear{{/str}}">
                     <i class="fa fa-stopwatch" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-study-{{cmid}}" title="{{#str}}study_mode, mod_gear{{/str}}" aria-label="{{#str}}study_mode, mod_gear{{/str}}">
+                    <i class="fa fa-graduation-cap" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-studysheet-{{cmid}}" title="{{#str}}studysheet_btn, mod_gear{{/str}}" aria-label="{{#str}}studysheet_btn, mod_gear{{/str}}">
+                    <i class="fa fa-file-alt" aria-hidden="true"></i>
+                </button>
                 {{#can_manage}}
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-heatmap-{{cmid}}" title="{{#str}}heatmap_mode, mod_gear{{/str}}" aria-label="{{#str}}heatmap_mode, mod_gear{{/str}}">
+                    <i class="fa fa-fire" aria-hidden="true"></i>
+                </button>
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-saveview-{{cmid}}" title="{{#str}}saveview, mod_gear{{/str}}" aria-label="{{#str}}saveview, mod_gear{{/str}}">
                     <i class="fa fa-save" aria-hidden="true"></i>
                 </button>
@@ -170,6 +185,32 @@
             </button>
             <small class="form-text text-muted mt-1">{{#str}}loadsamplescene_help, mod_gear{{/str}}</small>
         </form>
+        <div class="gear-library-section mt-4">
+            <h4 class="h5 mb-2"><i class="fa fa-cubes mr-1" aria-hidden="true"></i> {{#str}}library_heading, mod_gear{{/str}}</h4>
+            <p class="text-muted small mb-3">{{#str}}library_intro, mod_gear{{/str}}</p>
+            <div class="gear-library-grid">
+                {{#library_models}}
+                <div class="card gear-library-card">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge badge-secondary">{{category}}</span>
+                            <i class="fa {{icon}} text-primary" aria-hidden="true"></i>
+                        </div>
+                        <h5 class="card-title h6 mb-1">{{title}}</h5>
+                        <p class="card-text small text-muted flex-grow-1">{{description}}</p>
+                        <form method="post" action="{{viewurl}}" class="mt-2">
+                            <input type="hidden" name="action" value="loadlibrary">
+                            <input type="hidden" name="libraryid" value="{{id}}">
+                            <input type="hidden" name="sesskey" value="{{sesskey}}">
+                            <button type="submit" class="btn btn-sm btn-outline-primary btn-block">
+                                <i class="fa fa-download mr-1" aria-hidden="true"></i> {{#str}}library_load, mod_gear{{/str}}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {{/library_models}}
+            </div>
+        </div>
         {{/can_manage}}
         {{/has_models}}
     </div>

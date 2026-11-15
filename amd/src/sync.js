@@ -52,8 +52,16 @@ export default class SyncManager {
         this.laserActive = false;
         this.broadcastingView = false;
         this.followingPresenter = false;
+        this.inkMode = false;
+        this.inkDrawing = false;
+        this.inkPoints = [];
+        this.inkLines = [];
+        this.currentInkLine = null;
         this.broadcastInterval = null;
         this.onLaserPointerMove = (e) => this.handleLaserMove(e);
+        this.onInkDown = (e) => this.handleInkDown(e);
+        this.onInkMove = (e) => this.handleInkMove(e);
+        this.onInkUp = () => this.handleInkUp();
         this.onLaserKeyUp = (e) => {
             if (e.key === 'Alt' && this.laserActive) {
                 this.laserActive = false;
@@ -203,6 +211,14 @@ export default class SyncManager {
                 this.handleRemotePresenterView(data);
                 return;
             }
+            if (data.type === 'ink_stroke') {
+                this.renderInkStroke(data.points || []);
+                return;
+            }
+            if (data.type === 'ink_clear') {
+                this.clearInkStrokes(false);
+                return;
+            }
             if (typeof data.text !== 'string') {
                 return;
             }
@@ -283,7 +299,11 @@ export default class SyncManager {
         }
         if (this.viewer.canvas) {
             this.viewer.canvas.removeEventListener('pointermove', this.onLaserPointerMove);
+            this.viewer.canvas.removeEventListener('pointerdown', this.onInkDown, true);
+            this.viewer.canvas.removeEventListener('pointermove', this.onInkMove, true);
         }
+        window.removeEventListener('pointerup', this.onInkUp);
+        this.clearInkStrokes(false);
         document.removeEventListener('keyup', this.onLaserKeyUp);
     }
 
@@ -470,6 +490,150 @@ export default class SyncManager {
                     this.initPeer();
                 }
             });
+        }
+
+        const inkBtn = document.getElementById('gear-ink-btn-' + cmid);
+        const inkClearBtn = document.getElementById('gear-ink-clear-btn-' + cmid);
+        if (inkBtn) {
+            inkBtn.addEventListener('click', () => {
+                this.inkMode = !this.inkMode;
+                inkBtn.classList.toggle('active', this.inkMode);
+                inkBtn.classList.toggle('btn-warning', this.inkMode);
+                if (inkClearBtn) {
+                    inkClearBtn.classList.toggle('d-none', !this.inkMode && !this.inkLines.length);
+                }
+                if (this.viewer.controls) {
+                    this.viewer.controls.enabled = !this.inkMode;
+                }
+                if (this.viewer.canvas) {
+                    this.viewer.canvas.style.cursor = this.inkMode ? 'crosshair' : 'default';
+                    if (this.inkMode) {
+                        this.initPeer();
+                        this.viewer.canvas.addEventListener('pointerdown', this.onInkDown, true);
+                        this.viewer.canvas.addEventListener('pointermove', this.onInkMove, true);
+                        window.addEventListener('pointerup', this.onInkUp);
+                    } else {
+                        this.viewer.canvas.removeEventListener('pointerdown', this.onInkDown, true);
+                        this.viewer.canvas.removeEventListener('pointermove', this.onInkMove, true);
+                        window.removeEventListener('pointerup', this.onInkUp);
+                    }
+                }
+            });
+        }
+        if (inkClearBtn) {
+            inkClearBtn.addEventListener('click', () => {
+                this.clearInkStrokes(true);
+                if (!this.inkMode) {
+                    inkClearBtn.classList.add('d-none');
+                }
+            });
+        }
+    }
+
+    /**
+     * Start a 3D surface ink stroke.
+     *
+     * @param {PointerEvent} event
+     */
+    handleInkDown(event) {
+        if (!this.inkMode || event.button !== 0 || !this.viewer.tools) {
+            return;
+        }
+        const hit = this.viewer.tools.raycastModel(event);
+        if (!hit) {
+            return;
+        }
+        event.stopPropagation();
+        this.inkDrawing = true;
+        const pt = hit.point.clone().addScaledVector(hit.face ? hit.face.normal : new THREE.Vector3(0, 1, 0), 0.01);
+        this.inkPoints = [pt];
+        const geom = new THREE.BufferGeometry().setFromPoints([pt, pt]);
+        const mat = new THREE.LineBasicMaterial({color: 0xfacc15, linewidth: 2});
+        this.currentInkLine = new THREE.Line(geom, mat);
+        this.viewer.scene.add(this.currentInkLine);
+        this.inkLines.push(this.currentInkLine);
+    }
+
+    /**
+     * Extend active 3D surface ink stroke.
+     *
+     * @param {PointerEvent} event
+     */
+    handleInkMove(event) {
+        if (!this.inkMode || !this.inkDrawing || !this.currentInkLine || !this.viewer.tools) {
+            return;
+        }
+        const hit = this.viewer.tools.raycastModel(event);
+        if (!hit) {
+            return;
+        }
+        const pt = hit.point.clone().addScaledVector(hit.face ? hit.face.normal : new THREE.Vector3(0, 1, 0), 0.01);
+        const last = this.inkPoints[this.inkPoints.length - 1];
+        if (last && last.distanceToSquared(pt) < 0.0004) {
+            return;
+        }
+        this.inkPoints.push(pt);
+        this.currentInkLine.geometry.dispose();
+        this.currentInkLine.geometry = new THREE.BufferGeometry().setFromPoints(this.inkPoints);
+    }
+
+    /**
+     * Finish and broadcast a 3D surface ink stroke.
+     */
+    handleInkUp() {
+        if (!this.inkDrawing) {
+            return;
+        }
+        this.inkDrawing = false;
+        this.currentInkLine = null;
+        if (this.inkPoints.length >= 2) {
+            this.broadcastData({
+                type: 'ink_stroke',
+                points: this.inkPoints.map((p) => [
+                    Math.round(p.x * 1e4) / 1e4,
+                    Math.round(p.y * 1e4) / 1e4,
+                    Math.round(p.z * 1e4) / 1e4,
+                ]),
+            });
+        }
+        this.inkPoints = [];
+    }
+
+    /**
+     * Render a remote peer's 3D ink stroke.
+     *
+     * @param {Array} pts Array of [x, y, z]
+     */
+    renderInkStroke(pts) {
+        if (!Array.isArray(pts) || pts.length < 2) {
+            return;
+        }
+        const vecs = pts.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
+        const geom = new THREE.BufferGeometry().setFromPoints(vecs);
+        const mat = new THREE.LineBasicMaterial({color: 0xfacc15, linewidth: 2});
+        const line = new THREE.Line(geom, mat);
+        this.viewer.scene.add(line);
+        this.inkLines.push(line);
+    }
+
+    /**
+     * Clear all 3D ink strokes from the scene.
+     *
+     * @param {boolean} broadcast Whether to notify peers
+     */
+    clearInkStrokes(broadcast) {
+        this.inkLines.forEach((line) => {
+            this.viewer.scene.remove(line);
+            if (line.geometry) {
+                line.geometry.dispose();
+            }
+            if (line.material) {
+                line.material.dispose();
+            }
+        });
+        this.inkLines = [];
+        if (broadcast) {
+            this.broadcastData({type: 'ink_clear'});
         }
     }
 

@@ -87,6 +87,20 @@ if ($action === 'loadsample') {
     }
     redirect(new moodle_url('/mod/gear/view.php', ['id' => $cm->id]));
 }
+if ($action === 'loadlibrary') {
+    require_sesskey();
+    require_capability('mod/gear:manage', $context);
+    $libraryid = optional_param('libraryid', '', PARAM_ALPHANUMEXT);
+    if (gear_load_library_model($gear, $context, $libraryid)) {
+        redirect(
+            new moodle_url('/mod/gear/view.php', ['id' => $cm->id]),
+            get_string('library_loaded', 'mod_gear'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
+    }
+    redirect(new moodle_url('/mod/gear/view.php', ['id' => $cm->id]));
+}
 
 // Get models for this activity (with file URLs).
 $models = gear_get_models($gear->id, $context->id);
@@ -128,6 +142,15 @@ $templatedata = [
     'reporturl' => (new moodle_url('/mod/gear/report.php', ['id' => $cm->id]))->out(),
     'viewurl' => (new moodle_url('/mod/gear/view.php', ['id' => $cm->id]))->out(false),
     'sesskey' => sesskey(),
+    'library_models' => (empty($models) && $canmanage) ? array_values(array_map(function (array $item): array {
+        return [
+            'id' => $item['id'],
+            'icon' => $item['icon'],
+            'category' => $item['category'],
+            'title' => $item['title'],
+            'description' => $item['description'],
+        ];
+    }, gear_get_model_library())) : [],
 ];
 
 // Output.

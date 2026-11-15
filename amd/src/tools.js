@@ -23,20 +23,26 @@
 
 import * as THREE from 'three';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
+import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import Str from 'core/str';
 import Templates from 'core/templates';
 
 const STRINGS = [
+    'angle_hint', 'angle_result', 'angle_tool',
     'autorotate',
     'clipping_axis', 'clipping_enable', 'clipping_flip', 'clipping_offset', 'clipping_plane',
     'env_darklab', 'env_lighting', 'env_none', 'env_studio', 'env_workshop',
     'explode_factor', 'explode_reset', 'explode_view',
+    'heatmap_empty', 'heatmap_mode', 'heatmap_summary',
     'measure_clear', 'measure_distance', 'measure_hint', 'measure_tool',
     'part_hide', 'part_isolate', 'part_none_selected', 'part_selected', 'part_unnamed', 'part_xray',
     'parts_inspector', 'parts_reset',
     'presentation_exit', 'presentation_mode',
     'snapshot', 'snapshot_saved',
+    'split_view',
+    'stats_summary',
+    'study_mode',
     'xray_all',
 ];
 
@@ -68,11 +74,31 @@ export default class SceneTools {
 
         // Measurement tool.
         this.measureBtn = null;
+        this.angleBtn = null;
         this.measuring = false;
+        this.measureMode = 'distance';
         this.measurePoints = [];
         this.measureMarkers = [];
         this.measureLine = null;
         this.measureLabel = null;
+
+        // Heatmap and study mode.
+        this.heatmapBtn = null;
+        this.heatmapPanel = null;
+        this.heatmapActive = false;
+        this.heatmapHalos = [];
+        this.studyBtn = null;
+        this.studyBar = null;
+        this.studyActive = false;
+        this.studyRevealed = new Set();
+
+        // Split comparison view & model stats.
+        this.splitBtn = null;
+        this.splitBar = null;
+        this.splitDivider = null;
+        this.splitActive = false;
+        this.splitRatio = 0.5;
+        this.modelStats = null;
         this.previewLine = null;
 
         // Exploded view.
@@ -141,7 +167,27 @@ export default class SceneTools {
 
         this.measureBtn = document.getElementById('gear-measure-' + cmid);
         if (this.measureBtn) {
-            this.measureBtn.addEventListener('click', () => this.toggleMeasureMode());
+            this.measureBtn.addEventListener('click', () => this.toggleMeasureMode('distance'));
+        }
+
+        this.angleBtn = document.getElementById('gear-angle-' + cmid);
+        if (this.angleBtn) {
+            this.angleBtn.addEventListener('click', () => this.toggleMeasureMode('angle'));
+        }
+
+        this.studyBtn = document.getElementById('gear-study-' + cmid);
+        if (this.studyBtn) {
+            this.studyBtn.addEventListener('click', () => this.toggleStudyMode());
+        }
+
+        this.studySheetBtn = document.getElementById('gear-studysheet-' + cmid);
+        if (this.studySheetBtn) {
+            this.studySheetBtn.addEventListener('click', () => this.exportStudySheet());
+        }
+
+        this.heatmapBtn = document.getElementById('gear-heatmap-' + cmid);
+        if (this.heatmapBtn) {
+            this.heatmapBtn.addEventListener('click', () => this.toggleHeatmap());
         }
 
         this.explodeBtn = document.getElementById('gear-explode-' + cmid);
@@ -152,6 +198,11 @@ export default class SceneTools {
         this.partsBtn = document.getElementById('gear-parts-' + cmid);
         if (this.partsBtn) {
             this.partsBtn.addEventListener('click', () => this.togglePartsPanel());
+        }
+
+        this.splitBtn = document.getElementById('gear-split-' + cmid);
+        if (this.splitBtn) {
+            this.splitBtn.addEventListener('click', () => this.toggleSplitView());
         }
 
         this.envBtn = document.getElementById('gear-env-' + cmid);
@@ -195,6 +246,7 @@ export default class SceneTools {
     onModelsLoaded() {
         this.calculateModelBounds();
         this.initExplodeData();
+        this.computeModelStats();
         if (this.explodeFactor > 0) {
             this.setExplodeFactor(this.explodeFactor);
         }
@@ -285,12 +337,18 @@ export default class SceneTools {
             this.partsPanel = document.getElementById('gear-parts-panel-' + cmid);
             this.envPanel = document.getElementById('gear-env-panel-' + cmid);
             this.presentationBar = document.getElementById('gear-presentation-bar-' + cmid);
+            this.heatmapPanel = document.getElementById('gear-heatmap-panel-' + cmid);
+            this.studyBar = document.getElementById('gear-study-bar-' + cmid);
+            this.splitBar = document.getElementById('gear-split-bar-' + cmid);
+            this.splitDivider = document.getElementById('gear-split-divider-' + cmid);
 
             this.wireClippingPanel(cmid);
             this.wireExplodePanel(cmid);
             this.wirePartsPanel(cmid);
             this.wireEnvPanel(cmid);
             this.wirePresentationBar();
+            this.wireHeatmapAndStudy(cmid);
+            this.updateModelStatsDisplay();
             return null;
         });
         return this.panelsPromise;
@@ -425,21 +483,47 @@ export default class SceneTools {
     }
 
     /**
-     * 3. Measure tool: toggle measure mode.
+     * 3. Measure tool: toggle distance or angle measure mode.
+     *
+     * @param {string} [mode='distance'] 'distance' or 'angle'
      */
-    toggleMeasureMode() {
+    toggleMeasureMode(mode = 'distance') {
         if (!this.measuring && this.partsInspecting) {
             this.setPartsPicking(false);
         }
+        const switching = this.measuring && this.measureMode !== mode;
+        if (switching) {
+            this.clearMeasurement();
+            this.measureMode = mode;
+            if (this.measureBtn) {
+                this.measureBtn.classList.toggle('active', mode === 'distance');
+            }
+            if (this.angleBtn) {
+                this.angleBtn.classList.toggle('active', mode === 'angle');
+            }
+            this.showMeasureToast(mode === 'angle' ? this.strings.angle_hint : this.strings.measure_hint);
+            return;
+        }
         this.measuring = !this.measuring;
+        this.measureMode = mode;
         if (this.measuring) {
-            this.measureBtn.classList.add('active');
+            if (this.measureBtn) {
+                this.measureBtn.classList.toggle('active', mode === 'distance');
+            }
+            if (this.angleBtn) {
+                this.angleBtn.classList.toggle('active', mode === 'angle');
+            }
             this.viewer.canvas.style.cursor = 'crosshair';
             this.viewer.canvas.addEventListener('pointerdown', this.onPointerDown);
             this.viewer.canvas.addEventListener('pointermove', this.onPointerMove);
-            this.showMeasureToast(this.strings.measure_hint);
+            this.showMeasureToast(mode === 'angle' ? this.strings.angle_hint : this.strings.measure_hint);
         } else {
-            this.measureBtn.classList.remove('active');
+            if (this.measureBtn) {
+                this.measureBtn.classList.remove('active');
+            }
+            if (this.angleBtn) {
+                this.angleBtn.classList.remove('active');
+            }
             this.viewer.canvas.style.cursor = 'default';
             this.viewer.canvas.removeEventListener('pointerdown', this.onPointerDown);
             this.viewer.canvas.removeEventListener('pointermove', this.onPointerMove);
@@ -464,14 +548,18 @@ export default class SceneTools {
 
         event.stopPropagation();
 
-        if (this.measurePoints.length >= 2) {
+        const maxPoints = this.measureMode === 'angle' ? 3 : 2;
+        if (this.measurePoints.length >= maxPoints) {
             this.clearMeasurement();
         }
 
         this.measurePoints.push(hit.point.clone());
-        this.createMarker(hit.point, this.measurePoints.length === 1 ? 0x10b981 : 0xef4444);
+        const colors = [0x10b981, 0xf59e0b, 0xef4444];
+        this.createMarker(hit.point, colors[this.measurePoints.length - 1] || 0xef4444);
 
-        if (this.measurePoints.length === 2) {
+        if (this.measureMode === 'angle' && this.measurePoints.length === 3) {
+            this.finishAngleMeasurement();
+        } else if (this.measureMode === 'distance' && this.measurePoints.length === 2) {
             this.finishMeasurement();
         }
     }
@@ -482,7 +570,11 @@ export default class SceneTools {
      * @param {PointerEvent} event
      */
     handlePointerMove(event) {
-        if (!this.measuring || this.measurePoints.length !== 1) {
+        if (!this.measuring || this.measurePoints.length === 0) {
+            return;
+        }
+        const maxPoints = this.measureMode === 'angle' ? 3 : 2;
+        if (this.measurePoints.length >= maxPoints) {
             return;
         }
 
@@ -491,7 +583,7 @@ export default class SceneTools {
             return;
         }
 
-        const p1 = this.measurePoints[0];
+        const p1 = this.measurePoints[this.measurePoints.length - 1];
         const p2 = hit.point;
 
         if (!this.previewLine) {
@@ -554,9 +646,40 @@ export default class SceneTools {
     }
 
     /**
+     * Connect three points (A-B-C) with lines and display the vertex angle at B.
+     */
+    finishAngleMeasurement() {
+        if (this.previewLine) {
+            this.viewer.scene.remove(this.previewLine);
+            if (this.previewLine.geometry) {
+                this.previewLine.geometry.dispose();
+            }
+            if (this.previewLine.material) {
+                this.previewLine.material.dispose();
+            }
+            this.previewLine = null;
+        }
+
+        const [p1, p2, p3] = this.measurePoints;
+        const geom = new THREE.BufferGeometry().setFromPoints([p1, p2, p3]);
+        const mat = new THREE.LineBasicMaterial({color: 0xf59e0b, linewidth: 2});
+        this.measureLine = new THREE.Line(geom, mat);
+        this.viewer.scene.add(this.measureLine);
+
+        const v1 = new THREE.Vector3().subVectors(p1, p2);
+        const v2 = new THREE.Vector3().subVectors(p3, p2);
+        const deg = (v1.lengthSq() > 0 && v2.lengthSq() > 0)
+            ? THREE.MathUtils.radToDeg(v1.angleTo(v2)).toFixed(1)
+            : '0.0';
+
+        const labelText = (this.strings.angle_result || 'Angle: {$a}°').replace('{$a}', deg);
+        this.showMeasureResultBadge(labelText);
+    }
+
+    /**
      * Display a floating badge with the measurement result and clear action.
      *
-     * @param {string} text Formatted distance text.
+     * @param {string} text Formatted distance or angle text.
      */
     showMeasureResultBadge(text) {
         if (!this.measureLabel) {
@@ -567,18 +690,26 @@ export default class SceneTools {
             this.measureLabel = badge;
         }
 
-        this.measureLabel.innerHTML = `
-            <span><i class="fa fa-ruler mr-1" aria-hidden="true"></i> ${text}</span>
-            <button type="button" class="btn btn-sm btn-outline-light ml-2 gear-measure-clear-btn"
-                    title="${this.strings.measure_clear}">
-                &times;
-            </button>
-        `;
+        this.measureLabel.textContent = '';
+        const span = document.createElement('span');
+        const icon = document.createElement('i');
+        icon.className = this.measureMode === 'angle' ? 'fa fa-drafting-compass mr-1' : 'fa fa-ruler mr-1';
+        icon.setAttribute('aria-hidden', 'true');
+        span.appendChild(icon);
+        span.appendChild(document.createTextNode(text));
 
-        this.measureLabel.querySelector('.gear-measure-clear-btn').addEventListener('click', (e) => {
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'btn btn-sm btn-outline-light ml-2 gear-measure-clear-btn';
+        clearBtn.title = this.strings.measure_clear || '';
+        clearBtn.textContent = '\u00d7';
+        clearBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.clearMeasurement();
         });
+
+        this.measureLabel.appendChild(span);
+        this.measureLabel.appendChild(clearBtn);
     }
 
     /**
@@ -768,6 +899,19 @@ export default class SceneTools {
                 valLabel.textContent = Math.round(this.explodeFactor) + '%';
             }
         }
+    }
+
+    /**
+     * Snap a specific exploded part back to its assembled home position.
+     *
+     * @param {string} meshName Target mesh name
+     */
+    snapPartHome(meshName) {
+        this.explodeMeshes.forEach((mesh) => {
+            if (mesh.name === meshName && mesh.userData.origPosition) {
+                mesh.position.copy(mesh.userData.origPosition);
+            }
+        });
     }
 
     /**
@@ -1074,6 +1218,19 @@ export default class SceneTools {
                 this.setEnvPreset(btn.dataset.preset);
             });
         });
+        const expSlider = document.getElementById('gear-env-exposure-' + this.viewer.cmid);
+        const expVal = document.getElementById('gear-env-exposure-val-' + this.viewer.cmid);
+        if (expSlider) {
+            expSlider.addEventListener('input', (e) => {
+                const v = Math.max(0.4, Math.min(2.2, parseFloat(e.target.value) || 1.0));
+                if (this.viewer.renderer) {
+                    this.viewer.renderer.toneMappingExposure = v;
+                }
+                if (expVal) {
+                    expVal.textContent = v.toFixed(2);
+                }
+            });
+        }
     }
 
     /**
@@ -1132,6 +1289,15 @@ export default class SceneTools {
                 btn.classList.toggle('btn-primary', isSelected);
                 btn.classList.toggle('btn-outline-light', !isSelected);
             });
+            const expSlider = document.getElementById('gear-env-exposure-' + this.viewer.cmid);
+            const expVal = document.getElementById('gear-env-exposure-val-' + this.viewer.cmid);
+            const exp = renderer.toneMappingExposure || 1.0;
+            if (expSlider) {
+                expSlider.value = String(exp);
+            }
+            if (expVal) {
+                expVal.textContent = exp.toFixed(2);
+            }
         }
     }
 
@@ -1180,6 +1346,11 @@ export default class SceneTools {
         if (this.presentationBar) {
             this.presentationBar.classList.remove('d-none');
         }
+        if (activityEl.requestFullscreen && !document.fullscreenElement) {
+            activityEl.requestFullscreen().catch(() => {
+                // Fallback to fixed overlay when fullscreen is blocked.
+            });
+        }
         window.dispatchEvent(new Event('resize'));
     }
 
@@ -1194,6 +1365,11 @@ export default class SceneTools {
         const activityEl = this.viewer.container.closest('.gear-activity');
         if (activityEl) {
             activityEl.classList.remove('gear-presentation-mode');
+        }
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {
+                // Ignore if already exited.
+            });
         }
         if (this.presentBtn) {
             this.presentBtn.classList.remove('active');
@@ -1270,6 +1446,7 @@ export default class SceneTools {
             {key: 'explode', panel: this.explodePanel, btn: this.explodeBtn},
             {key: 'parts', panel: this.partsPanel, btn: this.partsBtn},
             {key: 'env', panel: this.envPanel, btn: this.envBtn},
+            {key: 'heatmap', panel: this.heatmapPanel, btn: this.heatmapBtn},
         ];
         panels.forEach(({key, panel, btn}) => {
             if (key === except) {
@@ -1308,11 +1485,391 @@ export default class SceneTools {
     }
 
     /**
+     * Wire Heatmap panel and Study Mode bar.
+     *
+     * @param {number} cmid
+     */
+    wireHeatmapAndStudy(cmid) {
+        if (this.heatmapPanel) {
+            this.heatmapPanel.querySelector('.gear-panel-close').addEventListener('click', () => {
+                if (this.heatmapActive) {
+                    this.toggleHeatmap();
+                }
+            });
+        }
+        if (this.studyBar) {
+            this.studyBar.querySelector('.gear-study-reset').addEventListener('click', () => {
+                this.studyRevealed.clear();
+                this.updateStudyProgress();
+                this.viewer.container.querySelectorAll('.gear-hotspot-label').forEach((lbl) => {
+                    lbl.classList.add('gear-study-masked');
+                });
+            });
+            this.studyBar.querySelector('.gear-study-exit').addEventListener('click', () => {
+                if (this.studyActive) {
+                    this.toggleStudyMode();
+                }
+            });
+        }
+        if (this.splitBar) {
+            const slider = document.getElementById('gear-split-slider-' + cmid);
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    this.splitRatio = Math.max(0.1, Math.min(0.9, (parseFloat(e.target.value) || 50) / 100));
+                    if (this.splitDivider) {
+                        this.splitDivider.style.left = (this.splitRatio * 100) + '%';
+                    }
+                });
+            }
+            this.splitBar.querySelector('.gear-split-exit').addEventListener('click', () => {
+                if (this.splitActive) {
+                    this.toggleSplitView();
+                }
+            });
+        }
+        void cmid;
+    }
+
+    /**
+     * Toggle 3D Analytics Heatmap overlay for managers.
+     */
+    async toggleHeatmap() {
+        await this.ensurePanelsRendered();
+        this.heatmapActive = !this.heatmapActive;
+        if (!this.heatmapActive) {
+            this.clearHeatmap();
+            if (this.heatmapPanel) {
+                this.heatmapPanel.classList.add('d-none');
+            }
+            if (this.heatmapBtn) {
+                this.heatmapBtn.classList.remove('active');
+            }
+            return;
+        }
+        this.closeFloatingPanels('heatmap');
+        if (this.heatmapBtn) {
+            this.heatmapBtn.classList.add('active');
+        }
+        if (this.heatmapPanel) {
+            this.heatmapPanel.classList.remove('d-none');
+        }
+        try {
+            const [res] = await Promise.all(Ajax.call([{
+                methodname: 'mod_gear_get_heatmap_data',
+                args: {gearid: this.viewer.gearId},
+            }]));
+            this.renderHeatmap(res.hotspots || []);
+        } catch (err) {
+            Notification.exception(err);
+        }
+    }
+
+    /**
+     * Render 3D heatmap halos and summary stats.
+     *
+     * @param {Array} stats Per-hotspot statistics
+     */
+    renderHeatmap(stats) {
+        this.clearHeatmap();
+        const summaryEl = document.getElementById('gear-heatmap-summary-' + this.viewer.cmid);
+        if (!stats.length) {
+            if (summaryEl) {
+                summaryEl.textContent = this.strings.heatmap_empty || '';
+            }
+            return;
+        }
+        let totalViews = 0;
+        let totalAttempts = 0;
+        const byId = new Map();
+        stats.forEach((s) => {
+            totalViews += s.views;
+            totalAttempts += s.attempts;
+            byId.set(Number(s.hotspotid), s);
+        });
+        (this.viewer.hotspotMeshes || []).forEach((mesh) => {
+            const st = byId.get(Number(mesh.userData.id));
+            if (!st) {
+                return;
+            }
+            let color = 0x10b981;
+            if (st.attempts > 0) {
+                if (st.errorrate >= 50) {
+                    color = 0xef4444;
+                } else if (st.errorrate >= 20) {
+                    color = 0xf59e0b;
+                }
+            }
+            const geom = new THREE.SphereGeometry(0.15, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({
+                color,
+                transparent: true,
+                opacity: 0.48,
+                depthWrite: false,
+                depthTest: false,
+            });
+            const halo = new THREE.Mesh(geom, mat);
+            halo.position.copy(mesh.position);
+            halo.renderOrder = 999;
+            halo.userData.isHeatmapHalo = true;
+            this.viewer.scene.add(halo);
+            this.heatmapHalos.push(halo);
+        });
+        if (summaryEl) {
+            const tpl = this.strings.heatmap_summary || 'Views: {$a->views} | Attempts: {$a->attempts}';
+            summaryEl.textContent = tpl
+                .replace('{$a->views}', String(totalViews))
+                .replace('{$a->attempts}', String(totalAttempts));
+        }
+    }
+
+    /**
+     * Remove 3D heatmap halos from the scene.
+     */
+    clearHeatmap() {
+        this.heatmapHalos.forEach((halo) => {
+            this.viewer.scene.remove(halo);
+            if (halo.geometry) {
+                halo.geometry.dispose();
+            }
+            if (halo.material) {
+                halo.material.dispose();
+            }
+        });
+        this.heatmapHalos = [];
+    }
+
+    /**
+     * Toggle Student Study / Flashcard Mode.
+     */
+    async toggleStudyMode() {
+        await this.ensurePanelsRendered();
+        this.studyActive = !this.studyActive;
+        if (this.studyBtn) {
+            this.studyBtn.classList.toggle('active', this.studyActive);
+        }
+        if (this.studyBar) {
+            this.studyBar.classList.toggle('d-none', !this.studyActive);
+        }
+        this.viewer.container.classList.toggle('gear-study-mode', this.studyActive);
+        const labels = this.viewer.container.querySelectorAll('.gear-hotspot-label');
+        if (this.studyActive) {
+            this.studyRevealed.clear();
+            labels.forEach((lbl) => lbl.classList.add('gear-study-masked'));
+            this.updateStudyProgress();
+        } else {
+            labels.forEach((lbl) => lbl.classList.remove('gear-study-masked'));
+        }
+    }
+
+    /**
+     * Mark a hotspot as revealed in Study Mode and update progress.
+     *
+     * @param {number|string} hotspotId
+     */
+    markStudyRevealed(hotspotId) {
+        if (!this.studyActive) {
+            return;
+        }
+        this.studyRevealed.add(Number(hotspotId));
+        this.updateStudyProgress();
+    }
+
+    /**
+     * Update Study Mode progress badge.
+     */
+    updateStudyProgress() {
+        const el = document.getElementById('gear-study-progress-' + this.viewer.cmid);
+        if (!el) {
+            return;
+        }
+        const total = (this.viewer.hotspotMeshes || []).filter((m) => m.userData.type !== 'teleport').length;
+        el.textContent = `${this.studyRevealed.size} / ${total}`;
+    }
+
+    /**
+     * Export a printable HTML / PDF Study Sheet with a 3D snapshot and unlocked hotspots.
+     */
+    async exportStudySheet() {
+        const renderer = this.viewer.renderer;
+        const scene = this.viewer.scene;
+        const camera = this.viewer.camera;
+        let snapshot = '';
+        if (renderer && scene && camera) {
+            renderer.render(scene, camera);
+            snapshot = renderer.domElement.toDataURL('image/png');
+        }
+        const stripTags = (html) => {
+            const doc = new DOMParser().parseFromString(html || '', 'text/html');
+            return (doc.body.textContent || '').trim();
+        };
+        const items = (this.viewer.hotspotMeshes || [])
+            .filter((m) => m.userData.type !== 'teleport')
+            .map((m, idx) => {
+                const hs = m.userData;
+                let cfg = {};
+                if (hs.config) {
+                    try {
+                        cfg = typeof hs.config === 'string' ? JSON.parse(hs.config) : hs.config;
+                    } catch (e) {
+                        cfg = {};
+                    }
+                }
+                const options = Array.isArray(cfg.options) ? cfg.options : [];
+                return {
+                    num: idx + 1,
+                    title: hs.title || '#' + hs.id,
+                    type: hs.type || 'info',
+                    text: stripTags(hs.content),
+                    has_options: options.length > 0, // eslint-disable-line camelcase
+                    options,
+                };
+            });
+        const context = {
+            title: this.viewer.config?.name || document.title,
+            generated: new Date().toISOString().slice(0, 10),
+            snapshot,
+            has_hotspots: items.length > 0, // eslint-disable-line camelcase
+            hotspots: items,
+        };
+        try {
+            const {html} = await Templates.renderForPromise('mod_gear/study_sheet', context);
+            const win = window.open('', '_blank');
+            if (win) {
+                win.document.open();
+                win.document.write(html);
+                win.document.close();
+            } else {
+                const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `gear-study-sheet-${this.viewer.cmid}.html`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+        } catch (err) {
+            Notification.exception(err);
+        }
+    }
+
+    /**
+     * Compute mesh, triangle, and material counts for the Optimization Breakdown.
+     */
+    computeModelStats() {
+        if (!this.viewer.modelContainer) {
+            return;
+        }
+        let meshes = 0;
+        let triangles = 0;
+        const materials = new Set();
+        this.viewer.modelContainer.traverse((obj) => {
+            if (!obj.isMesh || !obj.geometry) {
+                return;
+            }
+            meshes++;
+            const geom = obj.geometry;
+            if (geom.index) {
+                triangles += Math.round(geom.index.count / 3);
+            } else if (geom.attributes && geom.attributes.position) {
+                triangles += Math.round(geom.attributes.position.count / 3);
+            }
+            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+            mats.forEach((m) => {
+                if (m) {
+                    materials.add(m.uuid);
+                }
+            });
+        });
+        this.modelStats = {meshes, triangles, materials: materials.size};
+        this.updateModelStatsDisplay();
+    }
+
+    /**
+     * Display computed model optimization stats in the Parts Inspector panel.
+     */
+    updateModelStatsDisplay() {
+        const el = document.getElementById('gear-model-stats-' + this.viewer.cmid);
+        if (!el || !this.modelStats) {
+            return;
+        }
+        const tpl = this.strings.stats_summary || 'Meshes: {$a->meshes} | Triangles: {$a->tris} | Materials: {$a->mats}';
+        el.textContent = tpl
+            .replace('{$a->meshes}', String(this.modelStats.meshes))
+            .replace('{$a->tris}', this.modelStats.triangles.toLocaleString())
+            .replace('{$a->mats}', String(this.modelStats.materials));
+    }
+
+    /**
+     * Toggle Before / After Split View (solid vs wireframe/X-ray).
+     */
+    async toggleSplitView() {
+        await this.ensurePanelsRendered();
+        this.splitActive = !this.splitActive;
+        if (this.splitBtn) {
+            this.splitBtn.classList.toggle('active', this.splitActive);
+        }
+        if (this.splitBar) {
+            this.splitBar.classList.toggle('d-none', !this.splitActive);
+        }
+        if (this.splitDivider) {
+            this.splitDivider.classList.toggle('d-none', !this.splitActive);
+            this.splitDivider.style.left = (this.splitRatio * 100) + '%';
+        }
+        if (!this.splitActive && this.viewer.renderer) {
+            this.viewer.renderer.setScissorTest(false);
+        }
+    }
+
+    /**
+     * Render a split comparison frame (solid left, wireframe right) when active.
+     *
+     * @returns {boolean} True if split rendering handled the frame
+     */
+    renderSplitFrame() {
+        if (!this.splitActive || !this.viewer.renderer || !this.viewer.scene || !this.viewer.camera) {
+            return false;
+        }
+        const renderer = this.viewer.renderer;
+        const size = new THREE.Vector2();
+        renderer.getSize(size);
+        const w = size.x;
+        const h = size.y;
+        const splitX = Math.round(w * this.splitRatio);
+
+        renderer.setScissorTest(true);
+        // Left side: normal solid rendering.
+        renderer.setScissor(0, 0, splitX, h);
+        renderer.setViewport(0, 0, w, h);
+        renderer.render(this.viewer.scene, this.viewer.camera);
+
+        // Right side: wireframe overlay comparison.
+        const toggled = [];
+        if (this.viewer.modelContainer) {
+            this.viewer.modelContainer.traverse((obj) => {
+                if (obj.isMesh && obj.material && !Array.isArray(obj.material) && !obj.material.wireframe) {
+                    obj.material.wireframe = true;
+                    toggled.push(obj.material);
+                }
+            });
+        }
+        renderer.setScissor(splitX, 0, w - splitX, h);
+        renderer.render(this.viewer.scene, this.viewer.camera);
+        toggled.forEach((m) => {
+            m.wireframe = false;
+        });
+        renderer.setScissorTest(false);
+        return true;
+    }
+
+    /**
      * Destroy resources and listeners.
      */
     destroy() {
         document.removeEventListener('keydown', this.onKeyDown);
         this.stopTimeTrial(true);
+        this.clearHeatmap();
         if (this.timeTrialBadge) {
             this.timeTrialBadge.remove();
             this.timeTrialBadge = null;
@@ -1321,7 +1878,17 @@ export default class SceneTools {
         this.setPartsPicking(false);
         this.resetAllParts();
         this.clearMeasurement();
-        [this.clippingPanel, this.explodePanel, this.partsPanel, this.envPanel, this.presentationBar].forEach((el) => {
+        [
+            this.clippingPanel,
+            this.explodePanel,
+            this.partsPanel,
+            this.envPanel,
+            this.presentationBar,
+            this.heatmapPanel,
+            this.studyBar,
+            this.splitBar,
+            this.splitDivider,
+        ].forEach((el) => {
             if (el) {
                 el.remove();
             }
@@ -1331,6 +1898,10 @@ export default class SceneTools {
         this.partsPanel = null;
         this.envPanel = null;
         this.presentationBar = null;
+        this.heatmapPanel = null;
+        this.studyBar = null;
+        this.splitBar = null;
+        this.splitDivider = null;
         if (this.envRT) {
             this.envRT.dispose();
             this.envRT = null;

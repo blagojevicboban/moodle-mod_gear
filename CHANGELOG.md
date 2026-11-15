@@ -5,6 +5,21 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-11-15
+
+### Added
+- **3D Pin-Drop Quiz (`pin`):** New spatial quiz type where students click directly on a 3D surface location and the server grades Euclidean 3D distance against a configurable tolerance radius (`pinRadius`), with target coordinates stripped from student responses.
+- **3D Assembly / Reorder (`assembly`) & Sequence Mesh Quiz (`sequence`):** New multi-step spatial quiz types where students click 3D parts in exact order (`targetSequence`); in `assembly` mode, the model auto-explodes and each clicked part snaps back into place.
+- **3-Point Angle Measurement Tool:** Measure vertex angles (`A–B–C`) in degrees directly on 3D model surfaces alongside 2-point distance measurement.
+- **3D Analytics Heatmap (`mod_gear_get_heatmap_data`):** Managers can toggle color-coded 3D halos and error-rate/view summaries directly on the 3D scene.
+- **Student Study / Flashcard Mode:** Blur/hide hotspot labels so students can self-test and track revealed hotspots without affecting Gradebook scores.
+- **Guided Tour View Capture & Auto-Tour:** One-click *Capture current view* (camera + explode state) and *Generate tour from hotspots* in the Guided Tour editor.
+- **Live Classroom 3D Surface Ink:** Presenters can draw persistent 3D ink strokes directly on the model surface and broadcast/clear them in real time over PeerJS.
+- **3D Model Library (`assets/library/`):** Built-in catalog of 5 multi-part CC0-style educational models (*Mechanical Gearbox*, *Plant Cell*, *Water Molecule*, *Solar System*, *DC Electric Motor*) with starter hotspots and quizzes for instant activity setup.
+- **PDF / HTML Study Sheet Export:** One-click printable study sheet (`templates/study_sheet.mustache`) embedding the current 3D snapshot and all unlocked hotspots/quiz prompts.
+- **Before / After Split View & Model Optimization Stats:** Scissor-based split comparison slider (solid vs. wireframe) and live mesh/triangle/material breakdown inside the Parts Inspector.
+- **AI Tour Narration, Mobile In-App View & Code Quality:** AI narration enrichment in Auto-Tour, `inApp="true"` Moodle App embedding, reduced ESLint complexity in `viewer.js`, and expanded PHPUnit coverage (`test_mesh_quiz_and_v3_scene_config`).
+
 ## [3.0.0] - 2026-11-15
 
 ### Added

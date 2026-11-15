@@ -137,4 +137,11 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',
     ],
+    'mod_gear_get_heatmap_data' => [
+        'classname'     => 'mod_gear\external\get_heatmap_data',
+        'description'   => 'Get 3D analytics heatmap data per hotspot',
+        'type'          => 'read',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
 ];

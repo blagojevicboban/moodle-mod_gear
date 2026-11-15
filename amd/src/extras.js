@@ -31,7 +31,8 @@ import {escapeHtml, prefersReducedMotion} from './dom';
 
 const STRINGS = [
     'animation', 'animationspeed', 'defaultssaved', 'materialvariant', 'pauseanimation', 'playanimation', 'savedefaults',
-    'tour', 'touradd', 'tourclose', 'tourdelete', 'tourdeleteconfirm', 'touredit', 'tourempty', 'tournext', 'tourprevious',
+    'tour', 'touradd', 'tourauto', 'tourcapture', 'tourclose', 'tourdelete', 'tourdeleteconfirm', 'touredit',
+    'tourempty', 'tournext', 'tourprevious',
     'tourmovedown', 'tourmoveup', 'tourstep', 'tourtext', 'tourtitle', 'variantdefault', 'tourhotspot', 'tourclip',
     'tourvariant', 'tournone',
 ];
@@ -395,7 +396,8 @@ export default class SceneExtras {
         if (this.viewer.canManage) {
             const edit = this.el('div', 'gear-tour-edit');
             [
-                ['add', s.touradd, 'plus'], ['edit', s.touredit, 'pen'], ['delete', s.tourdelete, 'trash'],
+                ['add', s.touradd, 'plus'], ['edit', s.touredit, 'pen'], ['capture', s.tourcapture, 'camera'],
+                ['auto', s.tourauto, 'magic'], ['delete', s.tourdelete, 'trash'],
                 ['up', s.tourmoveup, 'arrow-up'], ['down', s.tourmovedown, 'arrow-down'],
             ].forEach(([action, label, icon]) => {
                 const button = this.el('button', 'btn btn-sm btn-outline-light',
@@ -460,7 +462,8 @@ export default class SceneExtras {
         panel.querySelector('.gear-tour-next').disabled = !step || this.tourIndex >= total - 1;
         panel.querySelectorAll('.gear-tour-edit [data-action]').forEach((button) => {
             const a = button.dataset.action;
-            button.disabled = !step && a !== 'add' ? true
+            const alwaysOn = a === 'add' || a === 'auto';
+            button.disabled = !step && !alwaysOn ? true
                 : (a === 'up' && this.tourIndex === 0) || (a === 'down' && this.tourIndex >= total - 1);
         });
         if (step && (fly || this.tourIndex === 0)) {
@@ -486,6 +489,9 @@ export default class SceneExtras {
         if (variant >= 0) {
             this.variantSelect.value = String(variant);
             await this.selectVariant(variant);
+        }
+        if (typeof step.explodeFactor === 'number' && this.viewer.tools) {
+            this.viewer.tools.setExplodeFactor(step.explodeFactor);
         }
         if (step.hotspot) {
             const mesh = (this.viewer.hotspotMeshes || []).find((m) => Number(m.userData.id) === Number(step.hotspot));
@@ -547,16 +553,26 @@ export default class SceneExtras {
             if (existing) {
                 Object.assign(existing, values);
             } else {
-                // A new step remembers the current camera view.
-                const camera = this.viewer.camera;
-                const target = this.viewer.controls.target;
-                const view = {
-                    position: [camera.position.x, camera.position.y, camera.position.z].map((n) => Math.round(n * 1e4) / 1e4),
-                    target: [target.x, target.y, target.z].map((n) => Math.round(n * 1e4) / 1e4),
-                };
+                // A new step remembers the current camera view and explode state.
+                const view = this.captureCurrentView();
                 this.tour.splice(i + 1, 0, {...values, ...view});
                 this.tourIndex = i + 1;
             }
+        } else if (action === 'capture') {
+            if (!this.tour[i]) {
+                return;
+            }
+            Object.assign(this.tour[i], this.captureCurrentView());
+        } else if (action === 'auto') {
+            const steps = this.buildAutoTourSteps();
+            if (!steps.length) {
+                return;
+            }
+            if (this.viewer.config && this.viewer.config.aiavailable) {
+                await this.enrichTourWithAI(steps);
+            }
+            this.tour = steps;
+            this.tourIndex = 0;
         } else if (action === 'delete') {
             try {
                 await Notification.deleteCancelPromise(
@@ -635,6 +651,83 @@ export default class SceneExtras {
             escapeHtml(text) + '</option>').join('');
         return '<div class="mb-3"><label class="form-label" for="' + id + '">' + escapeHtml(label) + '</label>' +
             '<select class="form-control custom-select" id="' + id + '">' + options + '</select></div>';
+    }
+
+    /**
+     * Capture the current camera position, target, and explode factor.
+     *
+     * @returns {Object} View snapshot
+     */
+    captureCurrentView() {
+        const camera = this.viewer.camera;
+        const target = this.viewer.controls.target;
+        const round4 = (n) => Math.round(n * 1e4) / 1e4;
+        const view = {
+            position: [camera.position.x, camera.position.y, camera.position.z].map(round4),
+            target: [target.x, target.y, target.z].map(round4),
+        };
+        if (this.viewer.tools && typeof this.viewer.tools.explodeFactor === 'number') {
+            view.explodeFactor = this.viewer.tools.explodeFactor;
+        }
+        return view;
+    }
+
+    /**
+     * Generate tour steps from all non-teleport hotspots in the scene.
+     *
+     * @returns {Array} Tour steps
+     */
+    buildAutoTourSteps() {
+        const meshes = (this.viewer.hotspotMeshes || []).filter((m) => m.userData.type !== 'teleport');
+        const round4 = (n) => Math.round(n * 1e4) / 1e4;
+        const center = this.viewer.tools && this.viewer.tools.modelBounds
+            ? new THREE.Vector3(
+                this.viewer.tools.modelBounds.center.x,
+                this.viewer.tools.modelBounds.center.y,
+                this.viewer.tools.modelBounds.center.z
+            )
+            : new THREE.Vector3(0, 0, 0);
+        return meshes.map((m) => {
+            const hp = m.position.clone();
+            const dir = hp.clone().sub(center);
+            if (dir.lengthSq() < 0.001) {
+                dir.set(0, 0.4, 1);
+            }
+            dir.normalize();
+            const camPos = hp.clone().addScaledVector(dir, 1.8).add(new THREE.Vector3(0, 0.35, 0));
+            return {
+                title: m.userData.title || '#' + m.userData.id,
+                text: (m.userData.content || '').replace(/<[^>]+>/g, '').slice(0, 200),
+                hotspot: String(m.userData.id),
+                position: [camPos.x, camPos.y, camPos.z].map(round4),
+                target: [hp.x, hp.y, hp.z].map(round4),
+            };
+        });
+    }
+
+    /**
+     * Enrich auto-generated tour steps with short Moodle AI narration when available.
+     *
+     * @param {Array} steps Tour steps to enrich in place
+     */
+    async enrichTourWithAI(steps) {
+        for (const step of steps) {
+            try {
+                const res = await Ajax.call([{
+                    methodname: 'mod_gear_generate_content',
+                    args: {
+                        gearid: this.viewer.gearid,
+                        prompt: `Write a concise 2-sentence educational tour narration for "${step.title}".`,
+                        type: 'info',
+                    },
+                }])[0];
+                if (res && res.content) {
+                    step.text = res.content.replace(/<[^>]+>/g, '').trim().slice(0, 280);
+                }
+            } catch {
+                // Keep original hotspot text if AI generation fails or is unavailable.
+            }
+        }
     }
 
     /**

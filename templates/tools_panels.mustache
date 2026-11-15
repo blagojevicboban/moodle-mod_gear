@@ -89,7 +89,8 @@
             <button type="button" class="btn btn-outline-light" id="gear-part-hide-{{cmid}}" disabled>{{#str}}part_hide, mod_gear{{/str}}</button>
             <button type="button" class="btn btn-outline-light" id="gear-part-xray-{{cmid}}" disabled>{{#str}}part_xray, mod_gear{{/str}}</button>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-warning w-100" id="gear-parts-reset-{{cmid}}">{{#str}}parts_reset, mod_gear{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-outline-warning w-100 mb-2" id="gear-parts-reset-{{cmid}}">{{#str}}parts_reset, mod_gear{{/str}}</button>
+        <div class="gear-model-stats small text-light border-top pt-2 mt-1" id="gear-model-stats-{{cmid}}"></div>
     </div>
 </div>
 
@@ -99,11 +100,18 @@
         <button type="button" class="close text-white gear-panel-close gear-tools-close" aria-label="{{#str}}close, core{{/str}}">&times;</button>
     </div>
     <div class="gear-tools-panel-body">
-        <div class="gear-env-grid">
+        <div class="gear-env-grid mb-2">
             <button type="button" class="btn btn-sm btn-primary active gear-env-preset-btn" data-preset="none">{{#str}}env_none, mod_gear{{/str}}</button>
             <button type="button" class="btn btn-sm btn-outline-light gear-env-preset-btn" data-preset="studio">{{#str}}env_studio, mod_gear{{/str}}</button>
             <button type="button" class="btn btn-sm btn-outline-light gear-env-preset-btn" data-preset="workshop">{{#str}}env_workshop, mod_gear{{/str}}</button>
             <button type="button" class="btn btn-sm btn-outline-light gear-env-preset-btn" data-preset="darklab">{{#str}}env_darklab, mod_gear{{/str}}</button>
+        </div>
+        <div class="form-group mb-0">
+            <div class="d-flex justify-content-between small mb-1">
+                <label for="gear-env-exposure-{{cmid}}" class="mb-0">{{#str}}env_exposure, mod_gear{{/str}}</label>
+                <span id="gear-env-exposure-val-{{cmid}}">1.00</span>
+            </div>
+            <input type="range" class="custom-range w-100" id="gear-env-exposure-{{cmid}}" min="0.4" max="2.2" step="0.05" value="1.0">
         </div>
     </div>
 </div>
@@ -116,3 +124,30 @@
         <i class="fa fa-times" aria-hidden="true"></i> {{#str}}presentation_exit, mod_gear{{/str}}
     </button>
 </div>
+
+<div class="gear-tools-panel gear-heatmap-panel d-none" id="gear-heatmap-panel-{{cmid}}" role="region" aria-label="{{#str}}heatmap_mode, mod_gear{{/str}}">
+    <div class="gear-tools-panel-header d-flex justify-content-between align-items-center mb-2">
+        <strong><i class="fa fa-fire mr-1" aria-hidden="true"></i> {{#str}}heatmap_mode, mod_gear{{/str}}</strong>
+        <button type="button" class="close text-white gear-panel-close gear-tools-close" aria-label="{{#str}}close, core{{/str}}">&times;</button>
+    </div>
+    <div class="gear-tools-panel-body small">
+        <div class="d-flex align-items-center mb-1"><span class="gear-heatmap-dot gear-heat-low mr-2"></span> {{#str}}heatmap_low_error, mod_gear{{/str}}</div>
+        <div class="d-flex align-items-center mb-1"><span class="gear-heatmap-dot gear-heat-mid mr-2"></span> {{#str}}heatmap_mid_error, mod_gear{{/str}}</div>
+        <div class="d-flex align-items-center mb-2"><span class="gear-heatmap-dot gear-heat-high mr-2"></span> {{#str}}heatmap_high_error, mod_gear{{/str}}</div>
+        <div id="gear-heatmap-summary-{{cmid}}" class="text-light"></div>
+    </div>
+</div>
+
+<div class="gear-study-bar d-none" id="gear-study-bar-{{cmid}}">
+    <span class="badge badge-info mr-2" id="gear-study-progress-{{cmid}}">0 / 0</span>
+    <span class="small text-white mr-2">{{#str}}study_hint, mod_gear{{/str}}</span>
+    <button type="button" class="btn btn-sm btn-outline-light gear-study-reset mr-1">{{#str}}study_reset, mod_gear{{/str}}</button>
+    <button type="button" class="btn btn-sm btn-light gear-study-exit">{{#str}}study_exit, mod_gear{{/str}}</button>
+</div>
+
+<div class="gear-split-bar d-none" id="gear-split-bar-{{cmid}}">
+    <span class="small text-white mr-2"><i class="fa fa-columns mr-1" aria-hidden="true"></i> {{#str}}split_view, mod_gear{{/str}}</span>
+    <input type="range" class="custom-range gear-split-slider mr-2" id="gear-split-slider-{{cmid}}" min="10" max="90" step="1" value="50" aria-label="{{#str}}split_view, mod_gear{{/str}}">
+    <button type="button" class="btn btn-sm btn-light gear-split-exit">{{#str}}close, core{{/str}}</button>
+</div>
+<div class="gear-split-divider d-none" id="gear-split-divider-{{cmid}}"></div>

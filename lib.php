@@ -416,6 +416,7 @@ function gear_delete_instance(int $id): bool {
     return true;
 }
 
+
 /**
  * Serves the files from the gear file areas.
  *
@@ -471,6 +472,8 @@ function gear_pluginfile(
     send_stored_file($file, 86400, 0, !$inline, $options);
     return true;
 }
+
+
 
 /**
  * Get all models for a GEAR instance.
@@ -530,7 +533,16 @@ function gear_filter_hotspot_config(?string $config, bool $canmanage): string {
     if (!is_array($decoded)) {
         return '';
     }
-    unset($decoded['correctAnswer'], $decoded['correctAnswers'], $decoded['acceptedAnswers'], $decoded['caseSensitive']);
+    unset(
+        $decoded['correctAnswer'],
+        $decoded['correctAnswers'],
+        $decoded['acceptedAnswers'],
+        $decoded['caseSensitive'],
+        $decoded['targetMesh'],
+        $decoded['targetPoint'],
+        $decoded['targetSequence'],
+        $decoded['pinRadius']
+    );
     return json_encode($decoded);
 }
 
@@ -636,6 +648,42 @@ function gear_quiz_answer_is_correct(array $config, string $answer): bool {
         $expected = trim(mb_strtolower((string) ($config['targetMesh'] ?? '')));
         $given = trim(mb_strtolower($answer));
         return $expected !== '' && $expected === $given;
+    }
+    if ($type === 'sequence' || $type === 'assembly') {
+        $rawexpected = $config['targetSequence'] ?? [];
+        if (is_string($rawexpected)) {
+            $rawexpected = explode(',', $rawexpected);
+        }
+        $norm = fn(array $items): array => array_values(array_filter(
+            array_map(fn($v): string => trim(mb_strtolower((string) $v)), $items),
+            fn(string $v): bool => $v !== ''
+        ));
+        $expected = $norm((array) $rawexpected);
+        $given = $norm(explode(',', $answer));
+        return $expected !== [] && $expected === $given;
+    }
+    if ($type === 'pin') {
+        $target = $config['targetPoint'] ?? null;
+        if (!is_array($target) || !isset($target['x'], $target['y'], $target['z'])) {
+            return false;
+        }
+        $radius = (float) ($config['pinRadius'] ?? 0.35);
+        if ($radius <= 0) {
+            $radius = 0.35;
+        }
+        $given = json_decode($answer, true);
+        if (!is_array($given) || !isset($given['x'], $given['y'], $given['z'])) {
+            $parts = array_map('trim', explode(',', $answer));
+            if (count($parts) === 3 && is_numeric($parts[0]) && is_numeric($parts[1]) && is_numeric($parts[2])) {
+                $given = ['x' => (float) $parts[0], 'y' => (float) $parts[1], 'z' => (float) $parts[2]];
+            } else {
+                return false;
+            }
+        }
+        $dx = (float) $given['x'] - (float) $target['x'];
+        $dy = (float) $given['y'] - (float) $target['y'];
+        $dz = (float) $given['z'] - (float) $target['z'];
+        return sqrt(($dx * $dx) + ($dy * $dy) + ($dz * $dz)) <= $radius;
     }
     return isset($config['correctAnswer']) && (string) $config['correctAnswer'] === trim($answer);
 }
@@ -1019,6 +1067,208 @@ function gear_load_sample_scene(stdClass $gear, context_module $context): bool {
             'sortorder' => 2,
             'timecreated' => $now,
         ]);
+    }
+
+    return true;
+}
+
+/**
+ * Return the built-in curated 3D Model Library catalog.
+ *
+ * @return array List of library model definitions keyed by id
+ */
+function gear_get_model_library(): array {
+    return [
+        'gearbox' => [
+            'id' => 'gearbox',
+            'filename' => 'mechanical_gearbox.glb',
+            'icon' => 'fa-cogs',
+            'category' => get_string('library_cat_engineering', 'mod_gear'),
+            'title' => get_string('library_gearbox_title', 'mod_gear'),
+            'description' => get_string('library_gearbox_desc', 'mod_gear'),
+            'hotspots' => [
+                [
+                    'type' => 'info',
+                    'title' => 'Drive Gear',
+                    'content' => '<p>Transfers torque from the input shaft to the driven gear.</p>',
+                    'position' => ['x' => -0.65, 'y' => 0.65, 'z' => 0],
+                    'icon' => 'info',
+                    'config' => [],
+                ],
+                [
+                    'type' => 'quiz',
+                    'title' => 'Identify Driven Gear',
+                    'content' => '<p>Click on the <strong>Driven_Gear</strong> mesh in the 3D assembly.</p>',
+                    'position' => ['x' => 0.55, 'y' => 0.55, 'z' => 0],
+                    'icon' => 'quiz',
+                    'config' => ['quizType' => 'mesh', 'targetMesh' => 'Driven_Gear', 'points' => 15],
+                ],
+            ],
+        ],
+        'plantcell' => [
+            'id' => 'plantcell',
+            'filename' => 'plant_cell.glb',
+            'icon' => 'fa-leaf',
+            'category' => get_string('library_cat_biology', 'mod_gear'),
+            'title' => get_string('library_plantcell_title', 'mod_gear'),
+            'description' => get_string('library_plantcell_desc', 'mod_gear'),
+            'hotspots' => [
+                [
+                    'type' => 'info',
+                    'title' => 'Nucleus',
+                    'content' => '<p>Stores genetic DNA and coordinates cell growth and reproduction.</p>',
+                    'position' => ['x' => -0.45, 'y' => 0.68, 'z' => 0.1],
+                    'icon' => 'info',
+                    'config' => [],
+                ],
+                [
+                    'type' => 'quiz',
+                    'title' => 'Photosynthesis Organelle',
+                    'content' => '<p>Click on the <strong>Chloroplast</strong> mesh where photosynthesis occurs.</p>',
+                    'position' => ['x' => 0.1, 'y' => 0.35, 'z' => 0.55],
+                    'icon' => 'quiz',
+                    'config' => ['quizType' => 'mesh', 'targetMesh' => 'Chloroplast', 'points' => 15],
+                ],
+            ],
+        ],
+        'water' => [
+            'id' => 'water',
+            'filename' => 'water_molecule.glb',
+            'icon' => 'fa-atom',
+            'category' => get_string('library_cat_chemistry', 'mod_gear'),
+            'title' => get_string('library_water_title', 'mod_gear'),
+            'description' => get_string('library_water_desc', 'mod_gear'),
+            'hotspots' => [
+                [
+                    'type' => 'info',
+                    'title' => 'Bond Angle (104.5°)',
+                    'content' => '<p>Use the 3-point Angle tool on Hydrogen–Oxygen–Hydrogen to verify 104.5°.</p>',
+                    'position' => ['x' => 0, 'y' => 0.72, 'z' => 0],
+                    'icon' => 'info',
+                    'config' => [],
+                ],
+                [
+                    'type' => 'quiz',
+                    'title' => 'Water Formula',
+                    'content' => '<p>What is the bond angle of a water molecule in degrees?</p>',
+                    'position' => ['x' => 0.75, 'y' => -0.35, 'z' => 0],
+                    'icon' => 'quiz',
+                    'config' => ['quizType' => 'text', 'acceptedAnswers' => ['104.5', '104.5°'], 'points' => 10],
+                ],
+            ],
+        ],
+        'solar' => [
+            'id' => 'solar',
+            'filename' => 'solar_system.glb',
+            'icon' => 'fa-globe',
+            'category' => get_string('library_cat_physics', 'mod_gear'),
+            'title' => get_string('library_solar_title', 'mod_gear'),
+            'description' => get_string('library_solar_desc', 'mod_gear'),
+            'hotspots' => [
+                [
+                    'type' => 'info',
+                    'title' => 'The Sun',
+                    'content' => '<p>G-type main-sequence star at the center of the Solar System.</p>',
+                    'position' => ['x' => -1.1, 'y' => 0.6, 'z' => 0],
+                    'icon' => 'info',
+                    'config' => [],
+                ],
+                [
+                    'type' => 'quiz',
+                    'title' => 'Find Earth',
+                    'content' => '<p>Click on the <strong>Earth</strong> mesh in the 3D Solar System.</p>',
+                    'position' => ['x' => 0.35, 'y' => 0.3, 'z' => -0.2],
+                    'icon' => 'quiz',
+                    'config' => ['quizType' => 'mesh', 'targetMesh' => 'Earth', 'points' => 15],
+                ],
+            ],
+        ],
+        'dcmotor' => [
+            'id' => 'dcmotor',
+            'filename' => 'dc_motor.glb',
+            'icon' => 'fa-bolt',
+            'category' => get_string('library_cat_engineering', 'mod_gear'),
+            'title' => get_string('library_dcmotor_title', 'mod_gear'),
+            'description' => get_string('library_dcmotor_desc', 'mod_gear'),
+            'hotspots' => [
+                [
+                    'type' => 'info',
+                    'title' => 'Commutator',
+                    'content' => '<p>Reverses current direction in the rotor coil every half turn.</p>',
+                    'position' => ['x' => 0.65, 'y' => 0.45, 'z' => 0],
+                    'icon' => 'info',
+                    'config' => [],
+                ],
+                [
+                    'type' => 'quiz',
+                    'title' => 'Locate Carbon Brush',
+                    'content' => '<p>Click on the <strong>Carbon_Brush</strong> mesh.</p>',
+                    'position' => ['x' => 0.65, 'y' => 0.65, 'z' => 0],
+                    'icon' => 'quiz',
+                    'config' => ['quizType' => 'mesh', 'targetMesh' => 'Carbon_Brush', 'points' => 15],
+                ],
+            ],
+        ],
+    ];
+}
+
+/**
+ * Load a curated 3D Model Library entry into an empty GEAR activity.
+ *
+ * @param stdClass $gear GEAR activity record
+ * @param context_module $context Module context
+ * @param string $modelid Library model identifier
+ * @return bool True if loaded
+ */
+function gear_load_library_model(stdClass $gear, context_module $context, string $modelid): bool {
+    global $CFG, $DB, $USER;
+
+    $catalog = gear_get_model_library();
+    if (!isset($catalog[$modelid])) {
+        return false;
+    }
+    $entry = $catalog[$modelid];
+    $filepath = $CFG->dirroot . '/mod/gear/assets/library/' . $entry['filename'];
+    if (!is_readable($filepath)) {
+        return false;
+    }
+
+    $fs = get_file_storage();
+    $existing = $fs->get_area_files($context->id, 'mod_gear', 'model', 0, 'id', false);
+    if (!empty($existing)) {
+        return false;
+    }
+
+    $fs->create_file_from_pathname([
+        'contextid' => $context->id,
+        'component' => 'mod_gear',
+        'filearea' => 'model',
+        'itemid' => 0,
+        'filepath' => '/',
+        'filename' => $entry['filename'],
+        'userid' => $USER->id,
+    ], $filepath);
+    gear_sync_model_records((int) $gear->id, (int) $context->id);
+
+    $model = $DB->get_record('gear_models', ['gearid' => $gear->id], '*', IGNORE_MULTIPLE);
+    $modelidfk = $model ? (int) $model->id : null;
+    if (!$DB->record_exists('gear_hotspots', ['gearid' => $gear->id])) {
+        $now = time();
+        $sort = 1;
+        foreach ($entry['hotspots'] as $hs) {
+            $DB->insert_record('gear_hotspots', (object) [
+                'gearid' => $gear->id,
+                'modelid' => $modelidfk,
+                'type' => $hs['type'],
+                'title' => $hs['title'],
+                'content' => $hs['content'],
+                'position' => json_encode($hs['position']),
+                'icon' => $hs['icon'],
+                'config' => json_encode($hs['config']),
+                'sortorder' => $sort++,
+                'timecreated' => $now,
+            ]);
+        }
     }
 
     return true;

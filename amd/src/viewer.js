@@ -46,7 +46,7 @@ import SceneTools from './tools';
 import {pickQuestion, getBankCategories} from './bank';
 import {quizFormContext, showQuizTypeFields, renderQuizInPopup, submitQuizAnswer} from './quiz';
 import {showHelpModal, showLeaderboardModal} from './modals';
-import {escapeHtml, htmlToText, prefersReducedMotion, openDialog, closeDialog} from './dom';
+import {escapeHtml, htmlToText, prefersReducedMotion} from './dom';
 
 // Above this many triangles the scene is rendered at pixel ratio 1; above the second limit the teacher is warned.
 const HEAVY_TRIANGLES = 500000;
@@ -763,6 +763,35 @@ const WARN_TRIANGLES = 1000000;
         }
 
         /**
+         * Let the user click a 3D point on the model for a pin-drop quiz.
+         *
+         * @param {Function} callback Receives THREE.Vector3 point or null on cancel
+         */
+        pickPointFromScene(callback) {
+            if (!this.canvas || !this.tools) {
+                callback(null);
+                return;
+            }
+            const prevCursor = this.canvas.style.cursor;
+            this.canvas.style.cursor = 'crosshair';
+            const onPick = (e) => {
+                if (e.button !== 0) {
+                    return;
+                }
+                const hit = this.tools.raycastModel(e);
+                this.canvas.removeEventListener('pointerdown', onPick, true);
+                this.canvas.style.cursor = prevCursor || 'default';
+                if (hit && hit.point) {
+                    e.stopPropagation();
+                    callback(hit.point.clone());
+                } else {
+                    callback(null);
+                }
+            };
+            this.canvas.addEventListener('pointerdown', onPick, true);
+        }
+
+        /**
          * Attach a 3D leader line to a hotspot sphere when callout mode is enabled.
          *
          * @param {THREE.Mesh} sphere Hotspot sphere
@@ -788,14 +817,11 @@ const WARN_TRIANGLES = 1000000;
         }
 
         /**
-         * Extract named meshes from loaded 3D models and auto-create AI hotspots.
+         * Collect center coordinates of named meshes for AI Auto-Annotate.
          *
-         * @param {HTMLElement} btn Trigger button
+         * @returns {Map<string, Object>} Map of mesh name to {x, y, z}
          */
-        async autoAnnotateModel(btn) {
-            if (!this.modelContainer) {
-                return;
-            }
+        collectNamedPartCenters() {
             const partMap = new Map();
             const box = new THREE.Box3();
             const center = new THREE.Vector3();
@@ -804,15 +830,61 @@ const WARN_TRIANGLES = 1000000;
                 if (!obj.isMesh || !obj.name || partMap.size >= 15) {
                     return;
                 }
-                if (/^(mesh|node|object|primitive)_?\d*$/i.test(obj.name.trim())) {
+                if (/^(mesh|node|object|primitive)_?\d*$/i.test(obj.name.trim()) || partMap.has(obj.name)) {
                     return;
                 }
-                if (!partMap.has(obj.name)) {
-                    box.setFromObject(obj);
-                    box.getCenter(center);
-                    partMap.set(obj.name, {x: center.x, y: center.y, z: center.z});
-                }
+                box.setFromObject(obj);
+                box.getCenter(center);
+                partMap.set(obj.name, {x: center.x, y: center.y, z: center.z});
             });
+            return partMap;
+        }
+
+        /**
+         * Persist a single AI-generated hotspot item.
+         *
+         * @param {Object} item AI annotation item
+         * @param {Object} pos 3D position {x, y, z}
+         * @returns {Promise<boolean>} True when saved
+         */
+        async saveAutoHotspotItem(item, pos) {
+            const isQuiz = item.type === 'quiz' && Array.isArray(item.options) && item.options.length >= 2;
+            const config = isQuiz ? {
+                quizType: 'single',
+                question: item.question || item.title,
+                options: item.options,
+                correct: typeof item.correct === 'number' ? item.correct : 0,
+                points: typeof item.points === 'number' ? item.points : 10,
+                explanation: item.explanation || ''
+            } : {};
+            await Ajax.call([{
+                methodname: 'mod_gear_save_hotspot',
+                args: {
+                    id: 0,
+                    gearid: this.gearid,
+                    modelid: 0,
+                    type: isQuiz ? 'quiz' : 'info',
+                    title: item.title || item.partName,
+                    content: item.content || item.question || '',
+                    position: JSON.stringify(pos),
+                    icon: isQuiz ? 'question' : 'info',
+                    config: JSON.stringify(config),
+                    draftitemid: 0
+                }
+            }])[0];
+            return true;
+        }
+
+        /**
+         * Extract named meshes from loaded 3D models and auto-create AI hotspots.
+         *
+         * @param {HTMLElement} btn Trigger button
+         */
+        async autoAnnotateModel(btn) {
+            if (!this.modelContainer) {
+                return;
+            }
+            const partMap = this.collectNamedPartCenters();
 
             if (partMap.size === 0) {
                 Notification.addNotification({
@@ -847,34 +919,9 @@ const WARN_TRIANGLES = 1000000;
                 let created = 0;
                 for (const item of items) {
                     const pos = partMap.get(item.partName);
-                    if (!pos) {
-                        continue;
+                    if (pos && await this.saveAutoHotspotItem(item, pos)) {
+                        created++;
                     }
-                    const isQuiz = item.type === 'quiz' && Array.isArray(item.options) && item.options.length >= 2;
-                    const config = isQuiz ? {
-                        quizType: 'single',
-                        question: item.question || item.title,
-                        options: item.options,
-                        correct: typeof item.correct === 'number' ? item.correct : 0,
-                        points: typeof item.points === 'number' ? item.points : 10,
-                        explanation: item.explanation || ''
-                    } : {};
-                    await Ajax.call([{
-                        methodname: 'mod_gear_save_hotspot',
-                        args: {
-                            id: 0,
-                            gearid: this.gearid,
-                            modelid: 0,
-                            type: isQuiz ? 'quiz' : 'info',
-                            title: item.title || item.partName,
-                            content: item.content || item.question || '',
-                            position: JSON.stringify(pos),
-                            icon: isQuiz ? 'question' : 'info',
-                            config: JSON.stringify(config),
-                            draftitemid: 0
-                        }
-                    }])[0];
-                    created++;
                 }
                 await this.loadHotspots();
                 Notification.addNotification({
@@ -1170,7 +1217,9 @@ const WARN_TRIANGLES = 1000000;
 
                 this.extras.update(delta);
                 this.controls.update();
-                this.renderer.render(this.scene, this.camera);
+                if (!this.tools?.renderSplitFrame()) {
+                    this.renderer.render(this.scene, this.camera);
+                }
             });
         }
 
@@ -2084,6 +2133,7 @@ const WARN_TRIANGLES = 1000000;
          * @param {Object} hotspot Hotspot data
          */
         async showHotspotPopup(hotspot) {
+            this.tools?.markStudyRevealed(hotspot.id);
             var audioContext = {};
             if (hotspot.type === 'audio' && hotspot.sound) {
                 audioContext = {
@@ -2413,6 +2463,21 @@ const WARN_TRIANGLES = 1000000;
                     });
                 });
             }
+            const pickSeqBtn = form.querySelector('#gear-hotspot-pickseq-' + this.cmid);
+            const targetSeqInput = form.querySelector('#gear-hotspot-input-targetseq-' + this.cmid);
+            if (pickSeqBtn && targetSeqInput) {
+                pickSeqBtn.addEventListener('click', () => {
+                    pickSeqBtn.classList.add('active');
+                    this.pickMeshFromScene((meshName) => {
+                        pickSeqBtn.classList.remove('active');
+                        if (meshName) {
+                            const cur = targetSeqInput.value.split(',').map(s => s.trim()).filter(Boolean);
+                            cur.push(meshName);
+                            targetSeqInput.value = cur.join(', ');
+                        }
+                    });
+                });
+            }
             const bankCategorySelect = form.querySelector('#gear-hotspot-input-bankcategory-' + this.cmid);
             const manualFields = form.querySelector('.gear-quiz-manual-fields');
             if (bankCategorySelect) {
@@ -2570,6 +2635,106 @@ const WARN_TRIANGLES = 1000000;
         }
 
         /**
+         * Populate spatial 3D quiz fields (mesh, pin, sequence, assembly).
+         *
+         * @param {HTMLElement} form Hotspot form
+         * @param {Object} config Config object
+         * @param {Object} position 3D position
+         * @param {string} quizType Quiz type
+         * @returns {Promise<boolean>} True if valid
+         */
+        async applySpecialQuizFields(form, config, position, quizType) {
+            delete config.options;
+            delete config.correctAnswer;
+            delete config.correctAnswers;
+            if (quizType === 'mesh') {
+                const meshInput = form.querySelector('#gear-hotspot-input-targetmesh-' + this.cmid);
+                config.targetMesh = meshInput ? meshInput.value.trim() : '';
+                if (!config.targetMesh) {
+                    Notification.alert(await Str.get_string('error', 'core'), await Str.get_string('quiz_targetmesh', 'mod_gear'));
+                    return false;
+                }
+                return true;
+            }
+            if (quizType === 'pin') {
+                const radiusInput = form.querySelector('#gear-hotspot-input-pinradius-' + this.cmid);
+                config.pinRadius = radiusInput ? (parseFloat(radiusInput.value) || 0.35) : 0.35;
+                config.targetPoint = {x: position.x, y: position.y, z: position.z};
+                return true;
+            }
+            const seqInput = form.querySelector('#gear-hotspot-input-targetseq-' + this.cmid);
+            config.targetSequence = seqInput ? seqInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+            if (!config.targetSequence.length) {
+                Notification.alert(await Str.get_string('error', 'core'), await Str.get_string('quiz_targetsequence', 'mod_gear'));
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * Populate and validate quiz fields on hotspot config.
+         *
+         * @param {HTMLElement} form Hotspot form
+         * @param {Object} config Config object to mutate
+         * @param {Object} position Hotspot 3D position
+         * @returns {Promise<boolean>} True if valid
+         */
+        async buildHotspotQuizConfig(form, config, position) {
+            const points = form.querySelector('#gear-hotspot-input-points-' + this.cmid).value;
+            const catSelect = form.querySelector('#gear-hotspot-input-bankcategory-' + this.cmid);
+            const bankCategoryId = catSelect ? (parseInt(catSelect.value, 10) || 0) : 0;
+            if (bankCategoryId > 0) {
+                config.bankCategoryId = bankCategoryId;
+                config.points = parseInt(points, 10) || 10;
+                delete config.options;
+                delete config.correctAnswer;
+                delete config.correctAnswers;
+                delete config.acceptedAnswers;
+                return true;
+            }
+            delete config.bankCategoryId;
+            const optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
+            const correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
+            const quizType = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid).value;
+            config.options = form.dataset.importedJoined === optionsStr && form.dataset.importedOptions
+                ? JSON.parse(form.dataset.importedOptions)
+                : optionsStr.split(',').map(s => s.trim()).filter(Boolean);
+            config.correctAnswer = parseInt(correct, 10);
+            config.points = parseInt(points, 10);
+            config.quizType = quizType;
+
+            if (quizType === 'text') {
+                delete config.options;
+                delete config.correctAnswer;
+                config.acceptedAnswers = form.querySelector('#gear-hotspot-input-accepted-' + this.cmid).value
+                    .split('\n').map(s => s.trim()).filter(Boolean);
+                config.caseSensitive = form.querySelector('#gear-hotspot-input-casesensitive-' + this.cmid).checked;
+                if (!config.acceptedAnswers.length) {
+                    Notification.alert(await Str.get_string('error', 'core'), await Str.get_string('quiz_noaccepted', 'mod_gear'));
+                    return false;
+                }
+                return true;
+            }
+            if (quizType === 'mesh' || quizType === 'pin' || quizType === 'sequence' || quizType === 'assembly') {
+                return this.applySpecialQuizFields(form, config, position, quizType);
+            }
+            if (quizType === 'multi') {
+                delete config.correctAnswer;
+                config.correctAnswers = correct.split(',').map(s => parseInt(s.trim(), 10))
+                    .filter(n => !isNaN(n) && n >= 0 && n < config.options.length);
+                if (!config.correctAnswers.length) {
+                    Notification.alert(await Str.get_string('error', 'core'), await Str.get_string('quiz_nocorrect', 'mod_gear'));
+                    return false;
+                }
+            }
+            if (config.options.length < 2) {
+                Notification.alert(await Str.get_string('error', 'core'), await Str.get_string('quiz_minoptions', 'mod_gear'));
+                return false;
+            }
+            return true;
+        }
+
+        /**
          * Save a new hotspot via AJAX.
          *
          * @param {HTMLElement} form The form element
@@ -2595,77 +2760,9 @@ const WARN_TRIANGLES = 1000000;
             }
 
             if (type === 'quiz') {
-                var points = form.querySelector('#gear-hotspot-input-points-' + this.cmid).value;
-                const catSelect = form.querySelector('#gear-hotspot-input-bankcategory-' + this.cmid);
-                const bankCategoryId = catSelect ? (parseInt(catSelect.value, 10) || 0) : 0;
-                if (bankCategoryId > 0) {
-                    config.bankCategoryId = bankCategoryId;
-                    config.points = parseInt(points, 10) || 10;
-                    delete config.options;
-                    delete config.correctAnswer;
-                    delete config.correctAnswers;
-                    delete config.acceptedAnswers;
-                } else {
-                    delete config.bankCategoryId;
-                    var optionsStr = form.querySelector('#gear-hotspot-input-options-' + this.cmid).value;
-                    var correct = form.querySelector('#gear-hotspot-input-correct-' + this.cmid).value;
-                    const quizType = form.querySelector('#gear-hotspot-input-quiztype-' + this.cmid).value;
-
-                // Options copied from the question bank may contain commas, so they are kept as a list.
-                config.options = form.dataset.importedJoined === optionsStr && form.dataset.importedOptions
-                    ? JSON.parse(form.dataset.importedOptions)
-                    : optionsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
-                config.correctAnswer = parseInt(correct, 10);
-                config.points = parseInt(points, 10);
-                config.quizType = quizType;
-
-                if (quizType === 'text') {
-                    // Typed answer: no options, a list of accepted answers instead.
-                    delete config.options;
-                    delete config.correctAnswer;
-                    config.acceptedAnswers = form.querySelector('#gear-hotspot-input-accepted-' + this.cmid).value
-                        .split('\n').map(s => s.trim()).filter(s => s.length > 0);
-                    config.caseSensitive = form.querySelector('#gear-hotspot-input-casesensitive-' + this.cmid).checked;
-                    if (!config.acceptedAnswers.length) {
-                        Notification.alert(
-                            await Str.get_string('error', 'core'),
-                            await Str.get_string('quiz_noaccepted', 'mod_gear')
-                        );
-                        return;
-                    }
-                } else if (quizType === 'mesh') {
-                    delete config.options;
-                    delete config.correctAnswer;
-                    delete config.correctAnswers;
-                    const meshInput = form.querySelector('#gear-hotspot-input-targetmesh-' + this.cmid);
-                    config.targetMesh = meshInput ? meshInput.value.trim() : '';
-                    if (!config.targetMesh) {
-                        Notification.alert(
-                            await Str.get_string('error', 'core'),
-                            await Str.get_string('quiz_targetmesh', 'mod_gear')
-                        );
-                        return;
-                    }
-                } else if (quizType === 'multi') {
-                    delete config.correctAnswer;
-                    config.correctAnswers = correct.split(',').map(s => parseInt(s.trim(), 10))
-                        .filter(n => !isNaN(n) && n >= 0 && n < config.options.length);
-                    if (!config.correctAnswers.length) {
-                        Notification.alert(
-                            await Str.get_string('error', 'core'),
-                            await Str.get_string('quiz_nocorrect', 'mod_gear')
-                        );
-                        return;
-                    }
-                }
-
-                if (quizType !== 'text' && quizType !== 'mesh' && config.options.length < 2) {
-                    Notification.alert(
-                        await Str.get_string('error', 'core'),
-                        await Str.get_string('quiz_minoptions', 'mod_gear')
-                    );
+                const ok = await this.buildHotspotQuizConfig(form, config, position);
+                if (!ok) {
                     return;
-                }
                 }
             } else if (type === 'audio') {
                 var audioUrl = form.querySelector('#gear-hotspot-input-audiourl-' + this.cmid).value.trim();

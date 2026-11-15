@@ -42,7 +42,13 @@ export const quizFormContext = (config) => {
         isMulti: quizType === 'multi',
         isText: quizType === 'text',
         isMesh: quizType === 'mesh',
+        isPin: quizType === 'pin',
+        isSequence: quizType === 'sequence',
+        isAssembly: quizType === 'assembly',
+        isSequenceOrAssembly: quizType === 'sequence' || quizType === 'assembly',
         targetMesh: config.targetMesh || '',
+        targetSequence: Array.isArray(config.targetSequence) ? config.targetSequence.join(', ') : (config.targetSequence || ''),
+        pinRadius: config.pinRadius || 0.35,
         callout: !!config.callout,
         options: config.options ? config.options.join(', ') : '',
         correctAnswer: quizType === 'multi' ? (config.correctAnswers || []).join(', ') : (config.correctAnswer || 0),
@@ -62,14 +68,22 @@ export const showQuizTypeFields = (form, cmid) => {
     const type = form.querySelector('#gear-hotspot-input-quiztype-' + cmid).value;
     const text = type === 'text';
     const mesh = type === 'mesh';
+    const pin = type === 'pin';
+    const seq = type === 'sequence' || type === 'assembly';
     form.querySelectorAll('.gear-quiz-choice-fields').forEach((el) => {
-        el.hidden = text || mesh;
+        el.hidden = text || mesh || pin || seq;
     });
     form.querySelectorAll('.gear-quiz-text-fields').forEach((el) => {
         el.hidden = !text;
     });
     form.querySelectorAll('.gear-quiz-mesh-fields').forEach((el) => {
         el.hidden = !mesh;
+    });
+    form.querySelectorAll('.gear-quiz-pin-fields').forEach((el) => {
+        el.hidden = !pin;
+    });
+    form.querySelectorAll('.gear-quiz-sequence-fields').forEach((el) => {
+        el.hidden = !seq;
     });
 };
 
@@ -135,7 +149,8 @@ export const renderQuizInPopup = (viewer, popup, hotspot) => {
         }).catch(Notification.exception);
         return;
     }
-    if (!config || (quizType !== 'text' && quizType !== 'mesh' && !config.options)) {
+    const isSeqOrAsm = quizType === 'sequence' || quizType === 'assembly';
+    if (!config || (quizType !== 'text' && quizType !== 'mesh' && quizType !== 'pin' && !isSeqOrAsm && !config.options)) {
         Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
             const note = Object.assign(document.createElement('p'), {className: 'text-danger', textContent: msg});
             contentDiv.appendChild(note);
@@ -149,6 +164,9 @@ export const renderQuizInPopup = (viewer, popup, hotspot) => {
         multi: quizType === 'multi',
         text: quizType === 'text',
         mesh: quizType === 'mesh',
+        pin: quizType === 'pin',
+        sequence: isSeqOrAsm,
+        assembly: quizType === 'assembly',
         options: (config.options || []).map((opt, index) => ({
             index: index,
             text: opt
@@ -180,6 +198,73 @@ export const renderQuizInPopup = (viewer, popup, hotspot) => {
             }
         }
 
+        if (quizType === 'pin' && viewer.pickPointFromScene) {
+            const pickBtn = popup.querySelector('.gear-quiz-pin-pick');
+            const badge = popup.querySelector('.gear-quiz-pin-badge');
+            const hiddenInput = popup.querySelector('.gear-quiz-pin-answer');
+            if (pickBtn) {
+                pickBtn.addEventListener('click', () => {
+                    pickBtn.classList.add('active');
+                    viewer.pickPointFromScene(async(point) => {
+                        pickBtn.classList.remove('active');
+                        if (!point) {
+                            return;
+                        }
+                        hiddenInput.value = JSON.stringify({
+                            x: Number(point.x.toFixed(4)),
+                            y: Number(point.y.toFixed(4)),
+                            z: Number(point.z.toFixed(4)),
+                        });
+                        if (badge) {
+                            badge.textContent = await Str.get_string('quiz_pin_selected', 'mod_gear');
+                            badge.classList.remove('d-none');
+                        }
+                    });
+                });
+            }
+        }
+
+        if (isSeqOrAsm && viewer.pickMeshFromScene) {
+            if (quizType === 'assembly' && viewer.tools) {
+                viewer.tools.setExplodeFactor(85);
+            }
+            const pickBtn = popup.querySelector('.gear-quiz-seq-pick');
+            const clearBtn = popup.querySelector('.gear-quiz-seq-clear');
+            const listEl = popup.querySelector('.gear-quiz-seq-list');
+            const hiddenInput = popup.querySelector('.gear-quiz-seq-answer');
+            const picked = [];
+            const syncList = () => {
+                hiddenInput.value = picked.join(',');
+                listEl.textContent = picked.map((name, i) => `${i + 1}. ${name}`).join(' → ');
+            };
+            const pickNext = () => {
+                pickBtn.classList.add('active');
+                viewer.pickMeshFromScene((meshName) => {
+                    pickBtn.classList.remove('active');
+                    if (!meshName) {
+                        return;
+                    }
+                    picked.push(meshName);
+                    if (quizType === 'assembly' && viewer.tools) {
+                        viewer.tools.snapPartHome(meshName);
+                    }
+                    syncList();
+                });
+            };
+            if (pickBtn) {
+                pickBtn.addEventListener('click', pickNext);
+            }
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    picked.length = 0;
+                    syncList();
+                    if (quizType === 'assembly' && viewer.tools) {
+                        viewer.tools.setExplodeFactor(85);
+                    }
+                });
+            }
+        }
+
         const submitBtn = popup.querySelector('.gear-quiz-submit');
         submitBtn.addEventListener('click', async() => {
             let answer;
@@ -187,6 +272,10 @@ export const renderQuizInPopup = (viewer, popup, hotspot) => {
                 answer = popup.querySelector('.gear-quiz-text').value.trim();
             } else if (quizType === 'mesh') {
                 answer = popup.querySelector('.gear-quiz-mesh-answer').value.trim();
+            } else if (quizType === 'pin') {
+                answer = popup.querySelector('.gear-quiz-pin-answer').value.trim();
+            } else if (isSeqOrAsm) {
+                answer = popup.querySelector('.gear-quiz-seq-answer').value.trim();
             } else {
                 const selected = popup.querySelectorAll('input[name="gear-quiz-option"]:checked');
                 answer = Array.from(selected).map((input) => input.value).join(',');
