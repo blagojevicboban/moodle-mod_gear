@@ -5,6 +5,17 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-11-15
+
+### Added
+- **Per-Hotspot Question Bank Category Rotation (#13):** Teachers can link a quiz hotspot to a Moodle question bank category (`mod_gear_get_bank_categories`). Each student deterministically receives a question from that category pinned to the hotspot's 3D position and graded server-side without exposing answers.
+- **Bundled Sample 3D Scene:** Empty GEAR activities now offer teachers (`mod/gear:manage`) a **Load sample 3D scene** button that loads a lightweight built-in `assets/sample_gear.glb` model with two starter hotspots (`info` and `quiz`).
+- **Tests:** Added PHPUnit tests `test_load_sample_scene()` and `test_bank_category_rotation()`.
+
+### Changed
+- **Frontend Modularization:** Extracted quiz form/popup/submission logic into `amd/src/quiz.js` and help/leaderboard modals into `amd/src/modals.js`, rebuilding `amd/build/viewer.min.js`.
+- **CI Optimization:** Limited `Moodle Plugin CI` push trigger to `main` with `concurrency.cancel-in-progress` to avoid duplicate runs on tag pushes.
+
 ## [1.9.1] - 2026-11-15
 
 ### Fixed
