@@ -49,6 +49,19 @@
         <i class="fa fa-comments"></i>
     </button>
 
+    {{#collab}}
+    {{#can_manage}}
+    <button class="btn btn-secondary gear-control-btn gear-overlay-btn" id="gear-broadcast-btn-{{cmid}}" type="button" title="{{#str}}collab_broadcast, mod_gear{{/str}}" aria-label="{{#str}}collab_broadcast, mod_gear{{/str}}">
+        <i class="fa fa-broadcast-tower" aria-hidden="true"></i>
+    </button>
+    {{/can_manage}}
+    {{^can_manage}}
+    <button class="btn btn-secondary gear-control-btn gear-overlay-btn" id="gear-follow-btn-{{cmid}}" type="button" title="{{#str}}collab_follow, mod_gear{{/str}}" aria-label="{{#str}}collab_follow, mod_gear{{/str}}">
+        <i class="fa fa-eye" aria-hidden="true"></i>
+    </button>
+    {{/can_manage}}
+    {{/collab}}
+
     <button class="btn btn-secondary gear-control-btn gear-overlay-btn" id="gear-help-btn-{{cmid}}" type="button" title="{{#str}}help, mod_gear{{/str}}" aria-label="{{#str}}help, mod_gear{{/str}}">
         <i class="fa fa-question"></i>
     </button>

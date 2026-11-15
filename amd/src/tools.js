@@ -22,13 +22,22 @@
  */
 
 import * as THREE from 'three';
+import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
 import Notification from 'core/notification';
 import Str from 'core/str';
+import Templates from 'core/templates';
 
 const STRINGS = [
+    'autorotate',
     'clipping_axis', 'clipping_enable', 'clipping_flip', 'clipping_offset', 'clipping_plane',
+    'env_darklab', 'env_lighting', 'env_none', 'env_studio', 'env_workshop',
+    'explode_factor', 'explode_reset', 'explode_view',
     'measure_clear', 'measure_distance', 'measure_hint', 'measure_tool',
+    'part_hide', 'part_isolate', 'part_none_selected', 'part_selected', 'part_unnamed', 'part_xray',
+    'parts_inspector', 'parts_reset',
+    'presentation_exit', 'presentation_mode',
     'snapshot', 'snapshot_saved',
+    'xray_all',
 ];
 
 /**
@@ -66,8 +75,44 @@ export default class SceneTools {
         this.measureLabel = null;
         this.previewLine = null;
 
+        // Exploded view.
+        this.explodeBtn = null;
+        this.explodePanel = null;
+        this.explodeFactor = 0; // 0..100
+        this.explodeMeshes = [];
+
+        // Part inspector & X-Ray.
+        this.partsBtn = null;
+        this.partsPanel = null;
+        this.partsInspecting = false;
+        this.globalXRay = false;
+        this.selectedPart = null;
+        this.isolatedPart = null;
+        this.tempMaterials = new Set();
+
+        // Studio environment (PMREM).
+        this.envBtn = null;
+        this.envPanel = null;
+        this.envPreset = 'none';
+        this.envRT = null;
+        this.origBackground = undefined;
+        this.origToneMappingExposure = null;
+
+        // Presentation mode.
+        this.presentBtn = null;
+        this.presentationBar = null;
+        this.presenting = false;
+
+        // Time-Trial stopwatch.
+        this.timeTrialBtn = null;
+        this.timeTrialBadge = null;
+        this.timeTrialTimer = null;
+        this.timeTrialStart = 0;
+        this.timeTrialRunning = false;
+
         this.onPointerDown = (e) => this.handlePointerDown(e);
         this.onPointerMove = (e) => this.handlePointerMove(e);
+        this.onPartPointerDown = (e) => this.handlePartPointerDown(e);
         this.onKeyDown = (e) => this.handleKeyDown(e);
     }
 
@@ -99,13 +144,46 @@ export default class SceneTools {
             this.measureBtn.addEventListener('click', () => this.toggleMeasureMode());
         }
 
-        // Restore saved clipping settings from scene config if available.
-        if (this.viewer.config && this.viewer.config.clipping) {
-            const cfg = this.viewer.config.clipping;
-            this.clippingActive = Boolean(cfg.enabled);
-            this.clippingAxis = cfg.axis || 'y';
-            this.clippingOffset = typeof cfg.offset === 'number' ? cfg.offset : 0;
-            this.clippingInverted = Boolean(cfg.inverted);
+        this.explodeBtn = document.getElementById('gear-explode-' + cmid);
+        if (this.explodeBtn) {
+            this.explodeBtn.addEventListener('click', () => this.toggleExplodePanel());
+        }
+
+        this.partsBtn = document.getElementById('gear-parts-' + cmid);
+        if (this.partsBtn) {
+            this.partsBtn.addEventListener('click', () => this.togglePartsPanel());
+        }
+
+        this.envBtn = document.getElementById('gear-env-' + cmid);
+        if (this.envBtn) {
+            this.envBtn.addEventListener('click', () => this.toggleEnvPanel());
+        }
+
+        this.presentBtn = document.getElementById('gear-present-' + cmid);
+        if (this.presentBtn) {
+            this.presentBtn.addEventListener('click', () => this.togglePresentationMode());
+        }
+
+        this.timeTrialBtn = document.getElementById('gear-timetrial-' + cmid);
+        if (this.timeTrialBtn) {
+            this.timeTrialBtn.addEventListener('click', () => this.toggleTimeTrial());
+        }
+
+        // Restore saved clipping, explode and environment settings from scene config if available.
+        if (this.viewer.config) {
+            if (this.viewer.config.clipping) {
+                const cfg = this.viewer.config.clipping;
+                this.clippingActive = Boolean(cfg.enabled);
+                this.clippingAxis = cfg.axis || 'y';
+                this.clippingOffset = typeof cfg.offset === 'number' ? cfg.offset : 0;
+                this.clippingInverted = Boolean(cfg.inverted);
+            }
+            if (typeof this.viewer.config.explodeFactor === 'number') {
+                this.explodeFactor = Math.max(0, Math.min(100, this.viewer.config.explodeFactor));
+            }
+            if (typeof this.viewer.config.envPreset === 'string') {
+                this.envPreset = this.viewer.config.envPreset;
+            }
         }
 
         document.addEventListener('keydown', this.onKeyDown);
@@ -116,6 +194,13 @@ export default class SceneTools {
      */
     onModelsLoaded() {
         this.calculateModelBounds();
+        this.initExplodeData();
+        if (this.explodeFactor > 0) {
+            this.setExplodeFactor(this.explodeFactor);
+        }
+        if (this.envPreset && this.envPreset !== 'none') {
+            this.setEnvPreset(this.envPreset);
+        }
         if (this.clippingActive) {
             this.updateClippingPlane();
         }
@@ -183,13 +268,41 @@ export default class SceneTools {
     }
 
     /**
+     * Ensure all floating tool panels from mod_gear/tools_panels are rendered once and wired.
+     *
+     * @returns {Promise<void>}
+     */
+    async ensurePanelsRendered() {
+        if (this.panelsPromise) {
+            return this.panelsPromise;
+        }
+        const cmid = this.viewer.cmid;
+        this.panelsPromise = Templates.renderForPromise('mod_gear/tools_panels', {cmid}).then(({html, js}) => {
+            Templates.appendNodeContents(this.viewer.container, html, js);
+
+            this.clippingPanel = document.getElementById('gear-clipping-panel-' + cmid);
+            this.explodePanel = document.getElementById('gear-explode-panel-' + cmid);
+            this.partsPanel = document.getElementById('gear-parts-panel-' + cmid);
+            this.envPanel = document.getElementById('gear-env-panel-' + cmid);
+            this.presentationBar = document.getElementById('gear-presentation-bar-' + cmid);
+
+            this.wireClippingPanel(cmid);
+            this.wireExplodePanel(cmid);
+            this.wirePartsPanel(cmid);
+            this.wireEnvPanel(cmid);
+            this.wirePresentationBar();
+            return null;
+        });
+        return this.panelsPromise;
+    }
+
+    /**
      * 2. Cross-section / Clipping plane: toggle the control panel.
      */
-    toggleClippingPanel() {
-        if (!this.clippingPanel) {
-            this.createClippingPanel();
-        }
+    async toggleClippingPanel() {
+        await this.ensurePanelsRendered();
         const isHidden = this.clippingPanel.classList.contains('d-none');
+        this.closeFloatingPanels('clipping');
         if (isHidden) {
             this.clippingPanel.classList.remove('d-none');
             this.clippingBtn.classList.add('active');
@@ -201,64 +314,21 @@ export default class SceneTools {
     }
 
     /**
-     * Build the floating clipping panel DOM element.
+     * Wire events on the rendered clipping panel.
+     *
+     * @param {number} cmid
      */
-    createClippingPanel() {
-        const panel = document.createElement('div');
-        panel.className = 'gear-tools-panel gear-clipping-panel d-none';
-        panel.id = 'gear-clipping-panel-' + this.viewer.cmid;
-        panel.setAttribute('role', 'region');
-        panel.setAttribute('aria-label', this.strings.clipping_plane || 'Cross-section');
-
-        panel.innerHTML = `
-            <div class="gear-tools-panel-header d-flex justify-content-between align-items-center">
-                <strong><i class="fa fa-cube mr-1" aria-hidden="true"></i> ${this.strings.clipping_plane}</strong>
-                <button type="button" class="close text-white gear-tools-close" aria-label="Close">&times;</button>
-            </div>
-            <div class="gear-tools-panel-body">
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="gear-clip-enable-${this.viewer.cmid}">
-                    <label class="form-check-label text-white" for="gear-clip-enable-${this.viewer.cmid}">
-                        ${this.strings.clipping_enable}
-                    </label>
-                </div>
-                <div class="form-group mb-2">
-                    <label class="text-white-50 small mb-1" for="gear-clip-axis-${this.viewer.cmid}">
-                        ${this.strings.clipping_axis}
-                    </label>
-                    <select class="custom-select form-select form-select-sm" id="gear-clip-axis-${this.viewer.cmid}">
-                        <option value="x">X (Sagittal / Left-Right)</option>
-                        <option value="y" selected>Y (Axial / Up-Down)</option>
-                        <option value="z">Z (Coronal / Front-Back)</option>
-                    </select>
-                </div>
-                <div class="form-group mb-2">
-                    <div class="d-flex justify-content-between text-white-50 small mb-1">
-                        <label for="gear-clip-offset-${this.viewer.cmid}">${this.strings.clipping_offset}</label>
-                        <span class="gear-clip-offset-val">0%</span>
-                    </div>
-                    <input type="range" class="form-range w-100" id="gear-clip-offset-${this.viewer.cmid}"
-                           min="0" max="100" step="1" value="50">
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="gear-clip-flip-${this.viewer.cmid}">
-                    <label class="form-check-label text-white" for="gear-clip-flip-${this.viewer.cmid}">
-                        ${this.strings.clipping_flip}
-                    </label>
-                </div>
-            </div>
-        `;
-
-        this.viewer.container.appendChild(panel);
-        this.clippingPanel = panel;
-
-        // Wire event listeners.
-        panel.querySelector('.gear-tools-close').addEventListener('click', () => {
+    wireClippingPanel(cmid) {
+        const panel = this.clippingPanel;
+        if (!panel) {
+            return;
+        }
+        panel.querySelector('.gear-panel-close').addEventListener('click', () => {
             panel.classList.add('d-none');
             this.clippingBtn.classList.remove('active');
         });
 
-        const enableCheck = panel.querySelector('#gear-clip-enable-' + this.viewer.cmid);
+        const enableCheck = panel.querySelector('#gear-clip-enable-' + cmid);
         enableCheck.addEventListener('change', (e) => {
             this.clippingActive = e.target.checked;
             this.updateClippingPlane();
@@ -358,6 +428,9 @@ export default class SceneTools {
      * 3. Measure tool: toggle measure mode.
      */
     toggleMeasureMode() {
+        if (!this.measuring && this.partsInspecting) {
+            this.setPartsPicking(false);
+        }
         this.measuring = !this.measuring;
         if (this.measuring) {
             this.measureBtn.classList.add('active');
@@ -612,18 +685,625 @@ export default class SceneTools {
     }
 
     /**
+     * 4. Exploded View: cache original mesh positions and radial separation vectors.
+     */
+    initExplodeData() {
+        this.explodeMeshes = [];
+        if (!this.viewer.modelContainer) {
+            return;
+        }
+        this.viewer.modelContainer.updateMatrixWorld(true);
+        const rootBox = new THREE.Box3().setFromObject(this.viewer.modelContainer);
+        if (rootBox.isEmpty()) {
+            return;
+        }
+        const rootCenter = new THREE.Vector3();
+        const rootSize = new THREE.Vector3();
+        rootBox.getCenter(rootCenter);
+        rootBox.getSize(rootSize);
+        const maxDist = Math.max(rootSize.length() * 0.45, 0.5);
+
+        const meshBox = new THREE.Box3();
+        const meshCenter = new THREE.Vector3();
+        const worldDir = new THREE.Vector3();
+        const parentQuat = new THREE.Quaternion();
+        const parentScale = new THREE.Vector3();
+
+        this.viewer.modelContainer.traverse((obj) => {
+            if (!obj.isMesh) {
+                return;
+            }
+            if (!obj.userData.origPosition) {
+                obj.userData.origPosition = obj.position.clone();
+            }
+            meshBox.setFromObject(obj);
+            meshBox.getCenter(meshCenter);
+            worldDir.subVectors(meshCenter, rootCenter);
+            if (worldDir.lengthSq() < 1e-6) {
+                worldDir.set(0, 0, 0);
+            } else {
+                // Distance-weighted direction so outer parts separate slightly further than inner parts.
+                const relDist = Math.min(worldDir.length() / Math.max(rootSize.length() * 0.5, 0.01), 1.5);
+                worldDir.normalize().multiplyScalar(maxDist * (0.4 + 0.6 * relDist));
+            }
+
+            // Convert world offset vector into the mesh's parent local space.
+            const localDir = worldDir.clone();
+            if (obj.parent) {
+                obj.parent.getWorldQuaternion(parentQuat);
+                obj.parent.getWorldScale(parentScale);
+                localDir.applyQuaternion(parentQuat.invert());
+                localDir.set(
+                    parentScale.x !== 0 ? localDir.x / parentScale.x : localDir.x,
+                    parentScale.y !== 0 ? localDir.y / parentScale.y : localDir.y,
+                    parentScale.z !== 0 ? localDir.z / parentScale.z : localDir.z
+                );
+            }
+            obj.userData.explodeOffset = localDir;
+            this.explodeMeshes.push(obj);
+        });
+    }
+
+    /**
+     * Apply exploded view factor (0..100).
+     *
+     * @param {number} pct Percentage 0..100
+     */
+    setExplodeFactor(pct) {
+        this.explodeFactor = Math.max(0, Math.min(100, Number(pct) || 0));
+        const t = this.explodeFactor / 100;
+        this.explodeMeshes.forEach((mesh) => {
+            if (!mesh.userData.origPosition || !mesh.userData.explodeOffset) {
+                return;
+            }
+            mesh.position.copy(mesh.userData.origPosition).addScaledVector(mesh.userData.explodeOffset, t);
+        });
+        if (this.explodePanel) {
+            const slider = this.explodePanel.querySelector('#gear-explode-slider-' + this.viewer.cmid);
+            const valLabel = this.explodePanel.querySelector('#gear-explode-val-' + this.viewer.cmid);
+            if (slider) {
+                slider.value = String(this.explodeFactor);
+            }
+            if (valLabel) {
+                valLabel.textContent = Math.round(this.explodeFactor) + '%';
+            }
+        }
+    }
+
+    /**
+     * Toggle the Exploded View floating panel.
+     */
+    async toggleExplodePanel() {
+        await this.ensurePanelsRendered();
+        const isHidden = this.explodePanel.classList.contains('d-none');
+        this.closeFloatingPanels('explode');
+        if (isHidden) {
+            this.explodePanel.classList.remove('d-none');
+            this.explodeBtn.classList.add('active');
+            this.setExplodeFactor(this.explodeFactor);
+        } else {
+            this.explodePanel.classList.add('d-none');
+            this.explodeBtn.classList.remove('active');
+        }
+    }
+
+    /**
+     * Wire events on the rendered Exploded View panel.
+     *
+     * @param {number} cmid
+     */
+    wireExplodePanel(cmid) {
+        const panel = this.explodePanel;
+        if (!panel) {
+            return;
+        }
+        panel.querySelector('.gear-panel-close').addEventListener('click', () => {
+            panel.classList.add('d-none');
+            this.explodeBtn.classList.remove('active');
+        });
+        panel.querySelector('#gear-explode-slider-' + cmid).addEventListener('input', (e) => {
+            this.setExplodeFactor(parseFloat(e.target.value));
+        });
+        panel.querySelector('#gear-explode-reset-' + cmid).addEventListener('click', () => {
+            this.setExplodeFactor(0);
+        });
+    }
+
+    /**
+     * 5. Part Inspector & X-Ray: toggle panel and part picking.
+     */
+    async togglePartsPanel() {
+        await this.ensurePanelsRendered();
+        const isHidden = this.partsPanel.classList.contains('d-none');
+        this.closeFloatingPanels('parts');
+        if (isHidden) {
+            this.partsPanel.classList.remove('d-none');
+            this.partsBtn.classList.add('active');
+            this.setPartsPicking(true);
+        } else {
+            this.partsPanel.classList.add('d-none');
+            this.partsBtn.classList.remove('active');
+            this.setPartsPicking(false);
+        }
+    }
+
+    /**
+     * Enable or disable click-to-inspect on 3D model parts.
+     *
+     * @param {boolean} active
+     */
+    setPartsPicking(active) {
+        if (active && this.measuring) {
+            this.toggleMeasureMode();
+        }
+        this.partsInspecting = active;
+        if (active) {
+            this.viewer.canvas.style.cursor = 'pointer';
+            this.viewer.canvas.addEventListener('pointerdown', this.onPartPointerDown);
+        } else {
+            this.viewer.canvas.style.cursor = 'default';
+            this.viewer.canvas.removeEventListener('pointerdown', this.onPartPointerDown);
+        }
+    }
+
+    /**
+     * Wire events on the rendered Part Inspector & X-Ray panel.
+     *
+     * @param {number} cmid
+     */
+    wirePartsPanel(cmid) {
+        const panel = this.partsPanel;
+        if (!panel) {
+            return;
+        }
+        panel.querySelector('.gear-panel-close').addEventListener('click', () => {
+            panel.classList.add('d-none');
+            this.partsBtn.classList.remove('active');
+            this.setPartsPicking(false);
+        });
+        panel.querySelector('#gear-xray-all-' + cmid).addEventListener('change', (e) => {
+            this.setGlobalXRay(e.target.checked);
+        });
+        panel.querySelector('#gear-part-isolate-' + cmid).addEventListener('click', () => this.isolateSelectedPart());
+        panel.querySelector('#gear-part-hide-' + cmid).addEventListener('click', () => this.hideSelectedPart());
+        panel.querySelector('#gear-part-xray-' + cmid).addEventListener('click', () => this.xraySelectedPart());
+        panel.querySelector('#gear-parts-reset-' + cmid).addEventListener('click', () => this.resetAllParts());
+    }
+
+    /**
+     * Handle pointer click to select a mesh part.
+     *
+     * @param {PointerEvent} event
+     */
+    handlePartPointerDown(event) {
+        if (!this.partsInspecting || event.button !== 0 || event.shiftKey) {
+            return;
+        }
+        const hit = this.raycastModel(event);
+        if (!hit || !hit.object || !hit.object.isMesh) {
+            return;
+        }
+        this.selectedPart = hit.object;
+        const cmid = this.viewer.cmid;
+        const nameEl = this.partsPanel.querySelector('#gear-part-name-' + cmid);
+        const label = this.selectedPart.name || this.strings.part_unnamed || 'Unnamed part';
+        if (nameEl) {
+            nameEl.textContent = `${this.strings.part_selected}: ${label}`;
+            nameEl.classList.add('has-selection');
+        }
+        ['#gear-part-isolate-', '#gear-part-hide-', '#gear-part-xray-'].forEach((sel) => {
+            const btn = this.partsPanel.querySelector(sel + cmid);
+            if (btn) {
+                btn.disabled = false;
+            }
+        });
+    }
+
+    /**
+     * Cache original material and visibility on a mesh before modifying it.
+     *
+     * @param {THREE.Mesh} mesh
+     */
+    cachePartState(mesh) {
+        if (!mesh.userData.origMaterial) {
+            mesh.userData.origMaterial = mesh.material;
+            mesh.userData.origVisible = mesh.visible;
+        }
+    }
+
+    /**
+     * Create a translucent ghost/X-Ray material based on an original material.
+     *
+     * @param {THREE.Material|THREE.Material[]} origMat
+     * @param {number} opacity
+     * @param {boolean} wireframe
+     * @returns {THREE.Material|THREE.Material[]}
+     */
+    makeGhostMaterial(origMat, opacity, wireframe) {
+        const build = (m) => {
+            const ghost = m.clone();
+            ghost.transparent = true;
+            ghost.opacity = opacity;
+            ghost.depthWrite = false;
+            ghost.wireframe = wireframe;
+            this.tempMaterials.add(ghost);
+            return ghost;
+        };
+        return Array.isArray(origMat) ? origMat.map(build) : build(origMat);
+    }
+
+    /**
+     * Toggle global X-Ray mode across the entire model.
+     *
+     * @param {boolean} enabled
+     */
+    setGlobalXRay(enabled) {
+        this.globalXRay = enabled;
+        this.isolatedPart = null;
+        if (!this.viewer.modelContainer) {
+            return;
+        }
+        this.viewer.modelContainer.traverse((obj) => {
+            if (!obj.isMesh) {
+                return;
+            }
+            this.cachePartState(obj);
+            if (enabled) {
+                obj.visible = obj.userData.origVisible;
+                obj.material = this.makeGhostMaterial(obj.userData.origMaterial, 0.22, true);
+            } else {
+                obj.material = obj.userData.origMaterial;
+                obj.visible = obj.userData.origVisible;
+            }
+        });
+    }
+
+    /**
+     * Isolate the currently selected part by ghosting all other meshes.
+     */
+    isolateSelectedPart() {
+        if (!this.selectedPart || !this.viewer.modelContainer) {
+            return;
+        }
+        const toggleOff = this.isolatedPart === this.selectedPart;
+        this.isolatedPart = toggleOff ? null : this.selectedPart;
+        this.viewer.modelContainer.traverse((obj) => {
+            if (!obj.isMesh) {
+                return;
+            }
+            this.cachePartState(obj);
+            if (toggleOff) {
+                obj.material = obj.userData.origMaterial;
+                obj.visible = obj.userData.origVisible;
+            } else if (obj === this.selectedPart) {
+                obj.material = obj.userData.origMaterial;
+                obj.visible = true;
+            } else {
+                obj.material = this.makeGhostMaterial(obj.userData.origMaterial, 0.1, false);
+                obj.visible = true;
+            }
+        });
+    }
+
+    /**
+     * Hide the currently selected part.
+     */
+    hideSelectedPart() {
+        if (!this.selectedPart) {
+            return;
+        }
+        this.cachePartState(this.selectedPart);
+        this.selectedPart.visible = false;
+    }
+
+    /**
+     * Toggle X-Ray ghosting on the currently selected part.
+     */
+    xraySelectedPart() {
+        if (!this.selectedPart) {
+            return;
+        }
+        this.cachePartState(this.selectedPart);
+        if (this.selectedPart.userData.isPartXRay) {
+            this.selectedPart.material = this.selectedPart.userData.origMaterial;
+            this.selectedPart.userData.isPartXRay = false;
+        } else {
+            this.selectedPart.material = this.makeGhostMaterial(this.selectedPart.userData.origMaterial, 0.22, true);
+            this.selectedPart.userData.isPartXRay = true;
+        }
+    }
+
+    /**
+     * Restore all mesh materials and visibility.
+     */
+    resetAllParts() {
+        this.globalXRay = false;
+        this.isolatedPart = null;
+        if (this.viewer.modelContainer) {
+            this.viewer.modelContainer.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData.origMaterial) {
+                    return;
+                }
+                obj.material = obj.userData.origMaterial;
+                obj.visible = obj.userData.origVisible;
+                obj.userData.isPartXRay = false;
+            });
+        }
+        this.tempMaterials.forEach((m) => m.dispose());
+        this.tempMaterials.clear();
+        if (this.partsPanel) {
+            const cmid = this.viewer.cmid;
+            const globalSwitch = this.partsPanel.querySelector('#gear-xray-all-' + cmid);
+            if (globalSwitch) {
+                globalSwitch.checked = false;
+            }
+        }
+    }
+
+    /**
+     * 6. Studio Environment (PMREM): toggle panel.
+     */
+    async toggleEnvPanel() {
+        await this.ensurePanelsRendered();
+        const isHidden = this.envPanel.classList.contains('d-none');
+        this.closeFloatingPanels('env');
+        if (isHidden) {
+            this.envPanel.classList.remove('d-none');
+            this.envBtn.classList.add('active');
+            this.setEnvPreset(this.envPreset);
+        } else {
+            this.envPanel.classList.add('d-none');
+            this.envBtn.classList.remove('active');
+        }
+    }
+
+    /**
+     * Wire events on the rendered Studio Lighting panel.
+     */
+    wireEnvPanel() {
+        const panel = this.envPanel;
+        if (!panel) {
+            return;
+        }
+        panel.querySelector('.gear-panel-close').addEventListener('click', () => {
+            panel.classList.add('d-none');
+            this.envBtn.classList.remove('active');
+        });
+        panel.querySelectorAll('.gear-env-preset-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                this.setEnvPreset(btn.dataset.preset);
+            });
+        });
+    }
+
+    /**
+     * Apply a procedural PMREM lighting preset to the scene.
+     *
+     * @param {string} preset none | studio | workshop | darklab
+     */
+    setEnvPreset(preset) {
+        const renderer = this.viewer.renderer;
+        const scene = this.viewer.scene;
+        if (!renderer || !scene) {
+            return;
+        }
+        if (this.origBackground === undefined) {
+            this.origBackground = scene.background ? scene.background.clone() : null;
+        }
+        if (this.origToneMappingExposure === null) {
+            this.origToneMappingExposure = renderer.toneMappingExposure || 1.0;
+        }
+
+        if (this.envRT) {
+            this.envRT.dispose();
+            this.envRT = null;
+        }
+
+        this.envPreset = preset || 'none';
+
+        if (this.envPreset === 'none') {
+            scene.environment = null;
+            scene.background = this.origBackground ? this.origBackground.clone() : null;
+            renderer.toneMappingExposure = this.origToneMappingExposure;
+        } else {
+            const pmrem = new THREE.PMREMGenerator(renderer);
+            const roomEnv = new RoomEnvironment();
+            this.envRT = pmrem.fromScene(roomEnv, 0.04);
+            roomEnv.dispose();
+            pmrem.dispose();
+            scene.environment = this.envRT.texture;
+
+            if (this.envPreset === 'studio') {
+                scene.background = this.origBackground ? this.origBackground.clone() : null;
+                renderer.toneMappingExposure = 1.05;
+            } else if (this.envPreset === 'workshop') {
+                scene.background = new THREE.Color(0x2b2620);
+                renderer.toneMappingExposure = 1.2;
+            } else if (this.envPreset === 'darklab') {
+                scene.background = new THREE.Color(0x0d1117);
+                renderer.toneMappingExposure = 1.15;
+            }
+        }
+
+        if (this.envPanel) {
+            this.envPanel.querySelectorAll('.gear-env-preset-btn').forEach((btn) => {
+                const isSelected = btn.dataset.preset === this.envPreset;
+                btn.classList.toggle('active', isSelected);
+                btn.classList.toggle('btn-primary', isSelected);
+                btn.classList.toggle('btn-outline-light', !isSelected);
+            });
+        }
+    }
+
+    /**
+     * 7. Presentation Mode: clean classroom/projector view with optional auto-turntable.
+     */
+    togglePresentationMode() {
+        if (this.presenting) {
+            this.exitPresentationMode();
+        } else {
+            this.enterPresentationMode();
+        }
+    }
+
+    /**
+     * Wire events on the rendered Presentation Mode bar.
+     */
+    wirePresentationBar() {
+        const bar = this.presentationBar;
+        if (!bar) {
+            return;
+        }
+        bar.querySelector('.gear-present-turntable').addEventListener('click', () => {
+            this.viewer.toggleAutoRotate();
+        });
+        bar.querySelector('.gear-present-exit').addEventListener('click', () => {
+            this.exitPresentationMode();
+        });
+    }
+
+    /**
+     * Enter presentation mode.
+     */
+    async enterPresentationMode() {
+        const activityEl = this.viewer.container.closest('.gear-activity');
+        if (!activityEl) {
+            return;
+        }
+        await this.ensurePanelsRendered();
+        this.presenting = true;
+        this.closeFloatingPanels();
+        activityEl.classList.add('gear-presentation-mode');
+        if (this.presentBtn) {
+            this.presentBtn.classList.add('active');
+        }
+        if (this.presentationBar) {
+            this.presentationBar.classList.remove('d-none');
+        }
+        window.dispatchEvent(new Event('resize'));
+    }
+
+    /**
+     * Exit presentation mode.
+     */
+    exitPresentationMode() {
+        if (!this.presenting) {
+            return;
+        }
+        this.presenting = false;
+        const activityEl = this.viewer.container.closest('.gear-activity');
+        if (activityEl) {
+            activityEl.classList.remove('gear-presentation-mode');
+        }
+        if (this.presentBtn) {
+            this.presentBtn.classList.remove('active');
+        }
+        if (this.presentationBar) {
+            this.presentationBar.classList.add('d-none');
+        }
+        window.dispatchEvent(new Event('resize'));
+    }
+
+    /**
+     * 8. Time-Trial stopwatch: toggle live challenge timer.
+     */
+    toggleTimeTrial() {
+        if (this.timeTrialRunning) {
+            this.stopTimeTrial(true);
+            return;
+        }
+        this.timeTrialRunning = true;
+        this.timeTrialStart = Date.now();
+        if (this.timeTrialBtn) {
+            this.timeTrialBtn.classList.add('active');
+        }
+        if (!this.timeTrialBadge) {
+            const badge = document.createElement('div');
+            badge.className = 'gear-timetrial-badge';
+            this.viewer.container.appendChild(badge);
+            this.timeTrialBadge = badge;
+        }
+        this.timeTrialBadge.classList.remove('d-none', 'finished');
+        const update = () => {
+            const secs = Math.floor((Date.now() - this.timeTrialStart) / 1000);
+            const mm = String(Math.floor(secs / 60)).padStart(2, '0');
+            const ss = String(secs % 60).padStart(2, '0');
+            if (this.timeTrialBadge) {
+                this.timeTrialBadge.textContent = `⏱ ${mm}:${ss}`;
+            }
+        };
+        update();
+        this.timeTrialTimer = setInterval(update, 1000);
+    }
+
+    /**
+     * Stop the Time-Trial stopwatch.
+     *
+     * @param {boolean} hideBadge
+     */
+    stopTimeTrial(hideBadge) {
+        this.timeTrialRunning = false;
+        if (this.timeTrialTimer) {
+            clearInterval(this.timeTrialTimer);
+            this.timeTrialTimer = null;
+        }
+        if (this.timeTrialBtn) {
+            this.timeTrialBtn.classList.remove('active');
+        }
+        if (this.timeTrialBadge) {
+            if (hideBadge) {
+                this.timeTrialBadge.classList.add('d-none');
+            } else {
+                this.timeTrialBadge.classList.add('finished');
+            }
+        }
+    }
+
+    /**
+     * Close all floating tool panels except an optional one.
+     *
+     * @param {string} [except] clipping | explode | parts | env
+     */
+    closeFloatingPanels(except) {
+        const panels = [
+            {key: 'clipping', panel: this.clippingPanel, btn: this.clippingBtn},
+            {key: 'explode', panel: this.explodePanel, btn: this.explodeBtn},
+            {key: 'parts', panel: this.partsPanel, btn: this.partsBtn},
+            {key: 'env', panel: this.envPanel, btn: this.envBtn},
+        ];
+        panels.forEach(({key, panel, btn}) => {
+            if (key === except) {
+                return;
+            }
+            if (panel && !panel.classList.contains('d-none')) {
+                panel.classList.add('d-none');
+            }
+            if (btn) {
+                btn.classList.remove('active');
+            }
+            if (key === 'parts' && this.partsInspecting) {
+                this.setPartsPicking(false);
+            }
+        });
+    }
+
+    /**
      * Handle Escape key to cancel tools.
      *
      * @param {KeyboardEvent} event
      */
     handleKeyDown(event) {
         if (event.key === 'Escape') {
+            if (this.presenting) {
+                this.exitPresentationMode();
+            }
             if (this.measuring) {
                 this.toggleMeasureMode();
             }
-            if (this.clippingPanel && !this.clippingPanel.classList.contains('d-none')) {
-                this.toggleClippingPanel();
+            if (this.partsInspecting) {
+                this.setPartsPicking(false);
             }
+            this.closeFloatingPanels();
         }
     }
 
@@ -632,10 +1312,28 @@ export default class SceneTools {
      */
     destroy() {
         document.removeEventListener('keydown', this.onKeyDown);
+        this.stopTimeTrial(true);
+        if (this.timeTrialBadge) {
+            this.timeTrialBadge.remove();
+            this.timeTrialBadge = null;
+        }
+        this.exitPresentationMode();
+        this.setPartsPicking(false);
+        this.resetAllParts();
         this.clearMeasurement();
-        if (this.clippingPanel) {
-            this.clippingPanel.remove();
-            this.clippingPanel = null;
+        [this.clippingPanel, this.explodePanel, this.partsPanel, this.envPanel, this.presentationBar].forEach((el) => {
+            if (el) {
+                el.remove();
+            }
+        });
+        this.clippingPanel = null;
+        this.explodePanel = null;
+        this.partsPanel = null;
+        this.envPanel = null;
+        this.presentationBar = null;
+        if (this.envRT) {
+            this.envRT.dispose();
+            this.envRT = null;
         }
         if (this.viewer.renderer) {
             this.viewer.renderer.clippingPlanes = [];

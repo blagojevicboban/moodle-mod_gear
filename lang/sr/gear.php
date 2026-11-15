@@ -312,3 +312,43 @@ $string['webxrnotavailable'] = 'WebXR nije podržan u vašem pregledaču.';
 $string['webxrnotsupported'] = 'WebXR nije podržan u vašem pregledaču.';
 $string['zoomhint'] = 'Zumiranje';
 $string['zoomhint_desc'] = 'Računar: Točkić miša. Mobilni uređaj: Štipanje za zumiranje.';
+
+// v2.1.0 CAD & Classroom tools.
+$string['env_darklab'] = 'Tamna laboratorija';
+$string['env_lighting'] = 'Studio osvetljenje';
+$string['env_none'] = 'Podrazumevano';
+$string['env_studio'] = 'Studio';
+$string['env_workshop'] = 'Radionica';
+$string['explode_factor'] = 'Razmak delova';
+$string['explode_reset'] = 'Resetuj';
+$string['explode_view'] = 'Eksplodirani prikaz';
+$string['part_hide'] = 'Sakrij';
+$string['part_isolate'] = 'Izoluj';
+$string['part_none_selected'] = 'Kliknite na bilo koji deo 3D modela';
+$string['part_selected'] = 'Izabrani deo';
+$string['part_unnamed'] = 'Neimenovani deo';
+$string['part_xray'] = 'Rendgen (X-Ray)';
+$string['parts_inspector'] = 'Delovi i Rendgen';
+$string['parts_reset'] = 'Vrati sve delove';
+$string['presentation_exit'] = 'Izađi iz prezentacije';
+$string['presentation_mode'] = 'Prezentacioni režim';
+$string['xray_all'] = 'Rendgen celog modela';
+
+// v2.2.0 Live classroom & AI Autopilot.
+$string['ai_auto_annotate'] = 'AI automatski označi model';
+$string['ai_auto_annotate_confirm'] = 'Pronađeno je {$a} imenovanih delova na 3D modelu. Generisati hotspotove i kviz pitanja automatski pomoću Moodle AI?';
+$string['ai_auto_annotate_done'] = 'AI je kreirao {$a} hotspotova na modelu.';
+$string['ai_auto_annotate_noparts'] = 'Na ovom 3D modelu nisu pronađeni imenovani delovi (meshevi).';
+$string['collab_broadcast'] = 'Prenesi pogled učenicima';
+$string['collab_follow'] = 'Prati nastavnika';
+$string['collab_laser_hint'] = 'Držite Alt + pomerajte kursor preko modela za 3D laser';
+
+// v3.0.0 Next-Gen Assessment & Gamification.
+$string['hotspot_callout'] = 'Prikaži 3D liniju (callout)';
+$string['quiz_mesh_hint'] = 'Kliknite dugme ispod, a zatim kliknite na odgovarajući deo 3D modela.';
+$string['quiz_mesh_selected'] = 'Izabrani deo: {$a}';
+$string['quiz_pickmesh'] = 'Izaberi deo na 3D modelu';
+$string['quiz_targetmesh'] = 'Ciljani 3D deo (naziv mesha)';
+$string['quiztype_mesh'] = 'Klik na deo (3D Mesh)';
+$string['timetrial_mode'] = 'Takmičarska štoperica';
+$string['timetrial_time'] = 'Vreme: {$a}';

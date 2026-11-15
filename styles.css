@@ -859,4 +859,80 @@
     color: #ef4444 !important;
 }
 
+/* v2.1.0 CAD & Classroom tools */
+.gear-activity .gear-part-name-badge {
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    word-break: break-word;
+}
+
+.gear-activity .gear-part-name-badge.has-selection {
+    background: rgba(99, 102, 241, 0.25);
+    color: #e0e7ff;
+    border: 1px solid rgba(129, 140, 248, 0.4);
+}
+
+.gear-activity .gear-env-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.gear-activity.gear-presentation-mode {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    margin: 0;
+    padding: 0;
+    background: #0b0f19;
+}
+
+.gear-activity.gear-presentation-mode .gear-viewer-container,
+.gear-activity.gear-presentation-mode .gear-viewer {
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+}
+
+.gear-activity.gear-presentation-mode .gear-controls,
+.gear-activity.gear-presentation-mode .gear-model-bar,
+.gear-activity.gear-presentation-mode .gear-extras-bar,
+.gear-activity.gear-presentation-mode .gear-intro {
+    display: none;
+}
+
+.gear-activity .gear-presentation-bar {
+    position: absolute;
+    bottom: 18px;
+    right: 18px;
+    z-index: 1700;
+    display: flex;
+    gap: 8px;
+}
+
+.gear-activity .gear-timetrial-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 1600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.88);
+    color: #f8fafc;
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    font-family: monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.gear-activity .gear-timetrial-badge.finished {
+    border-color: #10b981;
+    color: #34d399;
+}
+
+
 

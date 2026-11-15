@@ -506,6 +506,12 @@ const WARN_TRIANGLES = 1000000;
             // Import scene button.
             var importBtn = document.getElementById('gear-import-scene-' + this.cmid);
             var importInput = document.getElementById('gear-import-file-' + this.cmid);
+
+            // AI Auto-Annotate button.
+            var aiAnnotateBtn = document.getElementById('gear-ai-annotate-' + this.cmid);
+            if (aiAnnotateBtn) {
+                aiAnnotateBtn.addEventListener('click', () => this.autoAnnotateModel(aiAnnotateBtn));
+            }
             if (importBtn && importInput) {
                 importBtn.addEventListener('click', () => importInput.click());
                 importInput.addEventListener('change', async() => {
@@ -695,6 +701,8 @@ const WARN_TRIANGLES = 1000000;
                         target: [targetPos.x, targetPos.y, targetPos.z],
                         hotspotScale: this.hotspotScale,
                         hotspotColor: this.hotspotColor,
+                        explodeFactor: this.tools.explodeFactor,
+                        envPreset: this.tools.envPreset,
                         clipping: {
                             enabled: this.tools.clippingActive,
                             axis: this.tools.clippingAxis,
@@ -723,6 +731,163 @@ const WARN_TRIANGLES = 1000000;
                 });
                 return null;
             }).catch(Notification.exception);
+        }
+
+        /**
+         * Let the user click once on any 3D mesh in the scene and return its name.
+         *
+         * @param {Function} callback Receives mesh name or null on cancel
+         */
+        pickMeshFromScene(callback) {
+            if (!this.canvas || !this.tools) {
+                callback(null);
+                return;
+            }
+            const prevCursor = this.canvas.style.cursor;
+            this.canvas.style.cursor = 'crosshair';
+            const onPick = (e) => {
+                if (e.button !== 0) {
+                    return;
+                }
+                const hit = this.tools.raycastModel(e);
+                this.canvas.removeEventListener('pointerdown', onPick, true);
+                this.canvas.style.cursor = prevCursor || 'default';
+                if (hit && hit.object && hit.object.isMesh) {
+                    e.stopPropagation();
+                    callback(hit.object.name || '');
+                } else {
+                    callback(null);
+                }
+            };
+            this.canvas.addEventListener('pointerdown', onPick, true);
+        }
+
+        /**
+         * Attach a 3D leader line to a hotspot sphere when callout mode is enabled.
+         *
+         * @param {THREE.Mesh} sphere Hotspot sphere
+         * @param {Object} config Parsed hotspot config
+         */
+        attachCalloutLine(sphere, config) {
+            if (!config || !config.callout || !sphere) {
+                return;
+            }
+            const geom = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0.35, 0),
+                new THREE.Vector3(0.18, 0.48, 0),
+            ]);
+            const mat = new THREE.LineBasicMaterial({color: 0xf8fafc, transparent: true, opacity: 0.9});
+            const line = new THREE.Line(geom, mat);
+            const tipGeom = new THREE.SphereGeometry(0.025, 10, 10);
+            const tipMat = new THREE.MeshBasicMaterial({color: 0x38bdf8});
+            const tip = new THREE.Mesh(tipGeom, tipMat);
+            tip.position.set(0.18, 0.48, 0);
+            sphere.add(line);
+            sphere.add(tip);
+        }
+
+        /**
+         * Extract named meshes from loaded 3D models and auto-create AI hotspots.
+         *
+         * @param {HTMLElement} btn Trigger button
+         */
+        async autoAnnotateModel(btn) {
+            if (!this.modelContainer) {
+                return;
+            }
+            const partMap = new Map();
+            const box = new THREE.Box3();
+            const center = new THREE.Vector3();
+            this.modelContainer.updateMatrixWorld(true);
+            this.modelContainer.traverse((obj) => {
+                if (!obj.isMesh || !obj.name || partMap.size >= 15) {
+                    return;
+                }
+                if (/^(mesh|node|object|primitive)_?\d*$/i.test(obj.name.trim())) {
+                    return;
+                }
+                if (!partMap.has(obj.name)) {
+                    box.setFromObject(obj);
+                    box.getCenter(center);
+                    partMap.set(obj.name, {x: center.x, y: center.y, z: center.z});
+                }
+            });
+
+            if (partMap.size === 0) {
+                Notification.addNotification({
+                    message: await Str.get_string('ai_auto_annotate_noparts', 'mod_gear'),
+                    type: 'warning'
+                });
+                return;
+            }
+
+            try {
+                await Notification.saveCancelPromise(
+                    await Str.get_string('ai_auto_annotate', 'mod_gear'),
+                    await Str.get_string('ai_auto_annotate_confirm', 'mod_gear', partMap.size),
+                    await Str.get_string('confirm', 'core')
+                );
+            } catch {
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+            }
+            try {
+                const res = await Ajax.call([{
+                    methodname: 'mod_gear_auto_annotate',
+                    args: {
+                        gearid: this.gearid,
+                        parts: JSON.stringify(Array.from(partMap.keys()))
+                    }
+                }])[0];
+                const items = JSON.parse(res.annotations || '[]');
+                let created = 0;
+                for (const item of items) {
+                    const pos = partMap.get(item.partName);
+                    if (!pos) {
+                        continue;
+                    }
+                    const isQuiz = item.type === 'quiz' && Array.isArray(item.options) && item.options.length >= 2;
+                    const config = isQuiz ? {
+                        quizType: 'single',
+                        question: item.question || item.title,
+                        options: item.options,
+                        correct: typeof item.correct === 'number' ? item.correct : 0,
+                        points: typeof item.points === 'number' ? item.points : 10,
+                        explanation: item.explanation || ''
+                    } : {};
+                    await Ajax.call([{
+                        methodname: 'mod_gear_save_hotspot',
+                        args: {
+                            id: 0,
+                            gearid: this.gearid,
+                            modelid: 0,
+                            type: isQuiz ? 'quiz' : 'info',
+                            title: item.title || item.partName,
+                            content: item.content || item.question || '',
+                            position: JSON.stringify(pos),
+                            icon: isQuiz ? 'question' : 'info',
+                            config: JSON.stringify(config),
+                            draftitemid: 0
+                        }
+                    }])[0];
+                    created++;
+                }
+                await this.loadHotspots();
+                Notification.addNotification({
+                    message: await Str.get_string('ai_auto_annotate_done', 'mod_gear', created),
+                    type: 'success'
+                });
+            } catch (err) {
+                Notification.exception(err);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                }
+            }
         }
 
 
@@ -1690,6 +1855,15 @@ const WARN_TRIANGLES = 1000000;
                     }
                 }
 
+                let parsedConfig = {};
+                if (hotspot.config) {
+                    try {
+                        parsedConfig = (typeof hotspot.config === 'string') ? JSON.parse(hotspot.config) : hotspot.config;
+                    } catch {
+                        parsedConfig = {};
+                    }
+                }
+                this.attachCalloutLine(sphere, parsedConfig);
                 this.modelContainer.add(sphere);
                 this.hotspotMeshes.push(sphere);
             }
@@ -2226,6 +2400,19 @@ const WARN_TRIANGLES = 1000000;
             if (quizType) {
                 quizType.addEventListener('change', () => this.showQuizTypeFields(form));
             }
+            const pickMeshBtn = form.querySelector('#gear-hotspot-pickmesh-' + this.cmid);
+            const targetMeshInput = form.querySelector('#gear-hotspot-input-targetmesh-' + this.cmid);
+            if (pickMeshBtn && targetMeshInput) {
+                pickMeshBtn.addEventListener('click', () => {
+                    pickMeshBtn.classList.add('active');
+                    this.pickMeshFromScene((meshName) => {
+                        pickMeshBtn.classList.remove('active');
+                        if (meshName) {
+                            targetMeshInput.value = meshName;
+                        }
+                    });
+                });
+            }
             const bankCategorySelect = form.querySelector('#gear-hotspot-input-bankcategory-' + this.cmid);
             const manualFields = form.querySelector('.gear-quiz-manual-fields');
             if (bankCategorySelect) {
@@ -2446,6 +2633,19 @@ const WARN_TRIANGLES = 1000000;
                         );
                         return;
                     }
+                } else if (quizType === 'mesh') {
+                    delete config.options;
+                    delete config.correctAnswer;
+                    delete config.correctAnswers;
+                    const meshInput = form.querySelector('#gear-hotspot-input-targetmesh-' + this.cmid);
+                    config.targetMesh = meshInput ? meshInput.value.trim() : '';
+                    if (!config.targetMesh) {
+                        Notification.alert(
+                            await Str.get_string('error', 'core'),
+                            await Str.get_string('quiz_targetmesh', 'mod_gear')
+                        );
+                        return;
+                    }
                 } else if (quizType === 'multi') {
                     delete config.correctAnswer;
                     config.correctAnswers = correct.split(',').map(s => parseInt(s.trim(), 10))
@@ -2459,7 +2659,7 @@ const WARN_TRIANGLES = 1000000;
                     }
                 }
 
-                if (quizType !== 'text' && config.options.length < 2) {
+                if (quizType !== 'text' && quizType !== 'mesh' && config.options.length < 2) {
                     Notification.alert(
                         await Str.get_string('error', 'core'),
                         await Str.get_string('quiz_minoptions', 'mod_gear')
@@ -2473,6 +2673,13 @@ const WARN_TRIANGLES = 1000000;
             } else if (type === 'video') {
                 var videoUrl = form.querySelector('#gear-hotspot-input-videourl-' + this.cmid).value.trim();
                 config.videoUrl = videoUrl;
+            }
+
+            const calloutEl = form.querySelector('#gear-hotspot-input-callout-' + this.cmid);
+            if (calloutEl && calloutEl.checked) {
+                config.callout = true;
+            } else {
+                delete config.callout;
             }
 
             if (!title) {

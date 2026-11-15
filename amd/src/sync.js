@@ -46,6 +46,21 @@ export default class SyncManager {
         this.dataConns = {}; // PeerId -> dataConn
         this.voiceEnabled = false;
 
+        // Live classroom: 3D Laser Pointer & Follow Presenter.
+        this.laserMarkers = {}; // PeerId -> { mesh, timer }
+        this.lastLaserSent = 0;
+        this.laserActive = false;
+        this.broadcastingView = false;
+        this.followingPresenter = false;
+        this.broadcastInterval = null;
+        this.onLaserPointerMove = (e) => this.handleLaserMove(e);
+        this.onLaserKeyUp = (e) => {
+            if (e.key === 'Alt' && this.laserActive) {
+                this.laserActive = false;
+                this.broadcastData({type: 'laser', active: false});
+            }
+        };
+
         // Random id of this browser session. The server lists the participants and only those peers are accepted.
         var bytes = new Uint8Array(12);
         window.crypto.getRandomValues(bytes);
@@ -177,7 +192,18 @@ export default class SyncManager {
             this.dataConns[conn.peer] = conn;
         });
         conn.on('data', async(data) => {
-            if (!data || typeof data.text !== 'string') {
+            if (!data || typeof data !== 'object') {
+                return;
+            }
+            if (data.type === 'laser') {
+                this.handleRemoteLaser(conn.peer, data);
+                return;
+            }
+            if (data.type === 'presenter_view') {
+                this.handleRemotePresenterView(data);
+                return;
+            }
+            if (typeof data.text !== 'string') {
                 return;
             }
             const sender = await Str.get_string('chatuser', 'mod_gear', this.known[conn.peer] || '?');
@@ -185,6 +211,20 @@ export default class SyncManager {
         });
         conn.on('close', () => {
             delete this.dataConns[conn.peer];
+            this.clearRemoteLaser(conn.peer);
+        });
+    }
+
+    /**
+     * Broadcast a JSON payload to all open peer data connections.
+     *
+     * @param {Object} payload
+     */
+    broadcastData(payload) {
+        Object.values(this.dataConns).forEach((conn) => {
+            if (conn.open) {
+                conn.send(payload);
+            }
         });
     }
 
@@ -229,6 +269,7 @@ export default class SyncManager {
             }
         }, 2000);
         this.sync(); // Initial call
+        this.setupClassroomControls();
     }
 
     stop() {
@@ -236,6 +277,14 @@ export default class SyncManager {
             clearInterval(this.interval);
             this.interval = null;
         }
+        if (this.broadcastInterval) {
+            clearInterval(this.broadcastInterval);
+            this.broadcastInterval = null;
+        }
+        if (this.viewer.canvas) {
+            this.viewer.canvas.removeEventListener('pointermove', this.onLaserPointerMove);
+        }
+        document.removeEventListener('keyup', this.onLaserKeyUp);
     }
 
     sync() {
@@ -383,5 +432,160 @@ export default class SyncManager {
             // Optional: dispose geometry/material.
         }
         delete this.avatars[userid];
+    }
+
+    /**
+     * Wire 3D Laser Pointer and Broadcast/Follow Presenter controls.
+     */
+    setupClassroomControls() {
+        if (this.viewer.canvas) {
+            this.viewer.canvas.addEventListener('pointermove', this.onLaserPointerMove);
+        }
+        document.addEventListener('keyup', this.onLaserKeyUp);
+
+        const cmid = this.viewer.cmid;
+        const broadcastBtn = document.getElementById('gear-broadcast-btn-' + cmid);
+        if (broadcastBtn) {
+            broadcastBtn.addEventListener('click', () => {
+                this.broadcastingView = !this.broadcastingView;
+                broadcastBtn.classList.toggle('active', this.broadcastingView);
+                broadcastBtn.classList.toggle('btn-primary', this.broadcastingView);
+                if (this.broadcastingView) {
+                    this.initPeer();
+                    this.broadcastInterval = setInterval(() => this.sendPresenterView(), 120);
+                } else if (this.broadcastInterval) {
+                    clearInterval(this.broadcastInterval);
+                    this.broadcastInterval = null;
+                }
+            });
+        }
+
+        const followBtn = document.getElementById('gear-follow-btn-' + cmid);
+        if (followBtn) {
+            followBtn.addEventListener('click', () => {
+                this.followingPresenter = !this.followingPresenter;
+                followBtn.classList.toggle('active', this.followingPresenter);
+                followBtn.classList.toggle('btn-primary', this.followingPresenter);
+                if (this.followingPresenter) {
+                    this.initPeer();
+                }
+            });
+        }
+    }
+
+    /**
+     * Broadcast 3D laser pointer position when Alt is held.
+     *
+     * @param {PointerEvent} event
+     */
+    handleLaserMove(event) {
+        if (!event.altKey || !this.viewer.tools) {
+            return;
+        }
+        const now = Date.now();
+        if (now - this.lastLaserSent < 50) {
+            return;
+        }
+        const hit = this.viewer.tools.raycastModel(event);
+        if (!hit) {
+            return;
+        }
+        this.lastLaserSent = now;
+        this.laserActive = true;
+        this.initPeer();
+        this.broadcastData({
+            type: 'laser',
+            active: true,
+            pos: [hit.point.x, hit.point.y, hit.point.z],
+        });
+    }
+
+    /**
+     * Render or hide a remote peer's 3D laser pointer dot.
+     *
+     * @param {string} peerId
+     * @param {Object} data
+     */
+    handleRemoteLaser(peerId, data) {
+        if (!data.active || !Array.isArray(data.pos) || data.pos.length !== 3) {
+            this.clearRemoteLaser(peerId);
+            return;
+        }
+        let entry = this.laserMarkers[peerId];
+        if (!entry) {
+            const radius = (this.viewer.hotspotScale || 1.0) * 0.045;
+            const geom = new THREE.SphereGeometry(radius, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({color: 0xff2d55, depthTest: false});
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.renderOrder = 998;
+            this.viewer.scene.add(mesh);
+            entry = {mesh, timer: null};
+            this.laserMarkers[peerId] = entry;
+        }
+        entry.mesh.visible = true;
+        entry.mesh.position.set(data.pos[0], data.pos[1], data.pos[2]);
+        if (entry.timer) {
+            clearTimeout(entry.timer);
+        }
+        entry.timer = setTimeout(() => this.clearRemoteLaser(peerId), 1500);
+    }
+
+    /**
+     * Hide/remove a peer's 3D laser marker.
+     *
+     * @param {string} peerId
+     */
+    clearRemoteLaser(peerId) {
+        const entry = this.laserMarkers[peerId];
+        if (!entry) {
+            return;
+        }
+        if (entry.timer) {
+            clearTimeout(entry.timer);
+        }
+        if (entry.mesh) {
+            this.viewer.scene.remove(entry.mesh);
+            entry.mesh.geometry.dispose();
+            entry.mesh.material.dispose();
+        }
+        delete this.laserMarkers[peerId];
+    }
+
+    /**
+     * Broadcast presenter camera and explode state to followers.
+     */
+    sendPresenterView() {
+        if (!this.broadcastingView || !this.viewer.camera || !this.viewer.controls) {
+            return;
+        }
+        const cam = this.viewer.camera.position;
+        const tgt = this.viewer.controls.target;
+        this.broadcastData({
+            type: 'presenter_view',
+            pos: [cam.x, cam.y, cam.z],
+            target: [tgt.x, tgt.y, tgt.z],
+            explode: this.viewer.tools ? this.viewer.tools.explodeFactor : 0,
+        });
+    }
+
+    /**
+     * Apply incoming presenter camera and explode state if Follow Presenter is enabled.
+     *
+     * @param {Object} data
+     */
+    handleRemotePresenterView(data) {
+        if (!this.followingPresenter || !this.viewer.camera || !this.viewer.controls) {
+            return;
+        }
+        if (Array.isArray(data.pos) && data.pos.length === 3) {
+            this.viewer.camera.position.lerp(new THREE.Vector3(data.pos[0], data.pos[1], data.pos[2]), 0.35);
+        }
+        if (Array.isArray(data.target) && data.target.length === 3) {
+            this.viewer.controls.target.lerp(new THREE.Vector3(data.target[0], data.target[1], data.target[2]), 0.35);
+        }
+        this.viewer.controls.update();
+        if (typeof data.explode === 'number' && this.viewer.tools) {
+            this.viewer.tools.setExplodeFactor(data.explode);
+        }
     }
 }

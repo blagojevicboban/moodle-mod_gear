@@ -312,3 +312,43 @@ $string['webxrnotavailable'] = 'WebXR is not available on this device.';
 $string['webxrnotsupported'] = 'WebXR is not supported in your browser.';
 $string['zoomhint'] = 'Zoom';
 $string['zoomhint_desc'] = 'Desktop: Mouse wheel. Mobile: Pinch to zoom.';
+
+// v2.1.0 CAD & Classroom tools.
+$string['env_darklab'] = 'Dark Lab';
+$string['env_lighting'] = 'Studio lighting';
+$string['env_none'] = 'Default';
+$string['env_studio'] = 'Studio';
+$string['env_workshop'] = 'Workshop';
+$string['explode_factor'] = 'Separation';
+$string['explode_reset'] = 'Reset';
+$string['explode_view'] = 'Exploded view';
+$string['part_hide'] = 'Hide';
+$string['part_isolate'] = 'Isolate';
+$string['part_none_selected'] = 'Click any part on the 3D model to inspect it';
+$string['part_selected'] = 'Selected part';
+$string['part_unnamed'] = 'Unnamed part';
+$string['part_xray'] = 'X-Ray';
+$string['parts_inspector'] = 'Parts & X-Ray';
+$string['parts_reset'] = 'Reset all parts';
+$string['presentation_exit'] = 'Exit presentation';
+$string['presentation_mode'] = 'Presentation mode';
+$string['xray_all'] = 'X-Ray entire model';
+
+// v2.2.0 Live classroom & AI Autopilot.
+$string['ai_auto_annotate'] = 'AI auto-annotate model';
+$string['ai_auto_annotate_confirm'] = 'Detected {$a} named parts on the 3D model. Generate hotspots and quiz questions automatically using Moodle AI?';
+$string['ai_auto_annotate_done'] = 'AI created {$a} hotspots on the model.';
+$string['ai_auto_annotate_noparts'] = 'No named parts (meshes) were found in this 3D model.';
+$string['collab_broadcast'] = 'Broadcast view to students';
+$string['collab_follow'] = 'Follow presenter';
+$string['collab_laser_hint'] = 'Hold Alt + move cursor over model to point with 3D laser';
+
+// v3.0.0 Next-Gen Assessment & Gamification.
+$string['hotspot_callout'] = 'Show 3D callout leader line';
+$string['quiz_mesh_hint'] = 'Click the button below, then click the matching part on the 3D model.';
+$string['quiz_mesh_selected'] = 'Selected part: {$a}';
+$string['quiz_pickmesh'] = 'Pick part on 3D model';
+$string['quiz_targetmesh'] = 'Target 3D part (mesh name)';
+$string['quiztype_mesh'] = 'Click-the-Part (3D Mesh)';
+$string['timetrial_mode'] = 'Time-Trial stopwatch';
+$string['timetrial_time'] = 'Time: {$a}';

@@ -632,6 +632,11 @@ function gear_quiz_answer_is_correct(array $config, string $answer): bool {
         }
         return false;
     }
+    if ($type === 'mesh') {
+        $expected = trim(mb_strtolower((string) ($config['targetMesh'] ?? '')));
+        $given = trim(mb_strtolower($answer));
+        return $expected !== '' && $expected === $given;
+    }
     return isset($config['correctAnswer']) && (string) $config['correctAnswer'] === trim($answer);
 }
 

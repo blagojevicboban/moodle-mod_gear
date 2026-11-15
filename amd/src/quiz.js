@@ -41,6 +41,9 @@ export const quizFormContext = (config) => {
         isSingle: quizType === 'single',
         isMulti: quizType === 'multi',
         isText: quizType === 'text',
+        isMesh: quizType === 'mesh',
+        targetMesh: config.targetMesh || '',
+        callout: !!config.callout,
         options: config.options ? config.options.join(', ') : '',
         correctAnswer: quizType === 'multi' ? (config.correctAnswers || []).join(', ') : (config.correctAnswer || 0),
         accepted: (config.acceptedAnswers || []).join('\n'),
@@ -56,12 +59,17 @@ export const quizFormContext = (config) => {
  * @param {number} cmid Course module ID
  */
 export const showQuizTypeFields = (form, cmid) => {
-    const text = form.querySelector('#gear-hotspot-input-quiztype-' + cmid).value === 'text';
+    const type = form.querySelector('#gear-hotspot-input-quiztype-' + cmid).value;
+    const text = type === 'text';
+    const mesh = type === 'mesh';
     form.querySelectorAll('.gear-quiz-choice-fields').forEach((el) => {
-        el.hidden = text;
+        el.hidden = text || mesh;
     });
     form.querySelectorAll('.gear-quiz-text-fields').forEach((el) => {
         el.hidden = !text;
+    });
+    form.querySelectorAll('.gear-quiz-mesh-fields').forEach((el) => {
+        el.hidden = !mesh;
     });
 };
 
@@ -127,7 +135,7 @@ export const renderQuizInPopup = (viewer, popup, hotspot) => {
         }).catch(Notification.exception);
         return;
     }
-    if (!config || (quizType !== 'text' && !config.options)) {
+    if (!config || (quizType !== 'text' && quizType !== 'mesh' && !config.options)) {
         Str.get_string('quiz_invalid', 'mod_gear').then((msg) => {
             const note = Object.assign(document.createElement('p'), {className: 'text-danger', textContent: msg});
             contentDiv.appendChild(note);
@@ -140,6 +148,7 @@ export const renderQuizInPopup = (viewer, popup, hotspot) => {
         id: hotspot.id,
         multi: quizType === 'multi',
         text: quizType === 'text',
+        mesh: quizType === 'mesh',
         options: (config.options || []).map((opt, index) => ({
             index: index,
             text: opt
@@ -149,11 +158,35 @@ export const renderQuizInPopup = (viewer, popup, hotspot) => {
     Templates.render('mod_gear/quiz', context).then((html, js) => {
         Templates.appendNodeContents(contentDiv, html, js);
 
+        if (quizType === 'mesh' && viewer.pickMeshFromScene) {
+            const pickBtn = popup.querySelector('.gear-quiz-mesh-pick');
+            const badge = popup.querySelector('.gear-quiz-mesh-badge');
+            const hiddenInput = popup.querySelector('.gear-quiz-mesh-answer');
+            if (pickBtn) {
+                pickBtn.addEventListener('click', () => {
+                    pickBtn.classList.add('active');
+                    viewer.pickMeshFromScene(async(meshName) => {
+                        pickBtn.classList.remove('active');
+                        if (!meshName) {
+                            return;
+                        }
+                        hiddenInput.value = meshName;
+                        if (badge) {
+                            badge.textContent = await Str.get_string('quiz_mesh_selected', 'mod_gear', meshName);
+                            badge.classList.remove('d-none');
+                        }
+                    });
+                });
+            }
+        }
+
         const submitBtn = popup.querySelector('.gear-quiz-submit');
         submitBtn.addEventListener('click', async() => {
             let answer;
             if (quizType === 'text') {
                 answer = popup.querySelector('.gear-quiz-text').value.trim();
+            } else if (quizType === 'mesh') {
+                answer = popup.querySelector('.gear-quiz-mesh-answer').value.trim();
             } else {
                 const selected = popup.querySelectorAll('input[name="gear-quiz-option"]:checked');
                 answer = Array.from(selected).map((input) => input.value).join(',');

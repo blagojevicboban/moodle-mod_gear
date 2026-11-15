@@ -123,6 +123,8 @@ $templatedata = [
     'vr_enabled' => (bool) $gear->vr_enabled,
     'cmid' => $cm->id,
     'can_manage' => $canmanage,
+    'collab' => $jsconfig['collab'],
+    'ai_available' => $jsconfig['aiavailable'],
     'reporturl' => (new moodle_url('/mod/gear/report.php', ['id' => $cm->id]))->out(),
     'viewurl' => (new moodle_url('/mod/gear/view.php', ['id' => $cm->id]))->out(false),
     'sesskey' => sesskey(),

@@ -74,6 +74,13 @@ $functions = [
         'ajax'          => true,
         'capabilities'  => 'mod/gear:manage',
     ],
+    'mod_gear_auto_annotate' => [
+        'classname'     => 'mod_gear\external\auto_annotate',
+        'description'   => 'Auto-annotate 3D model parts using AI',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/gear:manage',
+    ],
     'mod_gear_track_event' => [
         'classname'     => 'mod_gear\external\track_event',
         'description'   => 'Track user event',

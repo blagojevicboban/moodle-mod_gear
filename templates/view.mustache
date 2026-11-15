@@ -97,6 +97,21 @@
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-measure-{{cmid}}" title="{{#str}}measure_tool, mod_gear{{/str}}" aria-label="{{#str}}measure_tool, mod_gear{{/str}}">
                     <i class="fa fa-ruler" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-explode-{{cmid}}" title="{{#str}}explode_view, mod_gear{{/str}}" aria-label="{{#str}}explode_view, mod_gear{{/str}}">
+                    <i class="fa fa-cubes" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-parts-{{cmid}}" title="{{#str}}parts_inspector, mod_gear{{/str}}" aria-label="{{#str}}parts_inspector, mod_gear{{/str}}">
+                    <i class="fa fa-layer-group" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-env-{{cmid}}" title="{{#str}}env_lighting, mod_gear{{/str}}" aria-label="{{#str}}env_lighting, mod_gear{{/str}}">
+                    <i class="fa fa-sun" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-present-{{cmid}}" title="{{#str}}presentation_mode, mod_gear{{/str}}" aria-label="{{#str}}presentation_mode, mod_gear{{/str}}">
+                    <i class="fa fa-tv" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-timetrial-{{cmid}}" title="{{#str}}timetrial_mode, mod_gear{{/str}}" aria-label="{{#str}}timetrial_mode, mod_gear{{/str}}">
+                    <i class="fa fa-stopwatch" aria-hidden="true"></i>
+                </button>
                 {{#can_manage}}
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-saveview-{{cmid}}" title="{{#str}}saveview, mod_gear{{/str}}" aria-label="{{#str}}saveview, mod_gear{{/str}}">
                     <i class="fa fa-save" aria-hidden="true"></i>
@@ -107,6 +122,11 @@
                 <button type="button" class="btn btn-outline-secondary gear-control-btn" id="gear-import-scene-{{cmid}}" title="{{#str}}import_scene, mod_gear{{/str}}" aria-label="{{#str}}import_scene, mod_gear{{/str}}">
                     <i class="fa fa-file-import" aria-hidden="true"></i>
                 </button>
+                {{#ai_available}}
+                <button type="button" class="btn btn-outline-primary gear-control-btn" id="gear-ai-annotate-{{cmid}}" title="{{#str}}ai_auto_annotate, mod_gear{{/str}}" aria-label="{{#str}}ai_auto_annotate, mod_gear{{/str}}">
+                    <i class="fa fa-magic" aria-hidden="true"></i>
+                </button>
+                {{/ai_available}}
                 <input type="file" id="gear-import-file-{{cmid}}" class="d-none" accept=".json,.gear.json">
                 <div class="gear-control-slider-container">
                     <div class="gear-color-picker-wrapper">

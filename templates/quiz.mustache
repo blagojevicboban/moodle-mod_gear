@@ -33,6 +33,17 @@
 }}
 <div class="gear-quiz-container">
     <form id="gear-quiz-form-{{id}}">
+        {{#mesh}}
+        <p class="small text-muted mb-2">{{#str}}quiz_mesh_hint, mod_gear{{/str}}</p>
+        <div class="mb-2">
+            <button type="button" class="btn btn-outline-info btn-sm gear-quiz-mesh-pick">
+                <i class="fa fa-crosshairs" aria-hidden="true"></i> {{#str}}quiz_pickmesh, mod_gear{{/str}}
+            </button>
+            <span class="badge badge-secondary ml-2 gear-quiz-mesh-badge d-none"></span>
+            <input type="hidden" class="gear-quiz-mesh-answer" value="">
+        </div>
+        {{/mesh}}
+        {{^mesh}}
         {{#text}}
         <label class="sr-only visually-hidden" for="gear-quiz-text-{{id}}">{{#str}}quiz_youranswer, mod_gear{{/str}}</label>
         <input type="text" class="form-control gear-quiz-text" id="gear-quiz-text-{{id}}" maxlength="255" autocomplete="off"
@@ -47,6 +58,7 @@
         </div>
         {{/options}}
         {{/text}}
+        {{/mesh}}
         
         <button type="button" class="btn btn-primary btn-sm mt-2 gear-quiz-submit">{{#str}}submit, core{{/str}}</button>
         <div class="gear-quiz-feedback mt-2"></div>

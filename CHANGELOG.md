@@ -5,6 +5,16 @@ All notable changes to mod_gear will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-11-15
+
+### Added
+- **Exploded View, Part Inspector & X-Ray:** Interactive assembly explosion slider (0%–100%, persisted in `scene_config`), global X-Ray wireframe mode, and click-to-inspect part isolation/hiding/X-Ray.
+- **Studio Lighting (PMREM) & Presentation Mode:** Procedural `RoomEnvironment` lighting presets (*Default*, *Studio*, *Workshop*, *Dark Lab*) and fullscreen projector-ready Presentation Mode with Auto-Turntable.
+- **Live Classroom Collaboration:** Real-time 3D Laser Pointer (`Alt` + pointer move) and **Broadcast / Follow Presenter** camera & explode sync over PeerJS data channels.
+- **AI Auto-Annotate (`mod_gear_auto_annotate`):** Extracts named 3D meshes from the scene and uses Moodle AI to generate info and quiz hotspots automatically.
+- **Click-the-Part Mesh Quiz, 3D Callout Lines & Time-Trial Stopwatch:** New `mesh` quiz type where students click directly on a 3D part to answer, optional 3D callout leader lines on hotspots, and a live Time-Trial stopwatch badge.
+- **Mustache Refactoring:** Moved floating scene tool panels into `templates/tools_panels.mustache` rendered via `core/templates`.
+
 ## [2.0.0] - 2026-11-15
 
 ### Added
